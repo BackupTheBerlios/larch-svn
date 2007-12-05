@@ -1,0 +1,70 @@
+# These are needed to build a live CD
+squashfs-tools
+initcpio_larch
+
+# At present these are also required packages
+# (needed to eject a cd, and for session saving)
+cdrkit
+dvd+rw-tools
+
+# You need a kernel with 'squashfs' and 'unionfs'.
+#kernel26 is now in 'base'
+aufs
+
+# Highly recommended
+#larchin
+#larch
+
+# Needed by the installer
+#python
+# dialog is now in basepacks!
+
+# If using 'abs':
+#cvsup
+
+# Useful for use as installer, etc.
+#ntfsprogs
+#parted
+#mdadm
+#lvm2
+#hwd
+
+# generally useful tools which don't require X
+openssh
+#dosfstools
+lynx
+#mc
+mc-utf8
+#unzip
+#zip
+
+# gradplay stuff
+alsa-lib
+alsa-oss
+alsa-utils
+
+# Xorg packages
+xorg-server
+xorg-xkb-utils
+xorg-xauth
+xorg-server-utils
+xorg-xinit
+xorg-input-drivers
+xorg-video-drivers
+
+libdvdcss
+vlc-gp
+ttf-bitstream-vera
+#openbox
+#obconf
+#rxvt
+#urxvt
+cdcd
+diffutils
+hdparm
+setserial
+lirc
+pylirc
+pyosd
+xscreensaver
+sendxevent

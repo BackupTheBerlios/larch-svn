@@ -1,0 +1,240 @@
+#!/bin/sh
+
+# merge_overlay   - recreate overlay squashfs
+
+# Author: Michael Towers (gradgrind) <mt.42@web.de>
+#
+# This file is part of the larch project.
+#
+#    larch is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 2 of the License, or
+#    (at your option) any later version.
+#
+#    larch is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with larch; if not, write to the Free Software Foundation, Inc.,
+#    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+#
+#----------------------------------------------------------------------------
+# 2007.10.01
+
+# test if the script is started by root user. If not, exit
+if [ $UID -ne 0 ]; then
+    echo "Only root can run ${APP}"; exit 1
+fi
+
+# Underlying system:        /.livesys/base and /.livesys/system
+# Present overlay:          /.livesys/etc and /.livesys/overlay
+
+# The overlay device(s)
+overlaypath=$1
+homepath=${overlaypath}
+
+# The new overlay will be built in memory (main tmpfs)
+merge_base=/.livesys
+
+# What is to be saved, overlay+etc and/or home? Default is both.
+# Set to "" to disable.
+savehome="1"
+saveovl="1"
+
+# The default behaviour for writable devices is to build the new
+# sqfs directly onto them, appending '_' to the names. Otherwise
+# sqfs with incremented indexes are built to /.livesys/new-sqf.
+# Set overwrite="" to force indexed overlays.
+overwrite="1"
+
+#================ END OF CONFIGURATION VARIABLE DECLARATIONS
+
+newsqf=/.livesys/new-sqf
+mkdir -p ${newsqf}
+rm -rf ${newsqf}/*
+
+if [ -f /.livesys/scripts/merge-adjust ] ; then
+    . /.livesys/scripts/merge-adjust
+fi
+
+if [ "${savehome}" != "" ]; then
+    # Get latest home sqf
+    pwdold=$( pwd )
+    cd ${homepath}
+    for ovl in home*.sqf; do ovlh=${ovl}; done
+    cd ${pwdold}
+
+    # Get new index
+    index=$( echo ${ovlh} | sed "s|home[^_]*_\?0*\([0-9]*\).sqf|\1|" )
+    if [ -z "${index}" ]; then
+        hom2="home_00001.sqf"
+    else
+        hom2="home_$( printf "%05d" $(( ${index} + 1 )) ).sqf"
+    fi
+
+    # See if writable
+    touch ${homepath}/${ovlh}_ 2>/dev/null
+    if [ $? -eq 0 ]; then
+        # writable
+        rm ${homepath}/${ovlh}_
+        if [ ${overwrite} != "" ]; then
+            saveto=${homepath}/${ovlh}_
+        else
+            saveto=${homepath}/${hom2}
+        fi
+    else
+        saveto=${newsqf}/${hom2}
+    fi
+
+    mksquashfs /home ${saveto} -keep-as-directory
+fi
+
+if [ "${saveovl}" == "" ]; then
+    exit
+fi
+
+# Make temporary directory for new overlay
+builddir="${merge_base}/merge_overlay"
+mkdir -p ${builddir}
+rm -rf ${builddir}/*
+echo "Copying overlay files to ${builddir}"
+
+# Copy existing overlays
+cp -a /.livesys/overlay/* ${builddir}
+cp -a /.livesys/etc/* ${builddir}
+
+# Update with files from the union writeable branches
+if grep "aufs" /.livesys/utype &>/dev/null; then
+    opq=".wh..wh..opq"
+else
+    opq=".wh.__dir_opaque"
+fi
+
+echo "Copying new files to ${builddir}"
+
+for d in bin boot etc larch lib opt root sbin usr var; do
+    if [ -z "$( ls -A /.livesys/.${d}_w )" ]; then continue; fi
+    cd /.livesys/.${d}_w
+
+    if [ ! -d "${builddir}/${d}" ]; then
+        mkdir "${builddir}/${d}"
+        chmod "${builddir}/${d}" --reference="/${d}"
+    fi
+
+    find -type d | while read n
+    do
+        if [ "${n}" = "." ]; then continue; fi
+        if $( basename ${n} | grep "^\.wh\." &>/dev/null ); then continue; fi
+        # Remove leading './'
+        n=${n:2}
+        mkdir -p "${builddir}/${d}/${n}"
+        chmod "${builddir}/${d}/${n}" --reference="${n}"
+        chown "${builddir}/${d}/${n}" --reference="${n}"
+        touch "${builddir}/${d}/${n}" --reference="${n}"
+        if [ -e "${n}/${opq}" ]; then
+            # remove existing (old) overlay files within this directory
+            rm -rf "${builddir}/${d}/${n}/"*
+            if [ -e "/.livesys/system/${d}/${n}" ] ||
+                    [ -e "/.livesys/base/${d}/${n}" ]; then
+                cp -a "${n}/${opq}" "${builddir}/${d}/${n}"
+            fi
+        fi
+    done
+
+    # Copy Files
+    find -not \( -regex '.*/\.wh\.[^/]*' -type f \) -not -type d | \
+            while read n
+    do
+        # Remove leading './'
+        n=${n:2}
+        # Remove existing (old) overlay file with same name (if there is one)
+        rm -rf "${builddir}/${d}/${n}"
+        # Remove existing whiteout file for this file (if there is one)
+        dn=$( dirname "${n}" )
+        if [ "${dn}" = "." ]; then
+            dn=""
+        else
+            dn="${dn}/"
+        fi
+        rm -f "${builddir}/${d}/${dn}.wh.$( basename "${n}" )"
+        # Copy the new overlay file to build area
+        cp -a "${n}" "${builddir}/${d}/${n}"
+    done
+
+    # Handle whiteouts
+    find \( -regex '.*/\.wh\.[^/]*' -type f \) | \
+            while read w
+    do
+        # Remove leading './'
+        w=${w:2}
+        n=$( echo "${w}" | sed 's/\.wh\.//' )
+        # Remove an existing (old) overlay file with this name
+        rm -rf "${builddir}/${d}/${n}"
+        if [ -e "/.livesys/system/${d}/${n}" ] ||
+                [ -e "/.livesys/base/${d}/${n}" ]; then
+            cp -a "./${w}" "${builddir}/${d}/${w}"
+        fi
+    done
+done
+
+rm -rf ${builddir}/var/{cache,log,tmp,lock,run}
+
+# Don't forget /mnt! (it is not present in 'system')
+# Only recreate the directories ...
+rm -rf ${builddir}/mnt
+for d in $( ls /mnt ); do
+    if [ -d /mnt/${d} ]; then
+        mkdir -p ${builddir}/mnt/${d}
+    fi
+done
+
+# Get latest overlay files
+pwdold=$( pwd )
+cd ${overlaypath}
+for ovl in overlay*.sqf; do ovlx=${ovl}; done
+for ovl in etc*.sqf; do ovle=${ovl}; done
+cd ${pwdold}
+
+index=$( echo ${ovlx} | sed "s|overlay[^_]*_\?0*\([0-9]*\).sqf|\1|" )
+if [ -z "${index}" ]; then
+    ovl2="overlay_0001.sqf"
+    etc2="etc_0001.sqf"
+else
+    ovl2="overlay_$( printf "%04d" $(( ${index} + 1 )) ).sqf"
+    etc2="etc_$( printf "%04d" $(( ${index} + 1 )) ).sqf"
+fi
+
+# See if writable
+touch ${overlaypath}/${ovlx}_ 2>/dev/null
+if [ $? -eq 0 ]; then
+    # writable
+    rm ${overlaypath}/${ovlx}_
+    saveto=${overlaypath}
+    if [ ${overwrite} != "" ]; then
+        savetox=${overlaypath}/${ovlx}_
+        savetoe=${overlaypath}/${ovle}_
+    else
+        savetox=${overlaypath}/${ovl2}
+        savetoe=${overlaypath}/${etc2}
+    fi
+else
+    savetox=${newsqf}/${ovl2}
+    savetoe=${newsqf}/${etc2}
+fi
+
+
+mksquashfs ${builddir} ${savetox} -e etc
+
+# An existing /etc/mtab seems to cause problems (can't unmount CD)
+# so delete it
+rm -f ${builddir}/etc/mtab
+
+#TODO
+# This is a bodge to stop 'lvm vgscan' segfaulting. It looks like it
+# might be a unionfs problem. It would be nice to get rid of this somehow ...
+rm -rf ${builddir}/etc/lvm
+
+mksquashfs ${builddir}/etc ${savetoe} -keep-as-directory
+rm -rf ${builddir}

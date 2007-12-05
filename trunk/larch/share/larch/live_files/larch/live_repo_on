@@ -1,0 +1,15 @@
+#! /bin/sh
+
+# larch_repo_on
+
+# Enable larch 'live' repo, by removing special comment marks in pacman.conf
+
+if [ -e /.livesys/livecd/packages/live.db.tar.gz ]; then
+    sed -i 's|#+#||' /etc/pacman.conf
+    echo "OK"
+    exit 0
+fi
+
+echo "Failed"
+echo "'/.livesys/livecd/packages/live.db.tar.gz' not found"
+exit 1

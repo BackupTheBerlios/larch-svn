@@ -1,0 +1,146 @@
+#!/bin/sh
+#
+# /etc/rc.sysinit0
+#
+# 2007.11.07
+
+# This has been added specifically for the larch3 boot process
+# It needs:   bash (as sh), mkdir, mount, (umount,) cp
+
+
+# Make special directories
+mkdir -m 1777 /tmp
+mkdir /media
+mkdir /sys
+mkdir /home
+# Make and mount /proc
+mkdir /proc
+mount -n -t proc none /proc
+
+# Copy scripts to memory
+if [ -d /.livesys/livecd/scripts ]; then
+    cp  -a /.livesys/livecd/scripts /.livesys
+fi
+
+# Copy static binaries to memory
+cp  -a /.livesys/livecd/larch-static-bin /.livesys
+
+# Find latest overlay
+cd /
+for ovl in /.livesys/livecd/overlay*.sqf; do ovlx=${ovl}; done
+for ovl in /.livesys/livecd/home*.sqf; do ovlh=${ovl}; done
+# These can be overridden, possibly using some output of the script
+# get_etc, which is run in the initramfs by hook larch2:
+if [ -f /.livesys/scripts/get_overlay ]; then
+    # ovlx is the path to the overlay sqf
+    # ovlh is the path to the home sqf
+    . /.livesys/scripts/get_overlay
+fi
+
+# Deal with copy-to-RAM
+if [ -f /.livesys/c2r ]; then
+    echo "Copying system.sqf to memory, please be patient ..."
+    cp /.livesys/livecd/system.sqf /.livesys
+    sysPath=/.livesys/system.sqf
+    echo "  ... system.sqf done, now copying ${ovlx} ..."
+    cp ${ovlx} /.livesys/overlay.sqf
+    ovlx=/.livesys/overlay.sqf
+    echo "  ... overlay.sqf done, now copying ${ovlh} ..."
+    cp ${ovlh} /.livesys/home.sqf
+    ovlh=/.livesys/home.sqf
+else
+    sysPath=/.livesys/livecd/system.sqf
+fi
+
+echo "Mounting system from boot device"
+mkdir /.livesys/system
+mount -n -t squashfs -o loop ${sysPath} /.livesys/system
+
+mkdir /.livesys/overlay
+mount -n -t squashfs -o loop ${ovlx} /.livesys/overlay
+
+if grep "aufs" /.livesys/utype &>/dev/null; then
+    ovlmnt="ro+wh"
+    bropt="br:"
+    utype="aufs"
+else
+    ovlmnt="ro"
+    bropt="dirs="
+    utype="unionfs"
+fi
+
+cd /.livesys/system
+# This is bodged a bit to ensure sbin is mounted last (so that
+# mount.aufs from aufs-utils doesn't cause problems)
+for d in * ___; do
+    # Just in case some non-directory entity creeps in, which is not
+    # supported in this version!
+    if [ "${d}" = "sbin" ]; then continue; fi
+    if [ "${d}" = "___" ]; then d=sbin; fi
+    if [ ! -d ${d} ]; then continue; fi
+
+    # This assumes a somewhat stripped system.sqf - the empty directories
+    # (and dev, mnt) are not in it
+
+    # Make writeable layer
+    mkdir /.livesys/.${d}_w
+    chmod /.livesys/.${d}_w --reference="/.livesys/system/${d}"
+
+    # Make union
+    layers="/.livesys/system/${d}=ro"
+    if [ -e /${d} ]; then
+        if [ "${d}" = "etc" ]; then
+            layers="/.livesys/etc/etc=ro:${layers}"
+        else
+            layers="/.livesys/base/${d}=ro:${layers}"
+        fi
+    else
+        mkdir /${d}
+        chmod /${d} --reference="/.livesys/system/${d}"
+    fi
+    #if there is an overlay directory, it needs adding
+    if [ -d /.livesys/overlay/${d} ]; then
+        layers="/.livesys/overlay/${d}=${ovlmnt}:${layers}"
+    fi
+    mount -n -t ${utype} -o ${bropt}/.livesys/.${d}_w=rw:${layers} ${utype} /${d}
+    echo "${d}" >> /.livesys/unions
+done
+
+# Directories in 'overlay' but not in 'system' (essentially 'larch'
+# and 'mnt')
+cd /.livesys/overlay
+for d in *; do
+    # Just in case some non-directory entity creeps in, which is not
+    # supported in this version!
+    if ! [ -d ${d} ]; then continue; fi
+    if [ -e /${d} ]; then
+        chmod /${d} --reference="/.livesys/overlay/${d}"
+        continue
+    fi
+    # Make writeable layer
+    mkdir /.livesys/.${d}_w
+    chmod /.livesys/.${d}_w --reference="/.livesys/overlay/${d}"
+    mkdir /${d}
+    chmod /${d} --reference="/.livesys/overlay/${d}"
+    mount -n -t ${utype} \
+            -o ${bropt}/.livesys/.${d}_w=rw:/.livesys/overlay/${d}=ro \
+            ${utype} /${d}
+    echo "${d}" >> /.livesys/unions
+done
+
+# /home has its own dedicated sqf
+mkdir /.livesys/home
+mount -n -t squashfs -o loop ${ovlh} /.livesys/home
+# ... make writeable layer
+mkdir /.livesys/.home_w
+mount -n -t ${utype} \
+        -o ${bropt}/.livesys/.home_w=rw:/.livesys/home/home=ro \
+        ${utype} /home
+echo "home" >> /.livesys/unions
+
+# Not sure what the optimal approach is, but /mnt must be there. If a
+# persistent fstab is used, a persistent /mnt will probably also be wanted
+# (probably in overlay).
+if ! [ -e /mnt ]; then mkdir /mnt; fi
+cd /
+exec /etc/rc.sysinit

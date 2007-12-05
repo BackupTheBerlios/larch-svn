@@ -1,0 +1,16 @@
+#
+# patch file for /etc/rc.conf
+#
+
+LOCALE="en_US.UTF-8"
+#LOCALE="en_US"
+HARDWARECLOCK="UTC"
+#TIMEZONE="UTC"
+TIMEZONE="Europe/Berlin"
+KEYMAP="de-latin1-nodeadkeys"
+
+HOSTNAME="gradplay"
+
+#eth0="eth0 192.168.178.231 netmask 255.255.255.0 broadcast 192.168.178.255"
+
+DAEMONS=(syslog-ng stlirc lircd)
