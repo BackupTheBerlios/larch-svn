@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2007.12.05
+# 2007.12.07
 
 # Location for the CD image
 CDDATA="${LARCHBUILD}/cd"
@@ -94,13 +94,6 @@ mklive ()
         if [ -z "${pac}" ]; then
             echo "ERROR: Package ${p} is not installed on target"
             fail=1
-        fi
-    done
-
-    for p in "python" "archin" "larchin"; do
-        pac=$( ls ${INSTLDIR}/var/lib/pacman/local | egrep "^${p}-[^-]+-[^-]+$" )
-        if [ -z "${pac}" ]; then
-            echo "WARNING: Package ${p} is recommended"
         fi
     done
 

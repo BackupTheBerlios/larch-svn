@@ -10,15 +10,6 @@ aufs
 cdrkit
 dvd+rw-tools
 
-# Highly recommended
-#larchin
-#larch
-
-# Needed by the installer
-python
-# dialog is now in basepacks!
-diffutils
-
 # If using 'abs':
 #cvsup
 
@@ -27,6 +18,7 @@ ntfsprogs
 parted
 mdadm
 lvm2
+diffutils
 #ddcxinfo-knoppix
 #hwd
 

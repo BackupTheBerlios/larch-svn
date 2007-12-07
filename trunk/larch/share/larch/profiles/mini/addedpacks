@@ -1,6 +1,5 @@
 # These are needed to build a live CD
 squashfs-tools
-initcpio_larch
 
 # At present these are also required packages
 # (needed to eject a cd, and for session saving)
@@ -11,15 +10,6 @@ dvd+rw-tools
 #kernel26 is now in 'base'
 aufs
 
-# Highly recommended
-larchin
-#larch
-
-# Needed by the installer
-python
-# dialog is now in basepacks!
-diffutils
-
 # If using 'abs':
 #cvsup
 
@@ -28,7 +18,7 @@ ntfsprogs
 parted
 mdadm
 lvm2
-hwd
+diffutils
 
 # generally useful tools which don't require X
 openssh
