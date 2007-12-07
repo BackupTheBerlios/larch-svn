@@ -21,7 +21,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2007.12.03
+# 2007.12.05
 
 # directory to use for building the CD - the installation root
 # It must have LOTS of space, ~ 4GB for a 700MB CD
@@ -44,17 +44,21 @@ cd ${startdir}
 usage () {
     echo
     echo "Usage:"
+    echo "  ${APP} -h     # Show this message"
+    echo
     echo "  ${APP} -a  [-f] [-p <profile directory>]"
     echo "                  [-c <package cache directory>]"
     echo "                  [-y <path to pacman database directories>]"
     echo "                  [<build directory>]"
+    echo
     echo "  ${APP} [-ugf]   [-p <profile directory>]"
     echo "                  [-c <package cache directory>]"
     echo "                  [-y <path to pacman database directories>]"
     echo "                  [<build directory>]"
     echo
-    echo "          -p    Use the 'profile' in the given directory."
     echo "          -a    Stop after installing Arch system (don't build live system)."
+    echo
+    echo "          -p    Use the 'profile' in the given directory."
     echo
     echo "          -c    Use an alternative package cache directory"
     echo "                (default is /var/cache/pacman/pkg, on host)"
@@ -70,6 +74,9 @@ usage () {
     echo
     echo "${APP} is the master script for the larch live CD / live USB-stick"
     echo "builder."
+    echo
+    echo "<build directory> is the directory in which all the building will"
+    echo "be done, by default '${INSTLDIR}'"
     echo
     echo "A profile is a directory containing all the necessary"
     echo "configuration details for a larch build."

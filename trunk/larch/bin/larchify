@@ -21,7 +21,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2007.11.09
+# 2007.12.05
 
 # Default target directory:
 INSTLDIR=larchroot
@@ -43,6 +43,8 @@ cd ${startdir}
 usage () {
     echo
     echo "Usage:"
+    echo "  ${APP} -h     # Show this message"
+    echo
     echo "  ${APP} [-irugf] [-p <profile directory>] [<target directory>]"
     echo
     echo "          -p    Use the 'profile' in the given directory."
