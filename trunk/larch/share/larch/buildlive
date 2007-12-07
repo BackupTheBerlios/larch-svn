@@ -119,8 +119,6 @@ mklive ()
     mkdir -p ${CDDATA}
     rm -Rf ${CDDATA}/*
 
-    # If the statically linked binaries (the static-progs directory)
-    # are not included here, then they must be fetched explicitly.
     cp -R ${LARCHDATA}/cd-root/* ${CDDATA}
     cp -Rf ${PROFILE}/cd-root/* ${CDDATA}
 
@@ -140,18 +138,6 @@ mklive ()
     fi
 
     copy_profile
-
-    # user-determined additional stuff ('packages' directory)
-    echo "// copying additional packages/data to ${CDDATA}/packages"
-    if [ -d "${PACKAGES}" ]; then
-        if [ -z "${NOPKGDB}" -a -n "$( ls ${PACKAGES} | grep .pkg.tar.gz )" ]; then
-            echo "// Generating repo db for packages in ${PACKAGES}"
-            echo "// Dependency info: +++++++++++++++++++++++++++"
-            gen_repo ${PACKAGES} larch -- ${INSTLDIR}/var/lib/pacman/local
-            echo "// End of dependency info: --------------------"
-        fi
-        cp -LR ${PACKAGES} ${CDDATA}/packages
-    fi
 
     ### Generate initcpio (using chroot if necessary) then copy it to CDDATA
 
