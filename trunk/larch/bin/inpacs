@@ -21,11 +21,11 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-#2007.11.06
+#2007.12.08
 
-# Note that this has quite a few differences to 'pacin'. Read the usage
-# blurb carefully, for example the options -c, -a (changed defaults), and
-# -x (the format of the veto file has changed slightly).
+# Note that this has quite a few differences to 'pacin' (now deprecated).
+# Read the usage blurb carefully, for example the options -c, -a (changed
+# defaults), and -x (the format of the veto file has changed slightly).
 
 # Working directory:
 TMPDIR=/tmp/inpacs$$
@@ -299,7 +299,7 @@ if [ -n "${ADDEDPACKS}" ]; then
     echo "//"
     echo "// ************** Additional packages **************"
     echo "//"
-    PKGLIST=$( grep -v "#" ${pklist} )
+    PKGLIST=$( grep -v "^#" ${pklist} )
     doInstall
     if [ $? -ne 0 ]; then exit 1; fi
 fi

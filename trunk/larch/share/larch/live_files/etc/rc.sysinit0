@@ -2,7 +2,7 @@
 #
 # /etc/rc.sysinit0
 #
-# 2007.11.07
+# 2007.12.08
 
 # This has been added specifically for the larch3 boot process
 # It needs:   bash (as sh), mkdir, mount, (umount,) cp
@@ -21,9 +21,6 @@ mount -n -t proc none /proc
 if [ -d /.livesys/livecd/scripts ]; then
     cp  -a /.livesys/livecd/scripts /.livesys
 fi
-
-# Copy static binaries to memory
-cp  -a /.livesys/livecd/larch-static-bin /.livesys
 
 # Find latest overlay
 cd /

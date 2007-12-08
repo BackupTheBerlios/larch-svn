@@ -1,6 +1,6 @@
 # Maintainer: Michael Towers <gradgrind[at]online[dot]de>
 pkgname=larch
-pkgver=5.0.4
+pkgver=5.0.5
 pkgrel=1
 
 # If I need the architecture, I can get it as ${CARCH}
@@ -16,7 +16,6 @@ build() {
   mkdir -p ${startdir}/pkg/usr
   cp -dr ${startdir}/src/larch/bin ${startdir}/pkg/usr
   cp -dr ${startdir}/src/larch/share ${startdir}/pkg/usr
-  cp -dr ${startdir}/larch-static-bin ${startdir}/pkg/usr/share/larch/cd-root
 
   # Compile shutdown unmount-helper
   cd ${startdir}/src/larch/src
