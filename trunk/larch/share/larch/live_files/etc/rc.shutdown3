@@ -1,5 +1,11 @@
 #!/bin/sh
-# 2007.10.15
+# 2007.12.08
+
+umount -n /.livesys/livecd 2>/dev/null
+umount -n /.livesys/savedev 2>/dev/null
+if [ -f /.livesys/scripts/shutdown-unmount ]; then
+    . /.livesys/scripts/shutdown-unmount
+fi
 
 savedev="$1"
 ejectdev="$2"

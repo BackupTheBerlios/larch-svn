@@ -5,39 +5,21 @@ pkgrel=1
 
 # If I need the architecture, I can get it as ${CARCH}
 
-# klibc stuff (for static shell and umount)
-# Modified from Arch klibc PKGBUILD, v 1.11 2007/09/19
-_lsbver=1.5
-_klibcbranch=Stable #Stable/Testing
-_kver=$( uname -r )
-
 pkgdesc="Scripts for generating live Archlinux CDs and USB-sticks"
 url="http://larch.berlios.de"
 depends=()
 arch=(i686 x86_64)
-license=('GPL' 'BSD')        # dash is apparently BSD
-source=(larch-${pkgver}.tar.gz
-        http://www.kernel.org/pub/linux/libs/klibc/${_klibcbranch}/klibc-${_lsbver}.tar.gz)
-md5sums=('d0d5d3904b64d6bf84dec2dbd737df1d'
-        'd55ce89c0656a7d6896ec0b2af07b5dc')
+license=('GPL')
+source=(larch-${pkgver}.tar.gz)
 
 build() {
-  if [ -f ${startdir}/larch-static-bin/sh_static ] && \
-        [ -f ${startdir}/larch-static-bin/sh_static ]; then
-    echo "static files already available, skipping compilation"
-  else
-    cd ${startdir}/src/klibc-${_lsbver}
-    ln -sf /usr/src/linux-${_kver} linux
-    make EXTRA_KLIBCFLAGS='' || exit 1
-
-    rm -rf ${startdir}/larch-static-bin
-    mkdir -p ${startdir}/larch-static-bin
-    cp  usr/dash/sh ${startdir}/larch-static-bin/sh_static
-    cp  usr/utils/static/umount ${startdir}/larch-static-bin/umount_static
-  fi
-
   mkdir -p ${startdir}/pkg/usr
   cp -dr ${startdir}/src/larch/bin ${startdir}/pkg/usr
   cp -dr ${startdir}/src/larch/share ${startdir}/pkg/usr
   cp -dr ${startdir}/larch-static-bin ${startdir}/pkg/usr/share/larch/cd-root
+
+  # Compile shutdown unmount-helper
+  cd ${startdir}/src/larch/src
+  klcc -static -o rc.shutdown2 rc.shutdown2.c || return 1
+  cp rc.shutdown2 ${startdir}/pkg/usr/share/larch/live_files/etc
 }

@@ -2,11 +2,13 @@
 #
 # /etc/rc.shutdown
 #
-# 2007.11.06
+# 2007.12.08
 
 # Added for larch, so that /etc, /lib and /bin (and /usr) are not busy
-# when the unions are unmounted
+# when the unions are unmounted. These files shold not be in one of the
+# union mounts.
 cp /etc/rc.shutdown2 /
+cp /etc/rc.shutdown3 /
 
 . /etc/rc.conf
 . /etc/rc.d/functions

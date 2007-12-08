@@ -35,7 +35,7 @@ existing one, make whatever changes you like, and then save the result back to
 the CD or USB-stick.
 </p>
 
-<p>In <em>larch</em>-4 the <em>overlay</em> file-system (in the
+<p>In <em>larch</em> the <em>overlay</em> file-system (in the
 <em>squashed</em> files 'overlay.sqf', 'etc.sqf' and 'home.sqf') can be rebuilt
 from the state of the live system when it shuts down.
 This is handled primarily by the script <strong>merge_overlay</strong>, which is
@@ -154,8 +154,10 @@ copied to <strong>/.livesys/scripts</strong> during booting.
     </p>
   </li>
 </ul>
-The session-saving at shutdown involves several scripts, each of the
-shutdown scripts uses one. I'll start at the end:
+    The session-saving at shutdown involves several scripts, each of the shutdown
+    scripts uses one. I'll start at the end, with the final shutdown code executed in
+    <strong>/etc/rc.shutdown3</strong> (note that only the rather limited
+    'base' environment is available from that script).
 <ul>
   <li><strong>shutdown-save</strong>
     <p>This is sourced by <strong>/etc/rc.shutdown3</strong> in order to
@@ -196,7 +198,7 @@ shutdown scripts uses one. I'll start at the end:
     </p>
   </li>
   <li><strong>shutdown-unmount</strong>
-    <p>This is sourced by <strong>/etc/rc.shutdown2</strong>. It should
+    <p>This is sourced by <strong>/etc/rc.shutdown3</strong><strong></strong>. It should
     unmount any remaining mounts which are not accounted for elsewhere
     (i.e. which arise through customizations). This should only be necessary
     in the case where system.sqf/base.sqf, overlay.sqf/etc.sqf and home.sqf are

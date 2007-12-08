@@ -97,7 +97,8 @@ additions need to be made to boot live CD/USB systems.
 <h4><a name="rc_files"></a>/etc/rc.sysinit and /etc/rc.shutdown</h4>
 
 <p>These are the other main files which must be customized for use in a live-CD
-environment. In <em>larch</em>-3, these have each been split into two, with the additional scripts dealing with setting up ('rc.sysinit0') or closing down
+environment. In <em>larch</em>-3, these have each been split into two, with the
+additional scripts dealing with setting up ('rc.sysinit0') or closing down
 ('rc.shutdown2') in the minimal, non-<em>unioned</em> environment of 'base.sqf'
 + 'etc.sqf'. 'rc.sysinit0', mounts the bulk of the system (after having copied
 it to memory if the 'c2r' boot parameter was passed) and sets up the
@@ -121,30 +122,10 @@ Quite a bit of the standard rc.sysinit will not be relevant in a live CD situati
 the normal version, the hardware clock is not reset. The part dealing with
 writing to CD/DVD and ejecting the device have been delegated to
 'rc.shutdown3', which must be run in the 'base' environment, after the CD
-has been unmounted. To achieve this, 'rc.shutdown2' is copied out of the <em>unionfs</em> union and 'exec'ed. This script uses a statically linked
-shell and 'umount' (from <em>klibc</em>) to do the unmounting and then in
-turn 'exec's 'rc.shutdown3'.
-</p>
-
-<h4><a name="Package_Repository"></a>Package Repository on the CD</h4>
-
-<p>The PACKAGES variable in <strong>config_larch</strong> determines a directory
-which will be copied onto the live CD as <strong>packages/</strong>. You can put
-any Arch packages you like in here, so that you have a small package repository
-on the CD. To make it usable as such by <em>pacman</em> there needs to be a 'db'
-file. This (<strong>live.db.tar.gz</strong>) is
-generated automatically using the <strong>gen_repo</strong> script.
-Unsatisfied dependencies are listed to standard output, so that
-you can see whether you maybe need to add other packages, but packages which are
-installed in the live system will be omitted.The <strong>/etc/pacman.conf</strong> file on the live system will by default not
-use this repository, but it can be enabled by running 'live_repo_on' (in the live
-system). It is placed before all the others, so that the packages in there have
-priority.</p>
-
-<p>Items other than Arch packages can be included in the packages directory, they
-will simply be copied to the CD. Also, generation of the db file can be
-suppressed by passing the '-o' option to <em>mklarch</em>. Note that the default 
-<strong>config_larch</strong> includes no package directory.
+has been unmounted. To achieve this, 'rc.shutdown2' (which is compiled using
+statically linked klibc from a small C-file) is copied out of the <em>unionfs/aufs</em>
+union and 'exec'ed. This in turn runs 'rc.shutdown3', which is also copied
+out of the union (in case it has been modified - unlikely but possible).
 </p>
 
 <table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
