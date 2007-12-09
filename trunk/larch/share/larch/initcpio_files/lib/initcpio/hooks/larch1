@@ -82,11 +82,11 @@ run_hook ()
                 msg_ ":: larch system at ${LDEV}"
             else
                 /bin/umount "${cdmount}" 2>/dev/null
-                msg_ "!! No larch system at ${LDEV}"
+                echo "!! No larch system at ${LDEV}"
                 LDEV=""
             fi
         else
-            msg_ "!! Couldn't mount ${LDEV}"
+            echo "!! Couldn't mount ${LDEV}"
             LDEV=""
         fi
     fi
