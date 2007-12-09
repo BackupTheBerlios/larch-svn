@@ -21,7 +21,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-#
+#2007.12.09
 
 # Replacement for msg which includes leading and trailing spaces
 msg_ () { [ "${quiet}" != "y" ] && echo "$@"; }
@@ -30,7 +30,6 @@ msg_ () { [ "${quiet}" != "y" ] && echo "$@"; }
 # 'larchboot' in the root directory.
 # If LiveCD system found in the device, return 0, else return 1
 # and leave the device mounted.
-# Mounting is not ro, but without any argument.
 # $1 = device name (e.g. "/dev/hda2")
 # $2 = directory where devices will be mounted
 #
@@ -69,22 +68,44 @@ run_hook ()
     # Directory for live cd stuff
     /bin/mkdir "/tfs/.livesys"
     # Directory for test mounts (and then for live CD)
-    /bin/mkdir "/tfs/.livesys/livecd"
+    cdmount="/tfs/.livesys/livecd"
+    /bin/mkdir "${cdmount}"
 
-    # look for livecd data directory, first try cdroms
-    msg_ ":: Looking for boot device"
-    LDEV=""
-    cdroms=$( /bin/cat /proc/sys/dev/cdrom/info | { while read a b c; do
-            if [ "${a}" = "drive" -a "${b}" = "name:" ]; then
-                echo "${c}"
-                break
+    # look for livecd data directory, first try ${root}
+    LDEV="${root}"
+    if [ "x${LDEV}" != "x" ]; then
+        /bin/mount -r -t iso9660 "${LDEV}" "${cdmount}" >/dev/null 2>/dev/null || \
+        /bin/mount -r -t vfat "${LDEV}" "${cdmount}" >/dev/null 2>/dev/null || \
+        /bin/mount -r -t ext2 "${LDEV}" "${cdmount}" >/dev/null 2>/dev/null
+        if [ $? -eq 0 ]; then
+            if [ -f "${cdmount}/larchroot" ]; then
+                msg_ ":: larch system at ${LDEV}"
+            else
+                /bin/umount "${cdmount}" 2>/dev/null
+                msg_ "!! No larch system at ${LDEV}"
+                LDEV=""
             fi
+        else
+            msg_ "!! Couldn't mount ${LDEV}"
+            LDEV=""
+        fi
+    fi
+
+    # then try cdroms
+    if [ "x${LDEV}" = "x" ]; then
+        msg_ ":: Looking for boot device"
+        cdroms=$( /bin/cat /proc/sys/dev/cdrom/info | { while read a b c; do
+                if [ "${a}" = "drive" -a "${b}" = "name:" ]; then
+                    echo "${c}"
+                    break
+                fi
+            done
+        } )
+        for i in ${cdroms}; do
+            test_live_data_dir "/dev/${i}" "${cdmount}"
+            if [ $? -eq 0 ]; then break; fi
         done
-    } )
-    for i in ${cdroms}; do
-        test_live_data_dir "/dev/${i}" "/tfs/.livesys/livecd"
-        if [ $? -eq 0 ]; then break; fi
-    done
+    fi
 
     # test USB devices (and disks) repeatedly until timed out
     if [ "x${LDEV}" = "x" ]; then
@@ -93,7 +114,7 @@ run_hook ()
             msg_ " :wait ${i} :::"
             /bin/sleep ${i}
             for d in /dev/sd[a-z][0-9]*; do
-                test_live_data_dir "${d}" "/tfs/.livesys/livecd"
+                test_live_data_dir "${d}" "${cdmount}"
                 if [ $? -eq 0 ]; then break 2; fi
             done
         done
