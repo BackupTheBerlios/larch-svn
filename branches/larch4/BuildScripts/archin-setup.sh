@@ -6,9 +6,9 @@ echo "be run from this directory, without installing."
 echo "It also generates a convenient symlink to the 'archin' script."
 echo
 
-REPO="ftp://archie.dotsrc.org/projects/archie/larch/testing"
-#REPO="http://www.faunos.com/larch/testing"
-#REPO="file:///home/larch/testing"
+REPO="ftp://archie.dotsrc.org/projects/archie/larch/larch4"
+#REPO="http://www.faunos.com/larch/larch4"
+#REPO="file:///home/larch/larch4"
 
 # Get path to this directory, via the location of this script
 fullpath="$( readlink -f $0 )"

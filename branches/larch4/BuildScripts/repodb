@@ -1,7 +1,7 @@
 #!/bin/sh
 # Example of how to build the repository db file.
 
-larchrepo=/home/larch/testing
+larchrepo=/home/larch/larch4
 
 # Test if the script is started by root user. If not, exit
 if [ $UID -ne 0 ]; then

@@ -7,9 +7,9 @@ echo "It also generates a wrapper script 'mklarch' which should"
 echo "then be used instead of the real 'mklarch' script."
 echo
 
-REPO="ftp://archie.dotsrc.org/projects/archie/larch/testing"
-#REPO="http://www.faunos.com/larch/testing"
-#REPO="file:///home/larch/testing"
+REPO="ftp://archie.dotsrc.org/projects/archie/larch/larch4"
+#REPO="http://www.faunos.com/larch/larch4"
+#REPO="file:///home/larch/larch4"
 
 # Get path to this directory, via the location of this script
 fullpath="$( readlink -f $0 )"

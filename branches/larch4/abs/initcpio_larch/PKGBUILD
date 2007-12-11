@@ -1,7 +1,7 @@
 # Maintainer: gradgrind <gradgrind@online.de>
 pkgname=initcpio_larch
 pkgver=4.4
-pkgrel=1
+pkgrel=2
 pkgdesc="Extensions to the Arch initcpio system for larch live CDs"
 url="http://larch.berlios.de"
 depends=('mkinitcpio')
