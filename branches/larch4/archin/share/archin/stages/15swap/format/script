@@ -1,0 +1,12 @@
+#!/bin/sh
+
+dev="$( cat ${TEMPDIR}/swap | cut -d' ' -f1 )"
+echo "Formatting swap partition ${dev}" >>${LOGFILE}
+echo
+echo "Formatting swap partition ${dev}. Please be patient ..."
+
+mkswap -c ${dev}
+if [ $? -ne 0 ]; then
+    echo "FAILED: mkswap -c ${dev}" >>${LOGFILE}
+    exit 1
+fi

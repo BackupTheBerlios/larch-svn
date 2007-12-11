@@ -1,0 +1,12 @@
+Partitionen anlegen, entfernen, oder deren Größe ändern
+
+Wähle einen 'Partition Editor' aus. Wenn man eine Partition
+umsetzten oder deren Größe ändern will, ist man von den
+graphischen Programmen 'gparted' oder 'qtparted' am Besten
+bedient. Das kann man auch im 'Console' hinbekommen (indem
+man z.B. 'ntfsresize' benutzt), es ist aber nicht so einfach.
+
+ACHTUNG! Das Ändern der Partitionierung ist eine heikle
+Angelegenheit. Sichere deine wichtigen Daten (Backup anlegen).
+
+:::!dscript

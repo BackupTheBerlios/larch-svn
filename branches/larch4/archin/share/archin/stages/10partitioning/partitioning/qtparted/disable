@@ -1,0 +1,3 @@
+#!/bin/sh
+
+[ -z "${DISPLAY}" ] || ! which qtparted &>/dev/null

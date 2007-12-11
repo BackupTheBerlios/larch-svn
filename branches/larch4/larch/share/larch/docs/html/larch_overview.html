@@ -1,0 +1,362 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+  <meta content="text/html;charset=UTF-8" http-equiv="Content-Type">
+  <title>larch overview</title>
+  <meta content="gradgrind" name="author">
+</head>
+
+<body>
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+  <tbody>
+    <tr>
+      <td><a href="larch_quick.html">Previous: Quick start</a></td>
+
+      <td><a href="larch_docindex.html">Table of Contents</a></td>
+
+      <td><a href="larch_profiles.html">Next: Profiles</a></td>
+    </tr>
+  </tbody>
+</table>
+
+<br>
+
+<h1><big>larch</big>
+&ndash;
+a do-it-yourself live Archlinux CD</h1>
+
+<img style="border: 0px solid ; width: 290px; height: 192px;" alt="" src="larchsplash.jpg" name="graphics1" align="right" hspace="10" vspace="10">
+<br>
+<br>
+
+<h2>Overview of the <em>larch</em> build system</h2>
+
+<blockquote>
+<h3>Warning</h3>
+
+<p><em>Before we get started I should point out that most of the scripts need to
+be run by the 'root' user. That is quite normal for an installer, but it is somewhat
+risky - a slight slip and all sorts of damage could be done. Ideally you would
+have a machine specially set aside for this sort of thing, i.e. one without any
+important data on it. <strong>You have been warned!</strong></em>
+</p>
+</blockquote>
+
+<h4><a name="larch_installation"></a>Installation of the <em>larch</em> build system</h4>
+
+<h5>Method 1</h5>
+<p><em>larch</em> may be installed in the normal Archlinux way using <em>pacman</em>. It
+has a single dependency, 'pacin'. The '[larch]' repository should be placed
+<strong><em>before all the others</em></strong> in '/etc/pacman.conf', in case it contains
+replacement packages for some of the standard ones. The URL for the <em>larch</em>
+repository can be got from the download page. This method will only work on an Arch
+system, of course. And, because building the live CD requires packages from the
+<em>larch</em> repository, this <strong><em>must</em></strong> be present in
+'/etc/pacman.conf'. To install <em>larch</em>, run 'pacman -Sy larch'.
+</p>
+
+<h5>Method 2</h5>
+<p>Alternatively, <em>larch</em> may be used without installing it. This should also
+work on non-Arch Linux systems. Create an empty
+directory somewhere convenient and place the <strong>larch-setup.sh</strong> script
+in it. 'cd' to the directory and run the script. A sub-directory 'larch' will be
+created containing the <em>larch</em> scripts, and also a new script,
+<strong>mklarch</strong>, which should be used instead of the one supplied with the
+'larch' package. If you don't put this new directory on your 'PATH', you may well
+need to add a path prefix when running it (e.g. './mklarch' if your current
+directory is the one containing the script).
+</p>
+
+<h4><a name="larch_using"></a>Using the <em>larch</em> build system</h4>
+
+<p>The main script from the user's point of view is <strong>mklarch</strong>,
+which calls other scripts to do most of the work. In the simplest case of building
+a <em>larch</em> iso from a predefined 'profile', a single call to <strong>mklarch</strong>
+will suffice, e.g.:
+<pre>
+        mklarch -p default
+</pre>
+</p>
+
+<p>The <em>larch</em> live CD/USB system is based on a pristine, fresh Archlinux
+installation, lovingly packaged in a <em>squashfs</em> file-system.
+The fresh Archlinux installation is prepared by using the installation script <strong>pacin</strong> (in the 'pacin' package), which is called
+automatically by <em>mklarch</em> with the correct options. Unlike a normal
+installation, a separate partition is not required, it can be placed anywhere
+convenient. The default installation directory (INSTLDIR) should normally be acceptable
+('/home/larchroot', with the building work being done in the '.larch' sub-directory).
+INSTLDIR can be changed in <strong>config_larch</strong> (in the full installation in
+'/usr/share/larch', in the method 2 installation in 'larch/share/larch').
+Note that lots of space is necessary in INSTLDIR, nearly 4GB for a 700MB CD.
+</p>
+
+<h4><a name="config_larch"></a><strong>config_larch</strong></h4>
+
+<p>This is a configuration file for <em>mklarch</em>, which
+allows you to set where the <em>larch</em> stuff will be built (INSTLDIR)
+and the location of an optional package directory to copy to the CD (PACKAGES)
+(the latter could also contain things other than packages, it is not used by the
+live system). You can also add further configuration options for <em>pacin</em>,
+such as an alternative package cache or base-package-set veto list. The
+default 'config_larch' is in '[path-to]/share/larch', but it can be overridden
+by placing a modified version in the working directory, i.e. the current directory
+when <em>mklarch</em> is called.</p>
+
+<h4><a name="running_mklarch"></a>Quick <em>mklarch</em> overview</h4>
+
+<p>That first stage is very much like a normal Arch installation to a
+partition - which is another possibility with the <strong>pacin</strong> script.
+A couple of small tweaks are made to this base installation to make it more
+convenient for live CD/USB use. Some glibc locales are generated (set by the file
+locale.gen in the selected profile) and, if <em>openssh</em> is installed, the initial
+ssh-keys are generated. Also a few unnecessary files are removed (pacman
+database files and invalid initrd images).
+</p>
+
+<p>The result of this first part of <em>mklarch</em> is a freshly
+installed Archlinux system at '${INSTLDIR}'. If you pass the '-a'
+option to <strong>mklarch</strong> it will stop there, without doing the rest of
+the build. If you set up your configuration
+wrong (or if you or I made some other mistake ...), you might find
+you have destroyed some important data and/or your system doesn't
+work any more. But that's life - Share and Enjoy!
+</p>
+
+<p>The rest of the build process is handled by the functions in
+<strong>buildlive</strong>, primarily <em>mklive</em>,
+which puts all the various components together into a CD image at
+'${INSTLDIR}/.larch/cd', then using the <em>build_iso</em> function
+to create the iso or (using the <strong>usbboot</strong> script) to prepare
+a bootable USB-stick.
+</p>
+
+<h4><a name="Minimal_build_system_requirements"></a>Minimal build system requirements</h4>
+
+<p>The <em>larch</em> scripts have been designed to work without heavy
+demands on the build system. Although they have been developed under Archlinux,
+they should run on other GNU/Linux systems. The required software has been
+kept to a minimum by means of a sort of bootstrapping - some of the build
+functions are carried out on the newly installed Arch system using <em>chroot</em>.
+For example, you do not need support for <em>squashfs</em> or <em>unionfs</em> on
+the build system. If <em>pacman</em> is not found, it will be downloaded. However, <em>bash</em>, <em>mkisofs</em>, <em>wget</em> and <em>python</em>
+are assumed to be available.
+</p>
+
+<h4><a name="Squashfs_and_Unionfs"></a>Squashfs and Unionfs</h4>
+
+<p>The newly installed system is made into a <em>squashed</em> file-system in the
+file <strong>system.sqf</strong>. However, a small but essential part is
+extracted and packaged separately in <strong>base.sqf</strong>. This is
+copied to memory at boot (regardless of the 'c2r' boot parameter), and deals
+with mounting the rest of the system using <em>unionfs</em>. It also
+contains the binaries for writing to CD/DVD, for session saving at
+shutdown - as these don't work with a mounted device. The modifications
+to the basic system to customize it for use as a live CD/USB are done
+separately from this in additional <em>squashed</em> file-systems,
+<strong>overlay.sqf</strong> and <strong>etc.sqf</strong> (the latter also
+being copied to memory as it contains essential boot files).
+The overlay files are placed 'on top of' those in the underlying system by
+building <em>unionfs</em> hierarchies, each with a writable layer on top
+so that the whole file-system appears writable, although the files may be on
+a read only medium. Of course only the <em>tmpfs</em> top layer can actually
+be written to,
+and its contents disappear when the system reboots, so the writing is only
+temporary.
+</p>
+<p>The entire 'home' directory is kept in its own <em>squashed</em> file-system
+in the file <strong>home.sqf</strong>.
+</p>
+
+<p>In order to boot into a system constructed in that way, you need an
+<em>initramfs</em> which deals with mounting all the various bits in the right
+way before entering the normal boot sequence. In <em>larch</em> version 4 the
+<em>initramfs</em> is built using the standard Arch 'mkinitcpio' system, for
+which special 'hooks' (essentially code plug-ins) have been developed.
+</p>
+
+<h4><a name="aufs"></a>aufs as an alternative to unionfs</h4>
+<p>It is possible to use <em>aufs</em> instead of <em>unionfs</em>. In order
+to do that you need package 'aufs' in <strong>addedpacks</strong>, the rest
+will then be handled automatically.
+</p>
+
+<h4><a name="Partial_rebuilding"></a>Partial rebuilding</h4>
+
+<p>If you make some changes to a build which don't
+affect the base system (the Archlinux installation in '${INSTLDIR}'),
+you can call <strong>mklarch</strong> with the '-b' option. Such changes might
+be tweaks to the overlay, or 'rcconfx', for example (but note that the glibc
+locales are in the installation so if you want to change these, you have to rerun the
+whole installation). If - as is likely - the 'system.sqf' and 'base.sqf' files
+from the previous build are still there, these will be reused, saving the time
+taken to <em>squash</em> them up. If you want to force rebuilding of these
+sqf files, pass the '-r' option to <strong>mklarch</strong>.
+</p>
+<p> If you only make changes to files in '${INSTLDIR}/.larch/cd', you can rebuild
+the iso using the '-i' option to <strong>mklarch</strong>. But be aware that
+some of the files in the directories
+'isolinux' (when using the <em>isolinux</em> bootloader) and 'boot' (when using the <em>GRUB</em> bootloader) are renewed from 'larch/cd-root' and the 'cd-root'
+directory in the <em>profile</em>.
+</p>
+<p><em><strong>N.B.</strong> Even though the Arch installation is
+in principle now redundant, you shouldn't delete it if you want to do a quick
+rebuild using the '-b' option, because this installation is used (via 'chroot')
+for some of the build functions.</em>
+</p>
+
+<h4><a name="Custom_packages"></a>Custom packages</h4>
+
+<p>It is possible to include your own 'custom' packages in the installation.
+Maybe ones you have compiled yourself, e.g. from the AUR, or modified versions
+(fixes or customisations) of standard packages. All you have to do is put your
+packages in a directory and pass the path to this directory to <strong>pacin</strong>
+by setting PACINOPTS appropriately in <strong>config_larch</strong>, e.g.
+
+<pre style="margin-left: 80px;">
+PACINOPTS="-p /home/archuser/mypackages"</pre>
+
+<strong>pacin</strong> generates
+the repository database file automatically, using the <strong>gen_repo</strong>
+script. A copy of 'pacman.conf' is modified so that this repository is placed
+ahead of the standard ones, thus these packages take precedence over those in
+'core' and 'extra'. Any packages you want installed now just need to be
+listed in <strong>addedpacks</strong>.
+</p>
+
+<p>The standard kernel ('kernel26') can be used. It includes <em>unionfs</em>
+and <em>squashfs</em> modules, and is now included in the set of 'base'
+packages. If <em>aufs</em> is desired (which is likely, as at the time of writing
+<em>unionfs</em> didn't work very well), this must be included in <strong>addedpacks</strong>, together with 'initcpio_larch_aufs' instead of
+'initcpio_larch', which is needed for <em>unionfs</em>.
+</p>
+
+<h4><a name="Generating_the_basepacks_list"></a>Generating
+the <em>basepacks</em> list</h4>
+
+<p>In case the base package set changes, I have
+automated the generation of this list. <em>wget</em> is used to download the
+<strong>packages.txt</strong> file from the 'core' repository. The first
+server containing '/core' in its path in the selected
+<strong>pacman.conf</strong> file is used. If the server is set to a local
+directory, 'cp' is used to get the file. This file
+is then filtered using a simple <em>grep/sed</em>
+command to get the desired list.
+</p>
+<p><strong>pacman.conf</strong> itself is first sought in the directory from which
+<em>mklarch/pacin</em> was run. If it is not found there, the version in '/etc' is
+taken, and if that doesn't exist (e.g. because the host system is not Arch),
+the version in '...path-to/share/pacin' is taken.
+</p>
+
+<p>To get a full listing of possible options to <em>pacin</em> run it without arguments.
+</p>
+
+<p>It is possible to filter out certain unwanted packages from the base set.
+In most cases the default setting will be satisfactory, but you can change it by
+passing a file containing vetoed packages to pacin, with the '-x' option. This
+is done automatically if there is a 'baseveto' file in the profile
+directory. Be aware, however, that vetoed packages will be installed anyway
+if they are depended on by some other installed package.
+The format for the 'baseveto' file is very simple. Each package to be vetoed
+must be at the beginning of a line of its own and be terminated by a '/',
+e.g.:
+</p>
+<pre>xfsprogs/
+xfsdump/
+</pre>
+
+<h4><a name="addedpacks"></a><em>addedpacks</em></h4>
+
+<p>This group of packages is the main place for defining your system.
+Here you can enter all the
+applications you would like in your live CD/USB system (and subsequently
+installed to a hard disk partition, if that was your intention).
+Thanks to <i>pacman</i> you don't need to sort out
+dependencies,
+these should all be included automatically. It is (still) possible to
+squeeze (or rather 'squash') quite a respectable quantity of software
+onto a CD - my first experiments included most of <i>KDE</i>,
+<i>OpenOffice</i>, <i>K3b</i>, <i>GIMP</i>, and quite a lot
+besides.</p>
+
+<h4><a name="Installation"></a>Installation
+of the 'pristine' system</h4>
+
+<p>If there is no '/etc/pacman.conf' file on your build system (probably because it
+is not an Arch system), a default one is supplied in the 'pacin' package. You can also
+supply one (overriding the other possibilities) in the working directory (the directory
+from which <em>mklarch</em> - or <em>pacin</em> - was called).
+If there is no 'pacman', it will be downloaded
+and the statically linked version used.
+</p>
+
+<p>The foundation of the <em>larch</em> live CD/USB system is, in a way, a pretty clean,
+unconfigured Archlinux system, <em>squashed</em> up in the file 'system.sqf'
+(and 'base.sqf').
+The initial installation of this system is handled by <em>pacman</em>, which
+installs all the constituent packages using
+the '-r' option to install to the chosen location, which can be anywhere where
+there is enough space.</p>
+
+<p>Note that the
+present design of the scripts will cause downloaded packages to be
+cached. The location of the cache is configurable, by passing an option to
+<em>pacin</em>), but the default location
+('/var/cache/pacman/pkg') is recommended, as it allows the existing
+standard Arch package cache to be utilized (assuming you are using
+Arch!).</p>
+
+<h4><a name="existingSystem"></a>Making a live CD from an existing Arch
+installation</h4>
+
+<p>New in <em>larch</em> version 4 is the ability to make a live CD (or
+USB-stick) from an existing Arch installation. The '-x' option to
+<em>mklarch</em>, taking the mount point of the installation as argument,
+achieves this. The installation must already be mounted, including any
+sub-mounts (e.g. /home on another partition). The main mount must be with
+options 'exec,dev', because some of the building is done via a <em>chroot</em>
+to the installation.
+</p>
+<p>There is also the '-X' option, which allows the creation of a live
+CD from the currently running Arch installation.
+</p>
+<p>All aspects of the larch
+building process connected with the installation are in this case
+irrelevant, as it is assumed that the installation is already complete.
+The handling of 'profiles' is also different as these are largely
+concerned with the installation process. The parts of the profile which
+are still relevant here are still retained, but named profiles are not
+used. There is a default profile for this case (at 'share/larch/profile0')
+which can be overridden by placing a customized version in the current
+directory (from where <em>mklarch</em> is run).
+</p>
+<p>In order to support the build process, certain packages must be
+installed in the system. These are:
+<ul>
+  <li>from the Arch repositories: cdrkit, dvd+rw-tools, squashfs-tools,
+  (and aufs if you want to use that instead of unionfs).
+  </li>
+  <li>from the larch repository: klibc-larch, initcpio_larch
+  </li>
+</ul>
+It is also recommended to install archin and larchin from the larch repository
+to enable use of the resulting live CD for system installation.
+</p>
+<p>To avoid reuse of existing base.sqf and system.sqf files, pass the '-r'
+option to <strong>mklarch</strong>.
+</p>
+
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+  <tbody>
+    <tr>
+      <td><a href="larch_quick.html">Previous: Quick start</a></td>
+
+      <td><a href="larch_docindex.html">Table of Contents</a></td>
+
+      <td><a href="larch_profiles.html">Next: Profiles</a></td>
+    </tr>
+  </tbody>
+</table>
+
+</body>
+</html>

@@ -1,0 +1,23 @@
+#!/bin/sh
+
+# mountparts  - Mount installation partitions
+
+# the file ${TEMPDIR}/mounts has lines of the form:
+# mountpoint!device!fstype![additional formatting info ...]
+
+cat ${TEMPDIR}/mounts | tr '!' ' ' | while read mp dev fst fstx; do
+        # Check the partition is a valid Linux paartition and not already mounted.
+        id=$( sfdisk -d | grep "^${dev}[ :]" | sed -r "s|.*Id=(..).*|\1|" )
+        if [ ${id} != 83 ]; then
+            echo "ERROR: illegal partition (${dev})" | tee -a ${LOGFILE}
+            exit 1
+        fi
+        if [ -n "$( df | grep "^${dev} " )" ]; then
+            echo "ERROR: partition (${dev}) already mounted" | tee -a ${LOGFILE}
+            exit 1
+        fi
+        mkdir -p ${INSTALL}${mp}
+        echo "mount ${dev} ${INSTALL}${mp}" >>${LOGFILE}
+        mount ${dev} ${INSTALL}${mp} 2>>${LOGFILE}
+        if [ $? -ne 0 ]; then exit 1; fi
+    done

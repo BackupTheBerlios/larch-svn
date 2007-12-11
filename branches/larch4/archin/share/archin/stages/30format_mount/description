@@ -1,0 +1,7 @@
+Format and mount installation partition(s)
+
+If any of the partitions selected for installation are mounted,
+they will be unmounted. Then they will be formatted according
+to the user's earlier selection.
+Finally they will be mounted at the appropriate places for the
+installation procedure.

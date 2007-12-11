@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# Create a device.map file
+mount --bind /dev ${INSTALL}/dev
+rm -f ${INSTALL}/boot/grub/device.map
+chroot ${INSTALL} /sbin/grub --batch --no-floppy --device-map=/boot/grub/device.map <<EOF
+quit
+EOF
+umount ${INSTALL}/dev
+

@@ -1,0 +1,7 @@
+#!/bin/sh
+#
+# xfs  - format $1
+#
+
+echo "mkfs.xfs -f $1" >>${LOGFILE}
+mkfs.xfs -f $1

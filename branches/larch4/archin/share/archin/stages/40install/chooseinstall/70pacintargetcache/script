@@ -1,0 +1,3 @@
+#! /bin/sh
+
+pacin -f -c '' ${INSTALL} | tee -a ${LOGFILE}

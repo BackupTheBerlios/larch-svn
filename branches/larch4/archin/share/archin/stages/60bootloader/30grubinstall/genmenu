@@ -1,0 +1,8 @@
+#!/bin/sh
+
+# Present choice of boot devices.
+mkdevicemap &>/dev/null
+
+cat ${INSTALL}/boot/grub/device.map
+
+echo "$( msgi18n id_cancel )"

@@ -1,0 +1,4 @@
+Unmount installation partition(s)
+
+Any partitions mounted at the installation point or below it
+will be unmounted.

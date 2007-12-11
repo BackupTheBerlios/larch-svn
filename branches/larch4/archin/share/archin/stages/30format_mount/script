@@ -1,0 +1,13 @@
+#!/bin/sh
+
+# Unmount whatever needs unmounting
+unmountparts
+if [ $? -ne 0 ]; then exit 1; fi
+
+# Format whatever needs formatting
+formatparts
+if [ $? -ne 0 ]; then exit 1; fi
+
+# Mount the installation partitions
+mountparts
+if [ $? -ne 0 ]; then exit 1; fi

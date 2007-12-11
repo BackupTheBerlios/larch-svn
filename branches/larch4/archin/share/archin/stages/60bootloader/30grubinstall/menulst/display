@@ -1,0 +1,10 @@
+Create grub/menu.lst
+
+:::!dscript1
+
+GRUB boot device:
+:::!dscript2
+
+The following entries have been added to /boot/grub/menu.lst:
+
+:::!dscript3

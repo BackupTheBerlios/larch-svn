@@ -1,0 +1,43 @@
+# added lirc support and stripped the build down a bit - mainly no gui!
+
+pkgname=vlc-gp
+pkgver=0.8.6c
+pkgrel=2
+pkgdesc="A multi-platform MPEG, VCD/DVD, and DivX player"
+depends=('libmad>=0.15.1b-2' 'libmpeg2>=0.4.0b-3' 'ffmpeg>=20070131'
+         'libid3tag>=0.15.1b-2' 'bash>=3.1'
+         'fribidi>=0.10.7' 'sysfsutils>=2.0.0'
+         'libdvdnav>=0.1.10-2' 'libdvdread>=0.9.4-3' 'xvidcore>=1.1.0-2'
+         'libmatroska>=0.8.0' 'libxv>=1.0.1' 'libcdio>=0.78.2'
+         'lirc')
+arch=(i686 x86_64)
+conflicts=('vlc')
+license=('GPL')
+url="http://www.videolan.org/vlc/"
+
+source=(http://download.videolan.org/pub/videolan/vlc/${pkgver}/vlc-${pkgver}.tar.bz2)
+md5sums=('c207f931f768e4dcde4bfaffdbf378cd')
+
+build() {
+  cd $startdir/src/vlc-${pkgver}
+  sed -i -e 's:#include <vlc\/vlc.h>:#include <vlc/vlc.h> \n #include <locale.h>: ' src/misc/charset.c
+  sed -i -e 's:/truetype/freefont/FreeSerifBold.ttf:/TTF/VeraBd.ttf:' modules/misc/freetype.c
+
+  # features that won't build on x86_64
+  [ "${CARCH}" = "i686" ] && EXTRAFEATURES="--enable-loader"
+
+  ./configure --prefix=/usr --enable-dvdread --enable-dvdnav --enable-madi \
+    --enable-ffmpeg --disable-rpath --enable-faad --enable-matroska \
+    --enable-alsa --disable-wxwidgets --disable-skins2  --enable-theora \
+    --enable-lirc --disable-nls --disable-sout --disable-httpd \
+    --with-ffmpeg-faac --with-ffmpeg-vorbis --with-ffmpeg-dts \
+    --with-ffmpeg-ogg --with-ffmpeg-theora \
+    --disable-vlm --disable-growl --disable-smb --disable-dvbpsi \
+    --disable-sdl --disable-hal $EXTRAFEATURES
+
+  make || return 1
+  make DESTDIR=${startdir}/pkg install || return 1
+
+  rm -rf ${startdir}/pkg/usr/lib/mozilla
+  rm -rf ${startdir}/pkg/usr/share/applications
+}

@@ -1,0 +1,6 @@
+Don't format
+
+This option should be used if you want to include a partition
+that already contains some data - maybe a '/home' partition.
+Before using this option you should really know what you are
+doing, it is very easy to make a mess ...

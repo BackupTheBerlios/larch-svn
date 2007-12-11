@@ -1,0 +1,42 @@
+#!/bin/sh
+
+# select mount point and file-system type for partition
+# the file ${TEMPDIR}/mounts has lines of the form:
+# mountpoint!device!fstype![additional formatting info ...]
+
+this=$( pwd )
+
+cat ${TEMPDIR}/dynopts | head -n $1 | tail -n 1 >${TEMPDIR}/part
+read dev mp0 siz fst fstx <${TEMPDIR}/part
+
+if [ "${dev:0:1}" != "/" ]; then exit; fi
+
+# Get mountpoint
+echo "${dev}     ${siz} MiB" >${TEMPDIR}/part
+: >${TEMPDIR}/mp
+    cd ${this}/mountpoint
+    blobtype=$( cat id )
+    ${BLOBS}/${blobtype}
+    cd ${this}
+mp=$( cat ${TEMPDIR}/mp )
+if [ -n "${mp}" ]; then
+    # Get filesystem
+    echo "${dev}  ${mp}     ${siz} MiB" >${TEMPDIR}/part
+    : >${TEMPDIR}/fs
+        cd ${this}/filesystem
+        blobtype=$( cat id )
+        ${BLOBS}/${blobtype}
+        cd ${this}
+    fs=$( cat ${TEMPDIR}/fs )
+    # Note that fs includes options, separated by a '!'
+    if [ -n "${fs}" ]; then
+        # Update ${TEMPDIR}/mounts
+        cat ${TEMPDIR}/mounts | grep -v "!${dev}!" >${TEMPDIR}/tmp
+        echo "${mp}!${dev}!${fs}" >>${TEMPDIR}/tmp
+        sort ${TEMPDIR}/tmp >${TEMPDIR}/mounts
+    fi
+fi
+
+# Go back to select partition menu
+blobtype=$( cat id )
+exec ${BLOBS}/${blobtype}

@@ -1,0 +1,21 @@
+#!/bin/sh
+
+# Present choice of mountpoints.
+# A few common ones are offered here, plus the possibility to
+# type in a different one. Already allocated mountpoints won't
+# be offered.
+# The file ${TEMPDIR}/part contains the partition to be edited, in
+# the form:
+# device  size
+# the file ${TEMPDIR}/mounts has lines of the form:
+# mountpoint!device!fstype![additional formatting info ...]
+
+part=$( cat ${TEMPDIR}/part | cut -d' ' -f1 )
+for mp in / /home /var /boot /tmp /usr /opt /usr /usr/local; do
+    dev=$( grep "^${mp} " ${TEMPDIR}/mounts | cut -d'!' -f2 )
+    if [ -z "${dev}" -o "${dev}" = "${part}" ]; then
+        echo "${mp}"
+    fi
+done    
+
+echo "$( msgi18n gm_other ) ..."

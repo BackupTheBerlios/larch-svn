@@ -1,0 +1,7 @@
+#!/bin/sh
+#
+# ext2  - format $1
+#
+
+echo "mke2fs $1" >>${LOGFILE}
+mke2fs $1

@@ -1,0 +1,3 @@
+#! /bin/sh
+
+pacin -fr -c /tmp/pkgcache$$ ${INSTALL} | tee -a ${LOGFILE}

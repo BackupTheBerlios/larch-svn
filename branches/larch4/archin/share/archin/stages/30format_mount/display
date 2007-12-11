@@ -1,0 +1,13 @@
+Format and mount installation partition(s)
+
+The partitions and formatting selected for installation
+are listed below. Please check that this is what you want.
+Formatting a partition will destroy any data it contains.
+You have been warned ...
+
+Install base:
+:::!dscript1
+
+Mountpoint  Partition  Format [Format tweaks]
+
+:::!dscript2

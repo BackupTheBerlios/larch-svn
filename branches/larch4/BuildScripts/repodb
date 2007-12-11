@@ -1,0 +1,15 @@
+#!/bin/sh
+# Example of how to build the repository db file.
+
+larchrepo=/home/larch/testing
+
+# Test if the script is started by root user. If not, exit
+if [ $UID -ne 0 ]; then
+    echo "Only root can run this"; exit 1
+fi
+
+echo "larch package repository:  ${larchrepo}"
+echo "(re)generating repository db file, larch.db.tar.gz"
+echo "--------------------------------------------------"
+echo
+./gen_repo ${larchrepo} larch

@@ -1,0 +1,4 @@
+jfs
+
+The IBM filesystem. Supposed to be fast.
+Recommended on server systems.

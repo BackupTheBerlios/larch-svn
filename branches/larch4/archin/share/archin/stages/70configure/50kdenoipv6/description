@@ -1,0 +1,5 @@
+Disable ipv6 in KDE
+
+In non-ipv6-enabled networks, Konqueror can take a long time to
+load web-pages. This will add the file kdenoipv6.sh to
+/etc/profile.d, which should cure this.

@@ -1,0 +1,12 @@
+Generate /etc/fstab
+
+This attempts to generate a suitable fstab file for the newly
+installed system based on the selected installation partitions.
+It also includes any other partitions it finds, creating
+entries in /mnt for them.
+
+The following file will be generated:
+
+:::!dscript
+mkfstab
+:::!cat ${TEMPDIR}/fstab

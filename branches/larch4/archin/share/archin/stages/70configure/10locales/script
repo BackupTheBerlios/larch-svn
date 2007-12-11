@@ -1,0 +1,6 @@
+#!/bin/sh
+
+edit ${INSTALL}/etc/locale.gen
+if [ $? != 0 ]; then exit 1; fi
+
+chroot ${INSTALL} usr/sbin/locale-gen | tee -a ${LOGFILE}

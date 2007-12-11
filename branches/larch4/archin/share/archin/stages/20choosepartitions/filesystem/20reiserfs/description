@@ -1,0 +1,4 @@
+reiserfs
+
+Good, general purpose filesystem with journalling.
+Supposed to be efficient with many small files.

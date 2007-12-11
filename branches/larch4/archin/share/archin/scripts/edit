@@ -1,0 +1,16 @@
+#!/bin/sh
+
+# Call a default text editor
+
+if which ${EDITOR} &>/dev/null; then
+    ${EDITOR} $1
+elif which mcedit &>/dev/null; then
+    mcedit $1
+elif which nano &>/dev/null; then
+    nano $1
+elif which vim &>/dev/null; then
+    vim $1
+else
+    echo "ERROR: no editor found" | tee -a ${LOGFILE}
+    exit 1
+fi

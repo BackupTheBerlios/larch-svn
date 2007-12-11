@@ -1,0 +1,4 @@
+Use pacin to install using ftp/cache, target package cache
+
+This uses a pacin's default package set - a fairly basic set of
+packages, without xorg - and it uses the target's package cache.

@@ -1,0 +1,185 @@
+#!/bin/sh
+
+# idialogue  - interface to console 'dialog' program for installer scripts
+
+cl="$( msgi18n id_cancel )"
+hl="$( msgi18n id_help )"
+ol="$( msgi18n id_ok )"
+nl="$( msgi18n id_no )"
+yl="$( msgi18n id_yes )"
+el="$( msgi18n id_exit )"
+export DIALOGOPTS="--cancel-label ${cl} --help-label ${hl} --ok-label ${ol} \
+        --no-label ${nl} --yes-label ${yl} --exit-label ${el} --no-collapse \
+        --cr-wrap"
+
+
+listify ()
+{
+    local f
+    local i
+    local c=0
+    # Array for checklist states
+    local a=( $2 )
+    local state
+    for f in $1; do
+        state="${a[${c}]}"
+        i="$( cat ${f} | head -n1 )"
+        c=$(( ${c} + 1 ))
+        echo -n "\"${c}\" \"${i}\" ${state} "
+    done
+}
+
+menuify ()
+{
+    local f
+    local c=0
+    # Array for checklist states
+    local a=( $2 )
+    local state
+    # I want to split only at <newline>
+    local ifs="${IFS}"
+    IFS=$'\n'
+    for f in $1; do
+        state="${a[${c}]}"
+        c=$(( ${c} + 1 ))
+        echo -n "\"${c}\" \"${f}\" ${state} "
+    done
+    IFS="${ifs}"
+}
+
+dlg_menu ()
+{
+    if [ -n "$2" ]; then defitem="--default-item $2"; fi
+    list="$( listify "$1" )"
+    while true; do
+        eval "dialog --help-button ${defitem} \
+            --title \"${DLGTITLE}\" \
+            --menu \"${DLGTEXT}\" \
+            20 70 8 \
+            ${list} \
+            2>${DLGRESULT}"
+        retval=$?
+
+        if [ "${retval}" != "2" ]; then return ${retval}; fi
+        # display help
+        # The result seems to contain (e.g.) 'HELP 1'
+        # so I need to remove the 'HELP'
+        read h val <${DLGRESULT}
+        defitem="--default-item ${val}"
+        show_help "$1" "${val}"
+
+
+    done
+}
+
+dlg_hchk ()
+{
+    list="$( listify "$1" "$2" )"
+    val="1"
+    while true; do
+        eval "dialog --help-button --single-quoted \
+            --default-item ${val} \
+            --title \"${DLGTITLE}\" \
+            --checklist \"${DLGTEXT}\" \
+            20 70 8 \
+            ${list} \
+            2>${DLGRESULT}"
+        retval=$?
+
+        if [ "${retval}" != "2" ]; then return ${retval}; fi
+        # display help
+        # The result seems to contain (e.g.) 'HELP 1'
+        # so I need to remove the 'HELP'
+        read h val <${DLGRESULT}
+        show_help "$1" "${val}"
+
+    done
+    return "${retval}"
+}
+
+show_help ()
+{
+    local files=( $1 )
+    local f=${files[$(( $2 - 1 ))]}
+    dialog --cr-wrap --title "$( msgi18n id_t1 )" \
+        --textbox ${f} 20 70
+}
+
+dlg_msg ()
+{
+        eval "dialog \
+            --title \"${DLGTITLE}\" \
+            --msgbox \"${DLGTEXT}\" \
+            20 70 \
+            2>${DLGRESULT}"
+}
+
+dlg_yn ()
+{
+        eval "dialog \
+            --title \"${DLGTITLE}\" \
+            --yesno \"${DLGTEXT}\" \
+            20 70 \
+            2>${DLGRESULT}"
+}
+
+dlg_dmen()
+{
+    if [ -n "$2" ]; then defitem="--default-item $2"; fi
+    list="$( menuify "$1" )"
+        eval "dialog ${defitem} \
+            --title \"${DLGTITLE}\" \
+            --menu \"${DLGTEXT}\" \
+            20 70 8 \
+            ${list} \
+            2>${DLGRESULT}"
+}
+
+dlg_entry ()
+{
+        eval "dialog \
+            --title \"${DLGTITLE}\" \
+            --inputbox \"${DLGTEXT}\" \
+            20 70 \
+            2>${DLGRESULT}"
+}
+
+
+
+
+    # a bit of a wrapper around the 'dialog' program
+    DLGTYPE=$1
+    DLGTEXT=$2
+    shift 2
+
+    DLGTITLE="$( cat ${DLGTEXT} | head -n1 | tr -d '\n' )"
+    # Change IFS so that leading spaces aren't stripped
+    ifs=${IFS}
+    IFS=""
+    DLGTEXT="$( cat ${DLGTEXT} | tail +3 | { while read line; do
+                sline="$( echo -e "${line}" | grep "^:::!" )"
+                if [ -n "${sline}" ]; then
+                    echo ${sline:4} | ( read command; ./${command} )
+                else
+                    echo -e "${line}"
+                fi
+            done
+        } )"
+
+########### for debugging
+        echo ${DLGTYPE} >>${TEMPDIR}/logdlg
+        echo ${DLGTEXT} >>${TEMPDIR}/logdlg
+        echo "------------------" >>${TEMPDIR}/logdlg
+
+    IFS=${ifs}
+    case ${DLGTYPE} in
+        hmenu ) dlg_menu "$1" "$2" ;;
+        hchk )  dlg_hchk "$1" "$2" ;;
+        dmenu ) dlg_dmen "$1" "$2" ;;
+        msg )   dlg_msg ;;
+        yn )    dlg_yn ;;
+        entry ) dlg_entry ;;
+        * ) echo "ERROR: dialogue (${DLGTYPE}) not implemented" 1>&2
+            exit 2 ;;
+    esac
+

@@ -1,0 +1,19 @@
+Check for mounted partitions
+
+Repartitioning and formatting when partitions are mounted
+can lead to big problems. Please unmount everything before
+starting.
+
+You have been warned ...
+
+If installing from a system which itself uses disk
+partitions, you must of course leave these mounted, but
+be very careful not to alter these partitions in any way.
+That means, with a partition editor, don't delete, resize
+or move them. If you must do this, use a live CD instead.
+With the installer, don't include any of these partitions
+in the installation.
+
+The following partitions are presently in use:
+
+:::!dscript

@@ -1,0 +1,6 @@
+disable boot-time checks
+
+Normally an ext3 file-system will be checked every 30 mounts
+or so. With a large partition this can take quite a while, and
+is, strictly speaking, unnecessary - because of the journalling.
+I hope I got that right!

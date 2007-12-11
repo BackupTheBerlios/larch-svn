@@ -1,0 +1,13 @@
+# idialogue
+id_t1|MENÜ-HILFE
+id_ok|OK
+id_cancel|Abbrechen
+id_help|Hilfe
+id_yes|Ja
+id_no|Nein
+id_exit|Fertig
+
+# choosepartitions/mountpoint/genmenu
+gm_other|Anderer
+
+done|fertig

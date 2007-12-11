@@ -1,0 +1,10 @@
+Use pacin to install using ftp, temporary package cache
+
+This option uses pacin's preset package selection - a fairly basic
+set, without xorg.
+
+A temporary directory on the host is used for the package cache,
+which is removed after installing. It is not generally
+recommended, but if you are sure you are doing a one-off
+installation from a non-Archlinux or live system, and the target
+has limited space, it might be worth considering.

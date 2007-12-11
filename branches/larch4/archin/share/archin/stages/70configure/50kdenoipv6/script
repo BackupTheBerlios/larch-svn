@@ -1,0 +1,3 @@
+#!/bin/sh
+
+cp ${BASEDIR}/data/kdenoipv6.sh ${INSTALL}/etc/profile.d

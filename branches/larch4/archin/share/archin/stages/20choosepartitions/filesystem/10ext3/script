@@ -1,0 +1,10 @@
+#!/bin/sh
+
+this=$( pwd )
+
+echo -n "ext3!" >${TEMPDIR}/fs
+
+# Now offer tweaks
+    cd ${this}/tweaks
+    blobtype=$( cat id )
+    exec ${BLOBS}/${blobtype}

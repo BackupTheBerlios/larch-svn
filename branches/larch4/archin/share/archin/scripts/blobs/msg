@@ -1,0 +1,15 @@
+#!/bin/sh
+#
+# msg  - blob type: show information
+#
+
+this=$( pwd )
+
+echo ">>> msg ${this}" >>${LOGFILE}
+
+disp="$( geti18n ${this}/display )"
+
+    ${DIALOGUE} msg "${disp}"
+    if [ $? -ne 0 ]; then exit 1; fi
+
+    [ -x script ] && exec script

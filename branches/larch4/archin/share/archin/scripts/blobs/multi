@@ -1,0 +1,35 @@
+#!/bin/sh
+#
+# multi  - blob type: checklist menu
+#
+
+this=$( pwd )
+
+echo ">>> multi ${this}" >>${LOGFILE}
+
+bloblist="$( getbloblist ${this} )"
+# Keep an array of the blobs for later reference
+blobs=( ${bloblist} )
+
+menulist=""
+deflist=""
+for b in ${bloblist}; do
+    menulist="${menulist} $( geti18n ${this}/${b}/description )"
+    if [ -f ${b}/default ]; then
+        deflist="${deflist} on"
+    else
+        deflist="${deflist} off"
+    fi
+done
+
+disp="$( geti18n ${this}/display )"
+
+    ${DIALOGUE} hchk "${disp}" "${menulist}" "${deflist}"
+    if [ "$?" -ne "0" ]; then exit 0; fi
+    values="$( cat ${DLGRESULT} )"
+    # Run the chosen items
+    for i in ${values}; do
+        cd ${this}/${blobs[${i} - 1]}
+        blobtype=$( cat id )
+        ${BLOBS}/${blobtype}
+    done

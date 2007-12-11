@@ -1,0 +1,44 @@
+#!/bin/sh
+#
+# sqnc  - blob type: sequence menu
+#
+
+this=$( pwd )
+
+echo ">>> seq ${this}" >>${LOGFILE}
+
+bloblist="$( getbloblist ${this} )"
+# Keep an array of the blobs for later reference
+blobs=( ${bloblist} )
+
+menulist=""
+for b in ${bloblist}; do
+    menulist="${menulist} $( geti18n ${this}/${b}/description )"
+done
+
+disp="$( geti18n ${this}/display )"
+# Default to first item
+defitem="1"
+# 'Done' flag
+: >${TEMPDIR}/exit
+while true; do
+    ${DIALOGUE} hmenu "${disp}" "${menulist}" ${defitem}
+    if [ "$?" -ne "0" ]; then exit 0; fi
+    value="$( cat ${DLGRESULT} )"
+
+    # Run the chosen item
+    cd ${this}/${blobs[${value} - 1]}
+    blobtype=$( cat id )
+    ${BLOBS}/${blobtype}
+    cd ${this}
+
+    if [ -n "$( cat ${TEMPDIR}/exit )" ]; then
+        : >${TEMPDIR}/exit
+        exit 0
+    fi
+
+    # need to change the default
+    if [ "${defitem}" -lt "${#blobs[@]}" ]; then
+        defitem=$(( ${value} + 1 ))
+    fi
+done

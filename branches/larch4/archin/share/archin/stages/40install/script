@@ -1,0 +1,28 @@
+#!/bin/sh
+
+# Check that a suitable 'mounts' file exists
+# and that the partitions sre mounted
+
+this=$( pwd )
+
+blob ()
+{
+    cd ${this}/$1
+    blobtype=$( cat id )
+    exec ${BLOBS}/${blobtype}
+}
+
+if [ -z "$( grep "^/!" ${TEMPDIR}/mounts 2>/dev/null )" ]; then
+    blob noparts
+fi
+cat ${TEMPDIR}/mounts | tr '!' ' ' | { while read mp dev fst fstx; do
+        if [ "${mp}" = "/" ]; then
+            if [ -z "$( df | grep "^${dev} .* ${INSTALL}$" )" ]; then
+                blob nomounts
+            fi
+        elif [ -z "$( df | grep "^${dev} .* ${INSTALL}${mp}$" )" ]; then
+            blob nomounts
+        fi
+    done }
+
+blob chooseinstall

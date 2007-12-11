@@ -1,0 +1,23 @@
+#!/bin/sh
+
+# unmountparts  - Unmount all partitions which might be relevant to installer
+
+# the file ${TEMPDIR}/mounts has lines of the form:
+# mountpoint!device!fstype![additional formatting info ...]
+
+# Seek all mounts whose device is in ${TEMPDIR}/mounts or whose
+# mount point is at or below ${INSTALL}.
+: >${TEMPDIR}/umount
+df | { while read dev s u a p mp; do
+        if [ -n "$( grep "!${dev}!" ${TEMPDIR}/mounts 2>/dev/null )" -o \
+             -n "$( echo ${mp} | grep "^${INSTALL}" )" ]; then
+            echo "${mp}" >>${TEMPDIR}/umount
+        fi
+    done }
+
+# Unmount anything found above (sorting to deal with sub-mounts)
+sort -r ${TEMPDIR}/umount | { while read mp; do
+        echo "umount ${mp}" >>${LOGFILE}
+        umount ${mp} 2>>${LOGFILE}
+        if [ $? -ne 0 ]; then exit 1; fi
+    done }

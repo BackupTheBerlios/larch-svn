@@ -1,0 +1,15 @@
+#!/bin/sh
+
+# Install grub to MBR
+
+mount --bind /proc ${INSTALL}/proc
+mount --bind /sys ${INSTALL}/sys
+mount --bind /dev ${INSTALL}/dev
+cat /proc/mounts | grep ${INSTALL} | sed "s|${INSTALL}|/|" | \
+    sed "s|//|/|" >${INSTALL}/etc/mtab
+chroot ${INSTALL} /sbin/grub-install --no-floppy \
+        $( cat ${TEMPDIR}/grub_mbrdev | cut -f1 )
+: >${INSTALL}/etc/mtab
+umount ${INSTALL}/dev
+umount ${INSTALL}/sys
+umount ${INSTALL}/proc

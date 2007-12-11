@@ -1,0 +1,20 @@
+Überprüfe eingebundene Partitionen
+
+Änderungen der Partitionierung und das Formatieren von
+eingebundenen Partitionen kann zu erheblichen Problemen führen.
+Bitte alles 'unmounten', bevor du weiter verfährst.
+
+Achtung!
+
+Wenn du von einem System aus installierst, das selbst Festplatten-
+Partitionen benutzt, müssen diese natürlich weiterhin eingebunden
+bleiben. Sei aber vorsichtig und fasse diese überhaupt nicht an.
+Das heißt im Falle eines 'Partition-Editor', sie nicht entfernen,
+umsetzen, oder ihre Größe ändern. Wenn so etwas notwendig ist,
+benutze dafür lieber eine live-CD. Im Falle des 'Installer'
+sollten diese Partitionen nicht in die Installation eingebunden
+werden.
+
+Momentan werden die folgenden Partitionen benutzt:
+
+:::!dscript

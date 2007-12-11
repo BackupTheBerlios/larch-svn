@@ -1,0 +1,6 @@
+Create, delete, resize partitions
+
+Before installing, you must prepare your disk partitions.
+One or more my be used for an Archlinux installation.
+
+Warning: this will clear any existing partition selections.

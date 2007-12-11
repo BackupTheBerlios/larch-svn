@@ -1,0 +1,12 @@
+Create, delete, resize partitions
+
+Select a partition editor. If you want to move or resize a
+partition you are best off using qtparted or gparted, but for
+these you must be running X-windows. It is also possible from
+the console, but not so simple (e.g. using  ntfsresize).
+
+WARNING! Repartitioning is, of course, a potentially
+hazardous operation. Make sure your important data is
+backed up.
+
+:::!dscript

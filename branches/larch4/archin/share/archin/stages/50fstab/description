@@ -1,0 +1,7 @@
+Generate /etc/fstab
+
+In order to boot properly, /etc/fstab must be set up to reflect
+the partitions used for the installation.
+
+It is also possible to create mount points for other partitions
+which are not directly connected with this installation.

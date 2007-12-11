@@ -1,0 +1,15 @@
+Copy from running larch live system
+
+This option is exclusive to larch live media. The running
+Arch system will be copied to the install point.
+
+Files specifically modified for 'live' usage will be
+taken from the underlying raw system. At present these
+are:
+ * /etc/rc.sysinit
+ * /etc/rc.shutdown
+ * /etc/inittab
+
+Also added files (i.e. not installed by pacman) only relevant
+when running in 'live' mode will not be installed.
+ 

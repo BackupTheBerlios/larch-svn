@@ -1,0 +1,8 @@
+No swap partitions found
+
+Unless you really have bucketfulls of memory, it is often a
+good idea to have some swap space. This can be a swap file or
+a swap partition (the latter probably being the normal case).
+If you want a swap partition, you will have to go back to the
+partition editor and create a partition of the correct type
+(82).

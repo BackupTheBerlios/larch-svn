@@ -1,0 +1,16 @@
+#!/bin/sh
+#
+# entry  - blob type: get text from user
+#
+
+this=$( pwd )
+
+echo ">>> entry ${this}" >>${LOGFILE}
+
+disp="$( geti18n ${this}/display )"
+
+    ${DIALOGUE} entry "${disp}"
+    value="$( cat ${DLGRESULT} )"
+    echo ": entered |${value}|" >>${LOGFILE}
+
+    [ -x script ] && exec script "${value}"

@@ -1,0 +1,7 @@
+Generate locales
+
+Which locales are generated depends on lines in the file
+/etc/locale.gen
+An editor will be started (by default the one in the EDITOR
+environment variable).
+Uncomment the locale(s) you want supported, then save the file.

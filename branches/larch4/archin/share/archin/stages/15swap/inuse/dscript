@@ -1,0 +1,5 @@
+#!/bin/sh
+
+# display discoverd swap partition(s)
+
+cat "${TEMPDIR}/swaps"

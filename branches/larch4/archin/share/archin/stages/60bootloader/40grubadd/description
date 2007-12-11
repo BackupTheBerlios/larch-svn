@@ -1,0 +1,4 @@
+Add an entry to an existing grub menu
+
+This will allow the new installation to be booted from an
+existing grub bootloader.

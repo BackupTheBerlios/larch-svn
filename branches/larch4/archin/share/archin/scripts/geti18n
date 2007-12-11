@@ -1,0 +1,23 @@
+#!/bin/sh
+#
+# geti18n  - get translation file for current locale
+#
+# $1   - file whose translation is sought
+# If not found, return original.
+f=$1
+
+if [ -n "${LC_MESSAGES}" ]; then
+    l="${LC_MESSAGES:0:5}"
+else
+    l="${LANG:0:5}"
+fi
+
+if [ -f "${f}.${l}" ]; then
+    echo "${f}.${l}"
+elif [ -f "${f}.${l:0:2}" ]; then
+    echo "${f}.${l:0:2}"
+else
+    echo "${f}"
+fi
+
+

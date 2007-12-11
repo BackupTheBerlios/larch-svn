@@ -1,0 +1,11 @@
+#This is a minimal no-X version
+# You need a kernel - kernel26 is now in 'base'
+#kernel26
+
+# generally useful tools which don't require X
+openssh
+dosfstools
+lynx
+mc
+unzip
+zip

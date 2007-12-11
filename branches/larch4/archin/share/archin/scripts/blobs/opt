@@ -1,0 +1,28 @@
+#!/bin/sh
+#
+# opt  - blob type: option menu
+#
+
+this=$( pwd )
+
+echo ">>> opt ${this}" >>${LOGFILE}
+
+bloblist="$( getbloblist ${this} )"
+# Keep an array of the blobs for later reference
+blobs=( ${bloblist} )
+
+menulist=""
+for b in ${bloblist}; do
+    menulist="${menulist} $( geti18n ${this}/${b}/description )"
+done
+
+disp="$( geti18n ${this}/display )"
+
+    ${DIALOGUE} hmenu "${disp}" "${menulist}"
+    if [ "$?" -ne "0" ]; then exit 0; fi
+    value="$( cat ${DLGRESULT} )"
+
+    # Run the chosen item
+    cd ${this}/${blobs[${value} - 1]}
+    blobtype=$( cat id )
+    exec ${BLOBS}/${blobtype}

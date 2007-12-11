@@ -1,0 +1,12 @@
+This is the source archive for larch4 - a collection of scripts for producing
+custom live CD/DVD/USB-sticks for Arch Linux.
+
+Instructions for building a larch package repository are in 'abs/README'.
+General documentation about larch is linked from 'docs'.
+
+This archive was packed using something along the lines of:
+
+    tar -czf larch4-20071211.tar.gz --owner=root --group=root larch4
+
+Licence: GPL
+(c) Copyright Michael Towers 2007

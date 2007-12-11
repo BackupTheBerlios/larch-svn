@@ -1,0 +1,7 @@
+#!/bin/sh
+#
+# reiserfs  - format $1
+#
+
+echo "mkreiserfs -q $1" >>${LOGFILE}
+mkreiserfs -q $1

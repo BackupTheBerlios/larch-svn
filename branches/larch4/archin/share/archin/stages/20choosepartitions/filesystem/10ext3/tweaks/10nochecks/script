@@ -1,0 +1,3 @@
+#!/bin/sh
+
+echo -n "n" >>${TEMPDIR}/fs

@@ -1,0 +1,376 @@
+#! /bin/bash
+#
+# pacin -  install Archlinux using pacman
+#
+# Author: Michael Towers (gradgrind) <mt.42@web.de>
+#
+#    pacin is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 2 of the License, or
+#    (at your option) any later version.
+#
+#    pacin is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with pacin; if not, write to the Free Software Foundation, Inc.,
+#    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+#
+#----------------------------------------------------------------------------
+#2007.10.14
+
+# location of temporary pacman configuration file
+PACMANCONF="/tmp/pacman_conf"
+# location of base package list
+basepacks="/tmp/pacin_basepacks"
+
+APP="$( basename $0 )"
+# Get path to pacin base directory, via the location of this script
+FULLPATH="$( readlink -f $0 )"
+SCRIPTDIR="$( dirname ${FULLPATH} )"
+PACINDATA="$( dirname ${SCRIPTDIR} )/share/pacin"
+
+# cd to ensure that the following test works even if '.' is in PATH
+calldir=$( pwd )
+cd ~
+if ! which ${APP} &>/dev/null; then
+    PATH=${SCRIPTDIR}:${PATH}
+fi
+cd ${calldir}
+
+usage () {
+    echo
+    echo "Usage:"
+    echo "  ${APP}    [-fr] [-a <addedpacksfile>] [-p <customrepodir>]"
+    echo "            [-c <package cache directory>] [-x <vetofile>]"
+    echo "         <install path>"
+    echo
+    echo "          -a    use list of packages in <addedpacksfile> (path/to/file)"
+    echo "                for 2nd install phase. If not specified, use default"
+    echo "                list in:"
+    echo "                  ${PACINDATA}/addedpacks"
+    echo "                If no file specified (explicit ''), install only base packages."
+    echo
+    echo "          -p    use custom packages in <customrepodir> (path/to/directory)."
+    echo "                The directory will be used as a pacman repository,"
+    echo "                appended temporarily at the head of pacman.conf"
+    echo "                (the pacman db file will be automatically generated)."
+    echo
+    echo "          -f    No interaction. (not recommended!)"
+    echo "                The script will just plough straight on and destroy"
+    echo "                your file-system without first asking."
+    echo
+    echo "          -c    Use alternative package cache (on host). Default is at"
+    echo "                '/var/cache/pacman/pkg'. Set to '' to use default"
+    echo "                location on _target_."
+    echo
+    echo "          -r    Remove package cache after installation (not recommended!)"
+    echo
+    echo "          -x    Use alternative file, <vetofile> for base package vetoes."
+    echo "                Default is:"
+    echo "                  ${PACINDATA}/baseveto"
+    echo "                '' may be passed here to disable vetoing."
+    echo
+    echo "${APP} will do an automated Archlinux installation to the given"
+    echo "installation directory."
+    echo "It only installs the packages, without configuration."
+    echo
+    echo "It runs two main stages:"
+    echo "                    install base packages - should generally be left unaltered"
+    echo "                    install additional packages - main point of customization"
+    echo
+    echo "If the environment variable LARCHREPO is set (to a repo URL), this will be"
+    echo "added to the pacman configuration."
+    echo
+    exit
+}
+
+DONTASK=""
+CUSTOMPACKS=""
+NOCACHE=""
+# Absolute /Path/to/file containing list of packages for 2nd install phase
+ADDEDPACKS="${PACINDATA}/addedpacks"
+VETOFILE="${PACINDATA}/baseveto"
+# Where to cache packages (on the host!)
+# Set this to "" to cache at the default location on the target.
+PKGCACHE=/var/cache/pacman/pkg
+
+while getopts ":a:p:fc:rx:vsb:" Option
+do
+  case ${Option} in
+    a ) ADDEDPACKS="$( readlink -f "${OPTARG}" )" ;;
+    p ) CUSTOMPACKS="$( readlink -f "${OPTARG}" )" ;;
+    f ) DONTASK="-f" ;;
+    c ) PKGCACHE="$( readlink -f "${OPTARG}" )" ;;
+    r ) NOCACHE="-r" ;;
+    x ) VETOFILE="$( readlink -f "${OPTARG}" )" ;;
+    * ) usage ;;
+  esac
+done
+shift $((${OPTIND} - 1))
+
+echo "DONTASK=${DONTASK}"
+echo "NOCACHE=${NOCACHE}"
+echo "ADDEDPACKS=${ADDEDPACKS}"
+echo "CUSTOMPACKS=${CUSTOMPACKS}"
+echo "PKGCACHE=${PKGCACHE}"
+echo "VETOFILE=${VETOFILE}"
+
+INSTLDIR="$1"
+if [ -d "${INSTLDIR}" ]; then
+    # This is not a brilliant test, but at least it will pick up
+    # data files in the destination directory, without being disturbed
+    # by sub-mounts.
+    if [ -n "$( find ${INSTLDIR} ! -type d )" ]; then
+        echo "ERROR: Installation directory (${INSTLDIR}) not empty"
+        exit 1
+    fi
+else
+    echo "ERROR: Installation directory (${INSTLDIR}) does not exist"
+    echo
+    usage
+fi
+
+# test if the script is started by root user. If not, exit
+if [ $UID -ne 0 ]; then
+    echo "Only root can run ${APP}"; exit 1
+fi
+
+echo "//"
+echo "// Installing Archlinux to directory ${INSTLDIR}"
+if [ -z "${DONTASK}" ]; then
+    # Await yes or no
+    read -p "// Shall I continue? [y/N]: " ans
+    if [ -z "$( echo ${ans} | grep '^ *[yY]' )" ]; then exit 0; fi
+fi
+
+PACMAN="pacman --config ${PACMANCONF} --noconfirm"
+
+#############DEAL WITH BASE PACKAGES
+
+# Get the list of base packages from the 'core' repository
+get_basepacks ()
+{
+    echo "//"
+    echo "// ** Getting base package list from: **"
+    echo "//      ${PKGSERV}/packages.txt"
+    echo "//"
+    rm -f packages.txt
+    if [ -n "$( echo "${PKGSERV}" | grep "file://" )" ]; then
+        cp ${PKGSERV:8}/packages.txt .
+    else
+        wget ${PKGSERV}/packages.txt
+    fi
+    # Get all packages in packages.txt in the 'base' section and strip
+    # them down to just package name
+    BASEPKGS=$( grep '^base/' packages.txt | \
+            sed -r 's|^base/||;s!-[^\-]+-[0-9.]+(-[a-z][^\-]*)?\.pkg.*!!' )
+    # Also get the name of the pacman file, in case it is needed
+    PACMANFILE=$( grep '^base/pacman-' packages.txt | sed 's|^base/||' )
+    rm -f packages.txt
+}
+
+########## PREPARE PACMAN CONFIGURATION FILE
+if [ -f ${calldir}/pacman.conf ]; then
+    # use pacman.conf from working directory
+    cp -f ${calldir}/pacman.conf ${PACMANCONF}_
+elif [ -f /etc/pacman.conf ]; then
+    # use host's pacman.conf
+    cp -f /etc/pacman.conf ${PACMANCONF}_
+else
+    # use supplied pacman.conf
+    cp -f ${PACINDATA}/pacman.conf ${PACMANCONF}_
+fi
+# Add special package repositories before first active repo
+: >${PACMANCONF}
+found=0
+# Also seek a source for the list of base packages
+core=0
+cat ${PACMANCONF}_ | while read line; do
+    if [ "${line:0:1}" = "[" ]; then
+        if [ "${found}" = "0" -a "${line:0:9}" != "[options]" ]; then
+            found=1
+            if [ -n "${CUSTOMPACKS}" ]; then
+                if [ ! -d "${CUSTOMPACKS}" ]; then
+                    echo "ERROR: supplied directory CUSTOMPACKS not found:"
+                    echo "          ${CUSTOMPACKS}"
+                    echo
+                    exit 1
+                fi
+                echo "// Adding custom repo to pacman configuration"
+                echo "[custom]" >>${PACMANCONF}
+                echo "Server = file://${CUSTOMPACKS}" >>${PACMANCONF}
+                echo "#<<<larch-custom>>>" >>${PACMANCONF}
+                echo "" >>${PACMANCONF}
+            fi
+            if ! grep "^\[larch\]" ${PACMANCONF}_ &>/dev/null; then
+                if [ -n "${LARCHREPO}" ]; then
+                    echo "// Adding larch repo to pacman configuration"
+                    echo "[larch]" >>${PACMANCONF}
+                    echo "Server = ${LARCHREPO}" >>${PACMANCONF}
+                    echo "" >>${PACMANCONF}
+                fi
+            fi
+        fi
+        if [ "${line:0:6}" = "[core]" ]; then
+            core=1
+        else
+            core=0
+        fi
+    fi
+
+    if [ "${core}" = "1" -a "${line:0:6}" = "Server" ]; then
+        echo "#<<<pkglist>>>${line}" >>${PACMANCONF}
+        core=0
+    fi
+
+    echo "${line}" >>${PACMANCONF}
+done
+
+PKGSERV="$( grep -m1 "^#<<<pkglist>>>" ${PACMANCONF} )"
+# If no 'core' repository source found, get it from /etc/pacman.d/core
+if [ -z "${PKGSERV}" ]; then
+    PKGSERV="$( grep -m1 "^Server" /etc/pacman.d/core )"
+    if [ -z "${PKGSERV}" ]; then
+        echo "ERROR: No source for 'core' repository found."
+        exit 1
+    fi
+fi
+PKGSERV=$( echo ${PKGSERV} | cut -d'=' -f2 )
+
+# Check that pacman is available
+which pacman &> /dev/null
+if [ $? -ne 0 ]; then
+    echo "//"
+    echo "// Downloading pacman"
+    echo "//"
+    # use wget to download pacman
+    (   cd ${SCRIPTDIR} ;\
+        wget ${PKGSERV}/${PACMANFILE} ;\
+        tar -xzf ${PACMANFILE} -O usr/bin/pacman.static >pacman ;\
+        chmod 755 pacman ;\
+        tar -xzf ${PACMANFILE} -O usr/bin/repo-add >repo-add ;\
+        chmod 755 repo-add ;\
+    )
+fi
+
+if grep "^#<<<larch-custom>>>" ${PACMANCONF} > /dev/null; then
+    echo "// Generating the repo db file for custom repo"
+    gen_repo ${CUSTOMPACKS} custom > /dev/null
+fi
+
+########## END OF PREPARING PACMAN CONFIGURATION FILE
+
+# Fetch the list of packages from core/base to BASEPKGS
+get_basepacks
+# Build basepacks by filtering BASEPKGS
+: > ${basepacks}
+#
+# Filter out vetoed packages
+if [ -n "${VETOFILE}" ] && [ ! -f ${VETOFILE} ]; then
+    echo "ERROR: supplied VETOFILE not found:"
+    echo "          ${VETOFILE}"
+    echo
+    exit 1
+fi
+for p in ${BASEPKGS}; do
+    if ! grep "^${p}/" ${VETOFILE} &>/dev/null; then
+        echo ${p} >> ${basepacks}
+    fi
+done
+
+################## BASE PACKAGE LIST NOW READY
+
+# Helper function for installing a list of packages
+doInstall() {
+    echo "// Installing following packages:"
+    echo ${PKGLIST}
+    mkdir -p ${INSTLDIR}/sys
+    mkdir -p ${INSTLDIR}/proc
+    mount --bind /sys ${INSTLDIR}/sys
+    mount --bind /proc ${INSTLDIR}/proc
+    ${PACMAN} -r ${INSTLDIR} -S ${PKGLIST}
+    RET=$?
+    umount ${INSTLDIR}/proc
+    umount ${INSTLDIR}/sys
+    if [ ${RET} -ne 0 ]; then
+        echo "//"
+        echo "// Package installation from ${pklist} FAILED."
+        echo "//"
+        return 1
+    fi
+}
+
+if [ -n "${ADDEDPACKS}" ] && [ ! -f ${ADDEDPACKS} ]; then
+    echo "ERROR: supplied file ADDEDPACKS not found:"
+    echo "          ${ADDEDPACKS}"
+    echo
+    exit 1
+fi
+
+if [ -n "${PKGCACHE}" ]; then
+    # This redirects the package cache, so that, for example,
+    # an existing one can be used.
+    mkdir -p ${INSTLDIR}/var/cache/pacman
+    mkdir -p ${PKGCACHE}
+    ln -s ${PKGCACHE} ${INSTLDIR}/var/cache/pacman/pkg
+fi
+
+echo "//"
+echo "// ************** Synchronising package dbs **************"
+echo "//"
+${PACMAN} -r ${INSTLDIR} -Sy
+
+echo "//"
+echo "// ************** Installing base package set **************"
+echo "//"
+pklist=${basepacks}
+PKGLIST=$( grep -v "#" ${pklist} )
+doInstall
+if [ $? -ne 0 ]; then exit 1; fi
+
+if [ -n "${ADDEDPACKS}" ]; then
+    pklist=${ADDEDPACKS}
+    echo "//"
+    echo "// ************** Additional packages **************"
+    echo "//"
+    PKGLIST=$( grep -v "#" ${pklist} )
+    doInstall
+    if [ $? -ne 0 ]; then exit 1; fi
+fi
+
+# Clean up package cache
+cleancache ()
+{
+    if [ -n "${PKGCACHE}" ]; then
+        # Remove the package cache redirection
+        rm ${INSTLDIR}/var/cache/pacman/pkg
+    else
+        PKGCACHE=${INSTLDIR}/var/cache/pacman/pkg
+    fi
+    if [ -n "${NOCACHE}" ]; then
+        echo "// Deleting cached packages"
+        if [ -z "${DONTASK}" ]; then
+            # Await yes or no
+            read -p "// Shall I delete all cached packages? [y/N]: " ans
+            if [ -z "$( echo ${ans} | grep '^ *[yY]' )" ]; then return; fi
+        fi
+        rm -r ${PKGCACHE}
+    fi
+}
+
+cleancache
+
+# Remove the custom db
+rm -rf ${INSTLDIR}/var/lib/pacman/custom
+
+# Remove temporary files
+rm ${PACMANCONF}
+rm ${basepacks}
+
+echo "//"
+echo "// *** pacin finished! Archlinux has been installed to ${INSTLDIR} ***"
+echo "// It is, however, pretty unconfigured ..."
+echo "//"

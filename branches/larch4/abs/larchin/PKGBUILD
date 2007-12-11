@@ -1,0 +1,17 @@
+# Maintainer: gradgrind <gradgrind@online.de>
+pkgname=larchin
+pkgver=4.1
+pkgrel=2
+pkgdesc="larch-specific plug-ins for the archin Archlinux installer"
+url="http://larch.berlios.de"
+depends=('archin')
+arch=(i686 x86_64)
+license=('GPL')
+
+# Very evil!
+_source="../../${pkgname}"
+
+build() {
+  mkdir -p ${startdir}/pkg/usr
+  cp -a ${startdir}/${_source}/share ${startdir}/pkg/usr
+}

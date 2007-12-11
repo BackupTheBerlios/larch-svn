@@ -1,0 +1,14 @@
+#!/bin/sh
+#
+# yn  - blob type: ask before running script
+#
+
+this=$( pwd )
+
+echo ">>> yn ${this}" >>${LOGFILE}
+
+disp="$( geti18n ${this}/display )"
+
+    ${DIALOGUE} yn "${disp}"
+    if [ "$?" -ne "0" ]; then exit 0; fi
+    exec script

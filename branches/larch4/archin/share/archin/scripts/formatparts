@@ -1,0 +1,13 @@
+#!/bin/sh
+
+# formatparts  - format all partitions as detailed in ${TEMPDIR}/mounts
+
+# the file ${TEMPDIR}/mounts has lines of the form:
+# mountpoint!device!fstype![additional formatting info ...]
+
+cat ${TEMPDIR}/mounts | tr '!' ' ' | { while read mp dev fst fstx; do
+        if [ "${fst}" != "-" ]; then
+            ${fst} ${dev} ${fstx} | tee -a ${LOGFILE}
+            if [ $? -ne 0 ]; then exit 1; fi
+        fi
+    done }

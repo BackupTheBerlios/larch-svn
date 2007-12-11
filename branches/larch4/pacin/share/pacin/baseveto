@@ -1,0 +1,8 @@
+# list of base packages which should NOT be installed
+# The package name must be at the beginning of a line
+# and must be terminated by a "/"
+
+#e.g.
+#xfsprogs/
+#xfsdump/
+#mdadm/

@@ -1,0 +1,3 @@
+#!/bin/sh
+
+[ ! -x ${INSTALL}/etc/profile.d/kde.sh ]

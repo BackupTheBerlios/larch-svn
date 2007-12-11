@@ -1,0 +1,36 @@
+#!/bin/sh
+
+# the file ${TEMPDIR}/mounts has lines of the form:
+# mountpoint!device!fstype![additional formatting info ...]
+
+# Get all linux partitions which are not currently mounted
+getparts ()
+{
+    sfdisk -d | grep "^/dev/[hs]d[a-z][1-9].*Id=83" | \
+            sed "s|\(.*\):.*size=\( *[0-9]*\).*|\1 \2|" | while read device sectors; do
+        # Check whether mounted
+        if [ -n "$( df | grep "^${device} " )" ]; then continue; fi
+        # Give size in MiB (2^20 bytes)
+        echo "${device}!$(( ${sectors} / 2048 ))"
+    done
+}
+
+touch ${TEMPDIR}/mounts
+# Merge in information from ${TEMPDIR}/mounts
+for p in $( getparts ); do
+    dev=$( echo ${p} | cut -d'!' -f1 )
+    mib=$( echo ${p} | cut -d'!' -f2 )
+    oldline="$( grep "!${dev}!" ${TEMPDIR}/mounts )"
+    if [ -n "${oldline}" ]; then
+        mp="$( echo "${oldline}" | cut -d'!' -f1 )"
+        fst="$( echo "${oldline}" | cut -d'!' -f3 )"
+        fstx="$( echo "${oldline}" | cut -d'!' -f4 )"
+    else
+        mp="-"
+        fst="-"
+        fstx=""
+    fi
+    printf "%-12s %-12s %8d   %s\n" ${dev} ${mp} ${mib} "${fst}    ${fstx}"
+done
+
+msgi18n "done"

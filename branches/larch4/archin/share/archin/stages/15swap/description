@@ -1,0 +1,4 @@
+Format swap partition(s)
+
+Freshly created swap partitions must be formatted. It is not
+necessary to reformat one which has already been formatted.

@@ -1,0 +1,34 @@
+I have also included a few extra PKGBUILDs here, e.g. for things that I
+needed for the 'gradplay' profile. The actual larch packages are:
+
+Necessary:
+larch
+initcpio_larch
+pacin
+
+For archin installer:
+archin
+larchin
+
+The PKGBUILDs for the larch script packages assume they are built in place
+(i.e. within abs/<pkgname>). If you want to build them somewhere else, you
+will need to change the '_source' variable. Note also that you will
+probably need to use 'makepkg -d' for the packages listed above, to skip
+the dependency checking (that is no problem, the dependencies are not
+build dependencies).
+
+To make a larch repository:
+1) Build packages (remember, use 'makepkg -d' for the larch packages only).
+2) Put all your packages in a directory.
+3) Edit BuildScripts/repodb to point to your repository (larchrepo=your/path).
+4) Run repodb.
+
+5) Edit BuildScripts/larch-setup.sh and BuildScripts/archin-setup.sh to
+point at your repository.
+
+You can then use larch-setup.sh (and/or) archin-setup.sh to produce
+ready-to-run larch/archin installations within the directory of your
+choice:
+Copy the script to an empty directory, then run it.
+It should unpack and set up the larch packages.
+From there you can then run ./mklarch ... (for example).

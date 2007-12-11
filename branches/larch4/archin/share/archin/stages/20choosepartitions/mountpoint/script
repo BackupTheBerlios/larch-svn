@@ -1,0 +1,24 @@
+#!/bin/sh
+
+# if selection was from one of the presets, pass it on
+# if it was 'other', present an input dialogue
+
+this=$( pwd )
+
+mp=$( cat ${TEMPDIR}/dynopts | head -n $1 | tail -n 1 )
+
+if [ "${mp:0:1}" = "/" ]; then
+    echo "${mp}" >${TEMPDIR}/mp
+    exit
+fi
+    cd ${this}/getmp
+    blobtype=$( cat id )
+    ${BLOBS}/${blobtype}
+    cd ${this}
+
+mp=$( cat ${TEMPDIR}/mp )
+if [ "${mp:0:1}" = "/" ]; then exit; fi
+
+: >${TEMPDIR}/mp
+    blobtype=$( cat id )
+    exec ${BLOBS}/${blobtype}

@@ -1,0 +1,3 @@
+#!/bin/sh
+
+df | grep "^/dev/" | grep -v "[hs]d[a-z] "

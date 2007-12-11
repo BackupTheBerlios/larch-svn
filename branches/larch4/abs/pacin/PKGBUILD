@@ -1,0 +1,18 @@
+# Maintainer: gradgrind <gradgrind@online.de>
+pkgname=pacin
+pkgver=2.10
+pkgrel=2
+pkgdesc="An installer for Archlinux packages"
+url="http://larch.berlios.de"
+depends=('python' 'wget')
+arch=(i686 x86_64)
+license=('GPL')
+
+# Very evil!
+_source="../../${pkgname}"
+
+build() {
+  mkdir -p ${startdir}/pkg/usr
+  cp -a ${startdir}/${_source}/bin ${startdir}/pkg/usr
+  cp -a ${startdir}/${_source}/share ${startdir}/pkg/usr
+}

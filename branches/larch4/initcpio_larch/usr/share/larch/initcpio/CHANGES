@@ -1,0 +1,29 @@
+03.11.2007:
+v4.3 - merged aufs version. For aufs, larch3 hook is named larch3_aufs
+         and gen_larch_init must be called with an extra (2nd) argument,
+	 '_aufs'. The appropriate mkinitcpio.conf is generated dynamically. 
+14.10.2007:
+v4.1 - first svn release.
+     - adapted for larch-4
+
+18.05.2007:
+v3.2 - tweaked larch3 hook to deal with new initcpio 'init' script
+
+28.12.2006:
+v3.0 - changed larch hooks for new union structure:
+         in initramfs base.sqf and etc.sqf are copied to memory and
+	 the initial boot (/sbin/init, /etc/rc.sysinit) is done with
+	 only these loaded. No unionfs mount is set up in initramfs,
+	 but several unions are set up later, one for each of the main root
+	 directories, at the start of rc.sysinit, where also the
+	 bulk of the system is loaded; 
+	 this allows unmounting of the boot device
+     - switched from ide hook to pata hook (mkinitcpio.conf)
+     - added ext2 to list of modules included by 'larch1' hook
+
+12.11.2006:
+v1.1 - remove kinit.shared from initcpio, thus getting rid of disturbing
+       message during building
+     - split larch hook into three, to allow easier implementation of
+       alternative overlay file handling strategies (larch2 selects the
+       overlay file)

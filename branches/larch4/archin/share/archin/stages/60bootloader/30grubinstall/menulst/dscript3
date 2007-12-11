@@ -1,0 +1,9 @@
+#!/bin/sh
+
+# Create a suitable menu.lst
+
+echo "Extending (installed) /boot/grub/menu.lst" >>${LOGFILE}
+
+cp -f ${BASEDIR}/data/menu.lst_tmpl ${INSTALL}/boot/grub/menu.lst
+# Get info for grub menu entry and write it
+grubmenuentry ${INSTALL}/boot/grub

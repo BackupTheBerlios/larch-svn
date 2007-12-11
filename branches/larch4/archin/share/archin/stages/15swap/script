@@ -1,0 +1,38 @@
+#!/bin/sh
+
+# format swap partitions
+
+this=$( pwd )
+
+# Discover swap partitions
+swaps="$( dscvr_swap )"
+
+# Get swap partitions which are already in use
+: > ${TEMPDIR}/swaps
+echo "${swaps}" | { while read dev size; do
+        if [ "${dev:0:1}" = "*" ]; then
+            echo "${dev:1}  ${size}" >> ${TEMPDIR}/swaps
+        fi
+    done }
+if [ -n "$( cat ${TEMPDIR}/swaps )" ]; then
+    # Run the appropriate blob
+    cd ${this}/inuse
+    blobtype=$( cat id )
+    ${BLOBS}/${blobtype}
+    cd ${this}
+elif [ -z "${swaps}" ]; then
+    cd ${this}/noswaps
+    blobtype=$( cat id )
+    exec ${BLOBS}/${blobtype}
+fi
+
+# Finally deal with other swap partitions,
+# asking whether to format them
+echo "${swaps}" | { while read dev size; do
+        if [ "${dev:0:1}" = "*" ]; then continue; fi
+        echo "${dev}  ${size}" > ${TEMPDIR}/swap
+        cd ${this}/format
+        blobtype=$( cat id )
+        ${BLOBS}/${blobtype}
+        cd ${this}
+    done }

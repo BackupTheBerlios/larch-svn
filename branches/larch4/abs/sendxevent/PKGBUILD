@@ -1,0 +1,17 @@
+# Contributor: Michael Towers (gradgrind) <gradgrind@online.de>
+pkgname=sendxevent
+pkgver=1.2g
+pkgrel=2
+pkgdesc="Command-line program to send X events to current or root window"
+license=("GPL")
+arch=('i686')
+url="http://www.lirc.org"
+depends=()
+source=(${pkgname}.c)
+
+build() {
+  cd $startdir/src
+  gcc -lX11 -o sendxevent sendxevent.c || return 1
+  mkdir -p $startdir/pkg/usr/bin
+  cp sendxevent $startdir/pkg/usr/bin
+}

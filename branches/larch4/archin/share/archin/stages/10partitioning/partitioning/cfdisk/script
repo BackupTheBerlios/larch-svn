@@ -1,0 +1,14 @@
+#!/bin/sh
+
+this=$( pwd )
+
+dev="$( cat ${TEMPDIR}/dynopts | head -n $1 | tail -n 1 \
+        | sed "s|.* \(/dev/[sh]d[a-z]\):.*|\1|" )"
+
+if [ "${dev:0:5}" != "/dev/" ]; then exit; fi
+
+cfdisk ${dev}
+
+# Go back to select device menu
+blobtype=$( cat id )
+exec ${BLOBS}/${blobtype}

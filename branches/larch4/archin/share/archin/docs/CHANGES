@@ -1,0 +1,11 @@
+2007/10/14
+v4.1: First svn-based release, adapted for larch-4
+
+2006/11/13
+v2.0: Adapted to pacin v2
+
+2006/11/11
+v1.2: May now only be run by root 
+
+2006/11/05
+v1.1: Fixed problems formatting reiserfs, jfs, xfs

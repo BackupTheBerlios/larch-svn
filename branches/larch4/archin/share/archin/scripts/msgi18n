@@ -1,0 +1,14 @@
+#!/bin/sh
+#
+# msgi18n  - look up a message tag in the mesage file
+#
+
+# $1    - the message tag
+# $2    - optional flag for 'echo', e.g. "-n"
+
+m="$( grep "$1" ${MESSAGES} | cut -d'|' -f2- )"
+if [ -z "${m}" ]; then
+    echo "ERROR: message ($1) not found in catalogue" 1>&2
+else
+    echo $2 "${m}"
+fi

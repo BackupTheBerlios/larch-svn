@@ -1,0 +1,13 @@
+#!/bin/sh
+#
+# getbloblist  - return a list of 'active' blobs in current directory
+#
+
+unset choices
+for b in $( ls ); do
+    if [ ! -f ${b}/id ]; then continue; fi
+    if ${b}/disable 2>/dev/null; then
+        continue
+    fi
+    echo "${b}"
+done

@@ -1,0 +1,4 @@
+#!/bin/sh
+
+mkfstab
+cat ${TEMPDIR}/fstab

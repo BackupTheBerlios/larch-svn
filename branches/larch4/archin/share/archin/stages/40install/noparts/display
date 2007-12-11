@@ -1,0 +1,11 @@
+Can't Perform Installation Step
+
+You must first choose partition and file-system types.
+If you have already done that, maybe there is some problem
+with your selection. Check especially the root partition
+(mountpoint /). The current 'mounts' info is shown below:
+
+Mountpoint  Partition  Format [Format tweaks]
+
+:::!dscript
+cat ${TEMPDIR}/mounts | sed 's|!|     |g'

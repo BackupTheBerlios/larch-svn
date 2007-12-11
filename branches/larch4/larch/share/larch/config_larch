@@ -1,0 +1,22 @@
+#! /bin/bash
+# This is the config file for mklarch.
+
+# WARNING! Relative paths (those not starting with /) are relative
+# to the directory containing this file, and should be processed
+# with 'readlink -f' in order to make them absolute, e.g.:
+#      VAR1=$( readlink -f ../dir/file )
+
+# directory to use for building the CD - the installation root
+# It must have LOTS of space, ~ 4GB for a 700MB CD
+INSTLDIR=/home/larchroot
+
+# path to folder containing additional packages, will be copied
+# as is to boot medium. (See docs.)
+# These are not used by the live system.
+#PACKAGES=$( readlink -f ../../../packages )
+PACKAGES=""
+
+# options to be passed to pacin (not -a or -f, they are passed automatically)
+# e.g. for your own package repository:
+#PACINOPTS="-p /usr/share/larch/custompacks"
+PACINOPTS=""

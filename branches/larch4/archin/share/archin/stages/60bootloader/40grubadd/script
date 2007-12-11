@@ -1,0 +1,14 @@
+#!/bin/sh
+
+# Add an entry for the new installation to an existing menu.lst
+
+cat ${TEMPDIR}/dynopts | head -n $1 | tail -n 1 >${TMPDIR}/grubdev
+read dev boot <${TMPDIR}/grubdev
+
+echo "Extending ${dev} ${boot}/grub/menu.lst" >>${LOGFILE}
+
+mount ${dev} ${TEMPDIR}/mnt
+# Get info for grub menu entry and write it
+grubmenuentry ${TEMPDIR}/mnt${boot}/grub
+
+umount ${TEMPDIR}/mnt

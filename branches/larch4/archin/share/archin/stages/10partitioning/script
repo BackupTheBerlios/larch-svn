@@ -1,0 +1,7 @@
+#!/bin/sh
+
+this=$( pwd )
+
+    cd ${this}/partitioning
+    blobtype=$( cat id )
+    exec ${BLOBS}/${blobtype}

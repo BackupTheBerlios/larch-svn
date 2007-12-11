@@ -1,0 +1,10 @@
+#!/bin/sh
+#
+# run  - blob type: run 'script'
+#
+
+this=$( pwd )
+
+echo ">>> run ${this}" >>${LOGFILE}
+
+    exec script

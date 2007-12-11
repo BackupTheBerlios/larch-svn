@@ -1,0 +1,39 @@
+# Config file for GRUB - The GNU GRand Unified Bootloader
+# /boot/grub/menu.lst
+
+# DEVICE NAME CONVERSIONS 
+#
+#  Linux           Grub
+# -------------------------
+#  /dev/fd0        (fd0)
+#  /dev/hda        (hd0)
+#  /dev/hdb2       (hd1,1)
+#  /dev/hda3       (hd0,2)
+#
+
+# general configuration:
+timeout   5
+default   0
+color light-blue/black light-cyan/blue
+
+# boot sections follow
+# each is implicitly numbered from 0 in the order of appearance below
+#
+#-*
+
+#--- without separate boot partition
+#title  Arch Linux  [/boot/vmlinuz26]
+#root   (hd0,2)
+#kernel /boot/vmlinuz26 root=/dev/hda3 ro
+#initrd /boot/kernel26.img
+
+#--- with separate boot partition
+#title  Arch Linux  [/boot/vmlinuz26]
+#root   (hd0,0)
+#kernel /vmlinuz26 root=/dev/hda3 ro
+#initrd /kernel26.img
+
+#title Windows
+#root  (hd0,0)
+#makeactive
+#chainloader +1

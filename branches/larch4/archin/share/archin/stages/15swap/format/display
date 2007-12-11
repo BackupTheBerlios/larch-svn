@@ -1,0 +1,8 @@
+Format swap partition?
+
+Would you like to format the following swap partition, checking
+for bad blocks?
+
+Partition    Size (MiB)
+
+:::!dscript

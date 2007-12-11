@@ -1,0 +1,67 @@
+#!/bin/sh
+# 2007.09.26
+
+# Extend a menu.lst for the new installation
+# $1  - path to grub directory
+
+grubdir=$1
+menulst=${grubdir}/menu.lst
+
+# grubmenuentry  - prepare info for an entry in /boot/grub/menu.lst
+
+# Test for separate /boot partition
+archroot="$( cat ${TEMPDIR}/mounts | grep "^/!" | cut -d'!' -f2 )"
+if [ -z "${archroot}" ]; then
+    echo "ERROR: no root (/) device" | tee -a ${LOGFILE}
+    exit 1
+fi
+boot="$( cat ${TEMPDIR}/mounts | grep "^/boot!" )"
+if [ -n "${boot}" ]; then
+    root="$( echo ${boot} | cut -d'!' -f2 )"
+    bp=""
+else
+    root="${archroot}"
+    bp="/boot"
+fi
+
+# Find kernels and their initramfs
+:>${TEMPDIR}/grubinfo
+for k in $( ls ${INSTALL}/boot | grep "vmlinuz.*" ); do
+    for img in "kernel${k:7}.img" "kernel${k:7}-fallback.img"; do
+        if [ -f ${INSTALL}/boot/${img} ]; then
+# 'root' is the partition to boot (containing kernel/initramfs)
+# 'archroot' is the Arch root partition
+# '${bp}/${k}' is the path to the kernel within the boot partition
+# '${bp}/${img}' is the path to the initramfs(cpio.gz) within the boot partition
+            echo "${root} ${archroot} ${bp}/${k} ${bp}/${img}" \
+                    >>${TEMPDIR}/grubinfo
+# One line per kernel/initramfs combination
+    done
+done
+
+devroot=${root:0:8}
+# Try to find grub name for boot partition (for grub, that is 'root')
+grubname="$( cat ${grubdir}/device.map 2>/dev/null | \
+        grep ${devroot} | cut -f1 )"
+if [ -z "${grubname}" ]; then
+    # if not found, try (hd0)
+    grubname="(hd0)"
+fi
+
+# grubname is the boot device (hopefully!)
+# bpname will be the grub name for the boot partition
+n=$(( ${root:8} - 1 ))
+bpname="$( echo ${grubname} | sed "s|)|,${n})|" )"
+
+echo "" >>${menulst}
+echo "# ++++ Section added automatically at $( date )" >>${menulst}
+echo "" >>${menulst}
+cat ${TEMPDIR}/grubinfo | { while read r a k i; do
+        echo "title  Arch Linux ${a} (initrd=${i})" | tee -a ${menulst}
+        echo "root   ${bpname}" | tee -a ${menulst}
+        echo "kernel ${k} root=${a} ro" | tee -a ${menulst}
+        echo "initrd ${i}" | tee -a ${menulst}
+        echo "" | tee -a ${menulst}
+    done
+}
+echo "# ---- End of section added automatically" >>${menulst}

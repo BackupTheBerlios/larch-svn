@@ -1,0 +1,21 @@
+#!/bin/sh
+
+# dscvr_swap   - discover swap partitions
+
+# Use fdisk to find swap partitions
+fdisk -l | grep "^/dev/" | \
+    { while read dev s e blocks id t; do
+        if [ "${id}" = "82" ]; then
+            # Check whether in use
+            if [ -n "$( cat /proc/swaps | grep "^${dev} " )" ]; then
+                echo -n "*${dev}"
+            else
+                echo -n "${dev}"
+            fi
+            # Filter + and - out of size
+            blocks=$( echo ${blocks} | sed 's|[+-]||')
+            # Give size in MiB (2^20 bytes)
+            echo " $(( ${blocks} / 1024 ))"
+        fi
+    done }
+

@@ -1,0 +1,9 @@
+#!/bin/sh
+
+df | grep "^/dev/" | grep -v "[hs]d[a-z] "
+
+swaps="$( cat /proc/swaps | grep partition | cut -d' ' -f1 )"
+if [ -n "${swaps}" ]; then
+    echo "  Swap:"
+    echo "${swaps}"
+fi

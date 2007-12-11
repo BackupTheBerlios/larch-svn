@@ -1,0 +1,15 @@
+#!/bin/sh
+
+this=$( pwd )
+
+# Get chosen device
+gdev=$( cat ${TEMPDIR}/dynopts | head -n $1 | tail -n 1 )
+
+if [ "${gdev:0:1}" != "(" ]; then exit; fi
+echo "${gdev}" >${TEMPDIR}/grub_mbrdev
+
+grubinstall &>${TEMPDIR}/grub_log
+
+    cd ${this}/menulst
+    blobtype=$( cat id )
+    exec ${BLOBS}/${blobtype}

@@ -1,0 +1,304 @@
+#! /bin/bash
+#
+# mklarch
+#
+# Author: Michael Towers (gradgrind) <mt.42@web.de>
+#
+# This file is part of the larch project.
+#
+#    larch is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 2 of the License, or
+#    (at your option) any later version.
+#
+#    larch is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with larch; if not, write to the Free Software Foundation, Inc.,
+#    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+#
+#----------------------------------------------------------------------------
+# 2007.10.02
+
+
+APP="$( basename $0 )"
+# Get path to larch base directory, via the location of this script
+FULLPATH="$( readlink -f $0 )"
+SCRIPTDIR="$( dirname ${FULLPATH} )"
+LARCHDATA="$( dirname ${SCRIPTDIR} )/share/larch"
+
+startdir=$( pwd )
+# cd to ensure that the following test works even if '.' is in PATH
+cd ~
+if ! which ${APP} &>/dev/null; then
+    PATH=${SCRIPTDIR}:${PATH}
+fi
+cd ${startdir}
+
+usage () {
+    echo
+    echo "Usage:"
+    echo "  ${APP} -a  [-f]   -p <profile>"
+    echo "  ${APP} -a  [-f]   -d <configuration directory>"
+    echo "  ${APP} -i  [-fgu] -p <profile>"
+    echo "  ${APP} -i  [-fgu] -d <configuration directory>"
+    echo "  ${APP} [-bfogur]  -p <profile>"
+    echo "  ${APP} [-bfogur]  -d <configuration directory>"
+    echo "  ${APP} -c  [-p <profile>] <destination directory>"
+    echo "  ${APP} -C"
+    echo "  ${APP} -X  [-ifgur]"
+    echo "  ${APP} -x  [-ifgur]  <path to mounted Arch installation>"
+    echo
+    echo "          -p    Use the preset configuration, <profile>."
+    echo "          -d    Use the configuration in the given directory."
+    echo "          -c    Copy the configuration to the given directory,"
+    echo "                which should not yet exist. If no named profile"
+    echo "                is passed with -p the 'default' one will be copied."
+    echo "                You don't need to be root to run with this option."
+    echo "          -a    Stop after installing Arch system (don't build live system)."
+    echo "          -i    Only rebuild iso (or install to USB-stick),"
+    echo "                don't regenerate CD data"
+    echo
+    echo "          -b    Skip the installation step, rebuild using existing 'ArchImage'."
+    echo "          -r    With -b, -x or -X: remove old system and base sqfs"
+    echo "          -u    Don't build iso, but install to USB-stick instead"
+    echo "          -g    Use GRUB bootloader (default is isolinux/syslinux)"
+    echo
+    echo "          -f    No interaction. (not recommended)"
+    echo "                The script will just plough straight on and destroy"
+    echo "                your file-system without first asking."
+    echo "          -o    Don't generate package repository db 'larch' for"
+    echo "                extra packages"
+    echo
+    echo "          -C    Copy the 'null' profile to 'profile' in the current"
+    echo "                directory. For use preparing for mklarch with -x or -X"
+    echo "          -x    Build a live CD from an existing Arch installation"
+    echo "                at the given mount point. Sub-mounts must already be"
+    echo "                active."
+    echo "          -X    Build a live CD from the currently running"
+    echo "                Arch installation."
+    echo
+    echo "${APP} is the master script for the larch live CD / live USB-stick"
+    echo "builder."
+    echo
+    echo "A profile is a directory containing all the necessary"
+    echo "configuration details for a larch build. The profile for a"
+    echo "normal larch build can be supplied either as a directory path"
+    echo "(-d option) or as a 'preset' name (-p option)."
+    echo
+    echo "The available preset profiles are:"
+    for p in $( ls ${LARCHDATA}/profiles ); do
+        echo "      ${p}"
+    done
+    echo
+    echo "For building from existing installations (options -X and -x)"
+    echo "the profile is taken from the 'profile' folder in the current"
+    echo "directory (from where mklarch is called) or - if this is not"
+    echo "present, then the default 'null' profile is used."
+    echo
+    exit
+}
+
+get_profile ()
+{
+    if [ -z "$1" ]; then
+        echo "ERROR: no profile supplied"
+        usage
+    fi
+    for d in $( ls ${LARCHDATA}/profiles ); do
+        if [ "${d}" = "$1" ]; then
+            PROFILE=${LARCHDATA}/profiles/${d}
+            break
+        fi
+    done
+    if [ -z "${PROFILE}" ]; then
+        echo "ERROR: profile ($1) not found"
+        usage
+    fi
+}
+
+get_profile_x ()
+{
+    if [ -d profile ]; then
+        PROFILE="$( readlink -f profile )"
+    else
+        PROFILE=${LARCHDATA}/profile0
+    fi
+}
+
+PROFILE=""
+PROFILE_SOURCE=""
+DONTASK=""
+NOLIVE=""
+USB=""
+GRUB=""
+REISO=""
+NOPKGDB=""
+REBUILD=""
+RMSQF=""
+while getopts ":aifobgup:d:cCXxr" Option
+do
+  case ${Option} in
+    a ) NOLIVE="-a" ;;
+    b ) REBUILD="-b" ;;
+    r ) RMSQF="-r" ;;
+    u ) USB="-u" ;;
+    g ) GRUB="-g" ;;
+    i ) REISO="-i" ;;
+    f ) DONTASK="-f" ;;
+    o ) NOPKGDB="-o" ;;
+    p ) if [ -n "${PROFILE_SOURCE}" ]; then usage; fi
+        PROFILE_SOURCE="-p"
+        get_profile "${OPTARG}" ;;
+    d ) if [ -n "${PROFILE_SOURCE}" ]; then usage; fi
+        PROFILE="$( readlink -f ${OPTARG} )"
+        PROFILE_SOURCE="-d" ;;
+    c ) COPY="-c" ;;
+    C ) rm -fr profile
+        cp -r ${LARCHDATA}/profile0 profile
+        exit 0 ;;
+    x ) if [ -n "${PROFILE_SOURCE}" ]; then usage; fi
+        PROFILE_SOURCE="-x"
+        get_profile_x ;;
+    X ) if [ -n "${PROFILE_SOURCE}" ]; then usage; fi
+        PROFILE_SOURCE="-X"
+        get_profile_x ;;
+    * ) usage ;;
+  esac
+done
+shift $((${OPTIND} - 1))
+
+if [ -n "${COPY}" ]; then
+    if [ "${PROFILE_SOURCE}" = "-d" ]; then usage; fi
+    if [ -z "${PROFILE}" ]; then PROFILE=${LARCHDATA}/profiles/default; fi
+    if [ -z "$1" ]; then
+        echo "ERROR: no destination directory supplied"
+        usage
+    fi
+    DEST="$( readlink -f $1 )"
+    if [ -e "${DEST}" ]; then echo "ERROR: ${DEST} already exists"; exit 1; fi
+    echo "// Copying configuration files to ${DEST}"
+    if [ -z "${DONTASK}" ]; then
+        # Await yes or no
+        read -p "// Shall I continue? [y/N]: " ans
+        if [ -z "$( echo ${ans} | grep '^ *[yY]' )" ]; then exit 0; fi
+    fi
+    mkdir -p ${DEST}
+    cp -a ${PROFILE}/* ${DEST}
+    exit 0
+fi
+
+if [ -z "${PROFILE_SOURCE}" ]; then
+    echo "ERROR: no profile supplied"
+    usage
+fi
+
+# test if the script is started by root user. If not, exit
+if [ $UID -ne 0 ]; then
+    echo "Only root can run ${APP}"; exit 1
+fi
+
+if [ "${PROFILE_SOURCE}" = "-X" ]; then
+    LARCHBUILD="/.larch"
+    INSTLDIR=""
+    REBUILD="-X"
+elif [ "${PROFILE_SOURCE}" = "-x" ]; then
+    if [ -z "$1" ]; then
+        echo "ERROR: no installation directory supplied"
+        usage
+    elif ! [ -d $1 ]; then
+        echo "ERROR: $1 is not a directory"
+        usage
+    elif [ -z "$( df | grep " $1$" )" ]; then
+        echo "ERROR: installation directory not found in 'df' output"
+        usage
+    fi
+    INSTLDIR="$1"
+    LARCHBUILD="${INSTLDIR}/.larch"
+    REBUILD="-x"
+else
+    # Check profile directory
+    if [ -z "$( cat ${PROFILE}/addedpacks 2>/dev/null )" ]; then
+        echo "ERROR: invalid profile, ${PROFILE}/addedpacks not found"
+        usage
+    fi
+
+    # Source config file to get configuration
+    echo "//"
+    echo "// Getting live CD configuration details"
+    cd ${LARCHDATA}
+    . ./config_larch
+    cd ${startdir}
+    if [ -f config_larch ]; then
+        . ./config_larch
+    fi
+    LARCHBUILD="${INSTLDIR}/.larch"
+fi
+
+# Get live CD build functions
+. ${LARCHDATA}/buildlive
+
+if [ -n "${REISO}" ]; then
+    buildiso
+    exit
+fi
+
+if [ -n "${REBUILD}" ]; then
+    mklive
+    exit
+fi
+
+echo "//"
+echo "// **********************************************************"
+echo "// This will delete EVERYTHING under"
+echo "//"
+echo "//        ${INSTLDIR}"
+echo "//"
+
+if [ -z "${DONTASK}" ]; then
+    echo "// I really mean it ... Are you sure you want to do this?"
+    echo "// **********************************************************"
+    # Await yes or no
+    read -p "// [y/N]: " ans
+    if [ -z "$( echo ${ans} | grep '^ *[yY]' )" ]; then exit 0; fi
+fi
+
+for fd in $( ls -A ${INSTLDIR} ); do
+    rm -rf ${INSTLDIR}/${fd}
+done
+mkdir -p ${LARCHBUILD}
+
+# Call pacin installer to do the installation
+if [ -f ${PROFILE}/baseveto ] && \
+        [ -z "$( echo "${PACINOPTS}" | grep "\-x " )" ]; then
+    PACINOPTS="${PACINOPTS} -x ${PROFILE}/baseveto"
+fi
+pacin ${DONTASK} -a ${PROFILE}/addedpacks ${PACINOPTS} ${INSTLDIR}
+if [ $? -ne 0 ]; then exit 1; fi
+
+# Remove unneeded pacman db info
+for d in $( ls ${INSTLDIR}/var/lib/pacman ); do
+    if [ "${d}" != "local" ]; then rm -r ${INSTLDIR}/var/lib/pacman/${d}; fi
+done
+
+# Generate glibc locales
+if [ -f ${PROFILE}/locale.gen ]; then
+    echo
+    echo "********** Generating locales **********"
+    echo
+    cat ${PROFILE}/locale.gen ${INSTLDIR}/etc/locale.gen >${INSTLDIR}/etc/locale.gen_new
+    mv -f ${INSTLDIR}/etc/locale.gen_new ${INSTLDIR}/etc/locale.gen
+    chroot ${INSTLDIR} usr/sbin/locale-gen
+fi
+
+# Generate ssh keys
+ssh_init ${INSTLDIR}
+
+echo "// ${APP} finished"
+echo "//"
+if [ -z "${NOLIVE}" ]; then
+    mklive
+fi

@@ -1,0 +1,5 @@
+Choose Filesystem
+
+Select how the following partition should be formatted:
+
+:::!cat ${TEMPDIR}/part

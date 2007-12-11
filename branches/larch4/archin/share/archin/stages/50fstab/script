@@ -1,0 +1,8 @@
+#! /bin/sh
+
+# install new fstab and mount points
+
+    cp -b ${TEMPDIR}/fstab ${INSTALL}/etc/fstab
+    # Delete existing mount points
+    rmdir ${INSTALL}/mnt/* | tee -a ${LOGFILE}
+    mv ${TEMPDIR}/mnt/* ${INSTALL}/mnt

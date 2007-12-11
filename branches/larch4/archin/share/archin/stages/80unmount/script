@@ -1,0 +1,4 @@
+#!/bin/sh
+
+# Unmount whatever needs unmounting
+unmountparts

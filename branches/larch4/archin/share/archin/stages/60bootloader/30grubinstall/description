@@ -1,0 +1,8 @@
+Install grub to MBR
+
+This will overwrite any existing bootloader, so that it won't
+be possible to boot any other partitions until you have manually
+edited the resulting /boot/grub/menu.lst file.
+
+You can choose which device's MBR from those known to grub?
+to the device known to grub as (hd0).

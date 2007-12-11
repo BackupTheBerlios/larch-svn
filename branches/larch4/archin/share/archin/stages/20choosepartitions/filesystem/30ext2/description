@@ -1,0 +1,4 @@
+ext2
+
+No journalling, but a good choice for a separate /boot partition.
+Very solid.

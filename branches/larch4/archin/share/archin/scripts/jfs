@@ -1,0 +1,7 @@
+#!/bin/sh
+#
+# jfs  - format $1
+#
+
+echo "mkfs.jfs -q $1" >>${LOGFILE}
+mkfs.jfs -q $1

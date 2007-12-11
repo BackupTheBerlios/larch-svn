@@ -1,0 +1,18 @@
+# Maintainer: gradgrind <gradgrind@online.de>
+pkgname=archin
+pkgver=4.1
+pkgrel=2
+pkgdesc="An installer for Archlinux"
+url="http://larch.berlios.de"
+depends=('pacin>=2.10' 'dialog')
+arch=(i686 x86_64)
+license=('GPL')
+
+# Very evil!
+_source="../../${pkgname}"
+
+build() {
+  mkdir -p ${startdir}/pkg/usr
+  cp -a ${startdir}/${_source}/bin ${startdir}/pkg/usr
+  cp -a ${startdir}/${_source}/share ${startdir}/pkg/usr
+}

@@ -1,0 +1,4 @@
+Edit /etc/rc.conf
+
+Here you can set several important system features, such as
+network, console keymap and daemons to start at boot.

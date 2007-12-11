@@ -1,0 +1,10 @@
+Select installation partition(s)
+
+The available (Linux, non-mounted) partitions are listed below,
+together with any mount points and formatting information which
+has already been entered.
+Select a partition to alter its settings.
+There must be at least the root mount point (/), others are
+optional.
+
+        Partition  MountPoint        Size(MiB) FS-Type (FSOpts)

@@ -1,0 +1,20 @@
+# list of base packages which should NOT be installed
+# The package name must be at the beginning of a line
+# and must be terminated by a "/"
+
+
+# these are not needed on a gradplay system
+
+cryptsetup/
+device-mapper/
+jfsutils/
+lilo/
+lvm2/
+mdadm/
+pcmciautils/
+reiserfsprogs/
+slocate/
+vi/
+wget/
+xfsprogs/
+xfsdump/

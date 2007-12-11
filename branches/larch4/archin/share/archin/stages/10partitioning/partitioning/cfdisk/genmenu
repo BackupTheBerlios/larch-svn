@@ -1,0 +1,4 @@
+#!/bin/sh
+
+fdisk -l | grep " /dev/[sh]d[a-z]:"
+msgi18n 'done'

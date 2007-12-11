@@ -1,0 +1,6 @@
+Install Archlinux to mounted partition
+
+This stage installs Archlinux to a partition.
+The partition must already be mounted.
+Any submounts (e.g. /home, /boot, /var, whatever) must also
+be mounted correctly within the main mount.

@@ -1,0 +1,8 @@
+Partitionen anlegen, entfernen, oder deren Größe ändern
+
+Vor der Installation müssen die Festplatten-Partitionen
+vorbereitet werden. Eine oder mehrere können für die
+Archlinux-Installation verwendet werden.
+
+Achtung: Falls Partitionen für die Installation schon
+gewählt wurden, wird diese Information gelöscht.

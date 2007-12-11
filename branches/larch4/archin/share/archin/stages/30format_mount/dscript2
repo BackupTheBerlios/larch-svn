@@ -1,0 +1,3 @@
+#!/bin/sh
+
+cat ${TEMPDIR}/mounts | sed 's|!|     |g'

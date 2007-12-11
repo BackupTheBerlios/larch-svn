@@ -1,0 +1,7 @@
+Can't Perform Installation Step
+
+The installation partitions are not (correctly) mounted.
+
+Relevant mounts are shown below:
+
+:::!dscript

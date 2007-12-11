@@ -1,0 +1,9 @@
+Swap partition(s) found
+
+One or more swap partitions have been found, but as they are
+currently in use I assume it will not be necessary to format
+them.
+
+Partition    Size(MiB)
+
+:::!dscript

@@ -1,0 +1,22 @@
+#!/bin/sh
+#
+# ext3  - format $1
+#
+
+echo "mke2fs -j $1" >>${LOGFILE}
+mke2fs -j $1
+
+opts="$2"
+
+while [ -n "${opts}" ]; do
+    o=${opts:0:1}
+    opts=${opts:1}
+    case ${o} in
+        d ) echo "tune2fs -O dir_index $1" >>${LOGFILE}
+            tune2fs -O dir_index $1 ;; # directory indexing
+        n ) echo "tune2fs -c 0 -i 0 $1" >>${LOGFILE}
+            tune2fs -c 0 -i 0 $1 ;; # disable boot-time checks
+        f ) echo "tune2fs -O has_journal -o journal_data $1" >>${LOGFILE}
+            tune2fs -O has_journal -o journal_data $1 ;; # full journalling
+    esac
+done

@@ -1,0 +1,20 @@
+# vim: set ft=sh:
+
+install ()
+{
+    MODULES="aufs squashfs"
+    BINARIES=""
+    FILES=""
+    SCRIPT="larch3_aufs"
+#    add_file "/usr/share/larch/initcpio/kinit" "/bin/kinit"  ##### This doesn't work
+    sed -i 's|.*/usr/lib/klibc/bin/kinit\.shared.*||' "${FILELIST}"
+    sed -i 's|/usr/lib/klibc/bin/kinit|/usr/share/larch/initcpio/kinit|' "${FILELIST}"
+}
+
+help ()
+{
+cat<<HELPEOF
+  This hook deals with booting a larch live CD. It is the last larch hook,
+setting up the tmpfs root file system.
+HELPEOF
+}

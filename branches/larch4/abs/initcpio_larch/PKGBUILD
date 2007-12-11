@@ -1,0 +1,17 @@
+# Maintainer: gradgrind <gradgrind@online.de>
+pkgname=initcpio_larch
+pkgver=4.4
+pkgrel=1
+pkgdesc="Extensions to the Arch initcpio system for larch live CDs"
+url="http://larch.berlios.de"
+depends=('mkinitcpio')
+arch=(i686 x86_64)
+license=('GPL')
+
+# Very evil!
+_source="../../${pkgname}"
+
+build() {
+  cp -a ${startdir}/${_source}/lib ${startdir}/pkg
+  cp -a ${startdir}/${_source}/usr ${startdir}/pkg
+}

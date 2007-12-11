@@ -1,0 +1,111 @@
+# vim: set ft=sh:
+
+# larch3 -  live 'hook' for mkinitcpio: set up root filesystem on tmpfs
+#           this version loads the unionfs module (but it is not used in
+#           the initramfs, only later, in the init script)
+
+# Author: Michael Towers (gradgrind) <mt.42@web.de>
+#
+# This file is part of the larch project.
+#
+#    larch is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 2 of the License, or
+#    (at your option) any later version.
+#
+#    larch is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with larch; if not, write to the Free Software Foundation, Inc.,
+#    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+#
+#----------------------------------------------------------------------------
+#2007.12.11
+
+run_hook ()
+{
+    if [ "x${LDEV}" = "x" ]; then
+        err "Sorry, couldn't find boot medium ..."
+        break="y"
+        return
+    fi
+
+    msg_ ":: Copying base system to RAM"
+    /bin/cat "/tfs/.livesys/livecd/base.sqf" > "/tfs/.livesys/base.sqf"
+    /bin/cat "/tfs/.livesys/livecd/${etcx}" > "/tfs/.livesys/etc.sqf"
+
+    msg_ ":: Mounting base image"
+    /bin/mkdir "/tfs/.livesys/base"
+    # The klibc mount command doesn't support '-o loop'
+    /bin/losetup "/dev/loop0" "/tfs/.livesys/base.sqf"
+    /bin/mount -r -t squashfs "/dev/loop0" "/tfs/.livesys/base"
+
+    msg_ ":: Mounting /etc overlay"
+    /bin/mkdir "/tfs/.livesys/etc"
+    # The klibc mount command doesn't support '-o loop'
+    /bin/losetup "/dev/loop1" "/tfs/.livesys/etc.sqf"
+    /bin/mount -r -t squashfs "/dev/loop1" "/tfs/.livesys/etc"
+
+    # Set up basic boot system
+    pwdold=$( pwd )
+    cd /tfs/.livesys/base
+    for d in *; do
+        /bin/mkdir /tfs/${d}
+        /bin/mount -o bind /tfs/.livesys/base/${d} /tfs/${d}
+    done
+    cd ${pwdold}
+    /bin/mkdir /tfs/etc
+    /bin/mount -o bind /tfs/.livesys/etc/etc /tfs/etc
+
+    # Make and populate /tfs/dev
+    # The permissions/ownerships may not be not ideal but this is just a
+    # temporary measure, udev overrides these.
+    /bin/mkdir /tfs/dev
+    /bin/mknod /tfs/dev/console c 5 1
+    /bin/mknod /tfs/dev/null c 1 3
+    /bin/mknod /tfs/dev/zero c 1 5
+    # Need the loop device nodes
+    for i in 0 1 2 3 4 5 6 7; do
+        /bin/mknod /tfs/dev/loop${i} b 7 ${i}
+    done
+
+    # Boot option copy-to-ram (c2r)
+    if [ "${c2r}" = "y" ]; then
+        # force use of swap (if available)
+        :> /tfs/.livesys/swapon
+        :> /tfs/.livesys/c2r
+    elif [ "${swap}" = "y" ]; then
+        :> /tfs/.livesys/swapon
+    fi
+
+    # Remember the boot device
+    echo "${LDEV}" > /tfs/.livesys/bootdevice
+
+    # Need unionfs module (in rc.sysinit0, before whole system is loaded)
+    /bin/modprobe unionfs
+    echo "unionfs" > /tfs/.livesys/utype
+
+    msg_ ":: End of live system set-up"
+
+    # Now some tweaks to alter 'init' actions from non-larch hooks, etc.
+    # override rootdelay from usb hook (?)
+    if [ "x${larchdelay}" = "x"  ]; then
+        # To avoid spurious udevd pid numbers
+        export rootdelay=1
+    else
+        # Allow adjustment via boot option
+        export rootdelay=${larchdelay}
+    fi
+    # root must be set to something or other, even though larch doesn't
+    # need it ...
+    export root="/dev/loop0"
+}
+
+#######
+# The actual root switch occurs later, when 'init' execs 'kinit'.
+# I handle this by overwriting the 'kinit' binary with my own script.
+# This will unmount dev, sys and proc and then call run-init.
+#######

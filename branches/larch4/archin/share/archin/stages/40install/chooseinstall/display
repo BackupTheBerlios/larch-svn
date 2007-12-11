@@ -1,0 +1,7 @@
+Install Archlinux to mounted partition
+
+Select which type of installation you would like to perform.
+
+The partition(s) to be installed to are mounted as follows:
+ 
+:::!dscript

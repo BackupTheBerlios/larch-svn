@@ -1,0 +1,27 @@
+#!/bin/sh
+
+# Seek all potential grub-boot partitions
+
+# Get all linux partitions which contain /grub/menu.lst or
+# /boot/grub/menu.lst
+    mkdir -p ${TEMPDIR}/mnt
+    fdisk -l | grep "^/dev/" | \
+        { while read dev s e blocks id t; do
+            if [ "${id}" = "83" ]; then
+                if [ -n "$( grep "!${dev}!" ${TEMPDIR}/mounts )" ]; then
+                    # Don't include the new installation
+                    continue
+                fi
+                mount ${dev} ${TEMPDIR}/mnt 2>/dev/null
+                if [ $? -ne 0 ]; then continue; fi
+                if [ -f ${TEMPDIR}/mnt/grub/menu.lst ]; then
+                    echo "${dev}"
+                fi
+                if [ -f ${TEMPDIR}/mnt/boot/grub/menu.lst ]; then
+                    echo "${dev} /boot"
+                fi
+                umount ${TEMPDIR}/mnt
+            fi
+        done }
+
+

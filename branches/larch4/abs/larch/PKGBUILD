@@ -1,0 +1,24 @@
+# Maintainer: gradgrind <gradgrind@online.de>
+pkgname=larch
+pkgver=4.24
+pkgrel=1
+pkgdesc="Scripts for generating live Archlinux CDs and USB-sticks"
+url="http://larch.berlios.de"
+depends=('pacin>=2.10')
+arch=(i686 x86_64)
+license=('GPL')
+
+# Very evil!
+_source="../../${pkgname}"
+
+build() {
+  mkdir -p ${startdir}/pkg/usr
+  cp -a ${startdir}/${_source}/bin ${startdir}/pkg/usr
+  cp -a ${startdir}/${_source}/share ${startdir}/pkg/usr
+
+  # Compile shutdown unmount-helper
+  cp ${startdir}/${_source}/src/rc.shutdown2.c ${startdir}/src
+  cd ${startdir}/src
+  klcc -static -o rc.shutdown2 rc.shutdown2.c || return 1
+  cp rc.shutdown2 ${startdir}/pkg/usr/share/larch/live_files/etc
+}
