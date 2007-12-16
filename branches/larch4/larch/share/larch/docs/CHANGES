@@ -1,4 +1,7 @@
 16.12.2007:
+v.4.26:
+ - Added automatic setting of init script to rc.sysinit0 when copying
+   inittab from 'system'.
 v.4.25:
  - Default inittab now copied from 'system' to overlay (if none in
    overlay.xpk), removed from live_files.
