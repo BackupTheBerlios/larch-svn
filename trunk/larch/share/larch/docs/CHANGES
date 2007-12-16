@@ -1,3 +1,7 @@
+16.12.2007:
+ - Default inittab now copied from 'system' to overlay (if none in
+   overlay.xpk), removed from live_files.
+
 2007.12.09
  - Version 5.0.5
  - Added acceptance of 'root=' boot option to select location of larch system.

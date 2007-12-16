@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2007.12.07
+# 2007.12.16
 
 # Location for the CD image
 CDDATA="${LARCHBUILD}/cd"
@@ -28,7 +28,7 @@ CDDATA="${LARCHBUILD}/cd"
 
 #+++++++mklive: main function for building larch system from
 #               Arch installation at ${INSTLDIR}, which can
-#               be '' to use currently running Arch installation.
+#               be '', to use currently running Arch installation.
 
 mklive ()
 {
@@ -254,6 +254,9 @@ mklive ()
     cp -dR ${LARCHDATA}/docs/html ${LARCHBUILD}/tmp/overlay/larch
 
     # There must be /etc/inittab and /etc/rc.conf in the final overlay
+    if [ ! -f ${LARCHBUILD}/tmp/overlay/etc/inittab ]; then
+        cp ${INSTLDIR}/etc/inittab ${LARCHBUILD}/tmp/overlay/etc
+    fi
     # Generate customised /etc/rc.conf
     # If there is one in the given overlay, use that
     if [ ! -f ${LARCHBUILD}/tmp/overlay/etc/rc.conf ]; then
