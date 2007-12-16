@@ -1,0 +1,40 @@
+#!/bin/bash
+
+# This ejects the boot cd in copy-to-ram mode. When not in 'c2r' mode
+# it does nothing.
+# It will normally ask for confirmation, but this can be disabled by
+# passing option '-f'.
+# In addition, it modifies /.livesys/bootdevice so that the shutdown
+# script won't try to eject it a second time!
+
+dialog_yn ()
+{
+    # Await yes or no
+    while true; do
+        read -p "$1 [yY/nN]: " ans
+        if [ -n "$( echo ${ans} | grep '^ *[yY]' )" ]; then
+            return 0
+        elif [ -n "$( echo ${ans} | grep '^ *[nN]' )" ]; then
+            return 1
+        fi
+    done
+}
+
+# calling with option -f causes confirmation dialog to be skipped
+if [ -e "/.livesys/c2r" ]; then
+    # find all CD-ROMs by using /proc entries
+    for CDDEVICE in $( cat /proc/sys/dev/cdrom/info | head -n 3 | \
+            tail -n 1 | cut -d ":" -f 2 ); do
+        if [ -n "$( grep "^/dev/${CDDEVICE}" /.livesys/bootdevice 2>/dev/null )" ]; then
+            if [ "$1" != "-f" ]; then
+                dialog_yn "Eject boot CD/DVD?"
+                if [ $? -ne 0 ]; then break; fi
+            fi
+            echo "Ejecting live CD"
+            umount /.livesys/livecd 2>/dev/null
+            #eject $CDDEVICE >/dev/null 2>/dev/null
+            cdrecord dev=/dev/${CDDEVICE} -eject >/dev/null 2>&1
+            sed -i 's|^|#|' /.livesys/bootdevice
+        fi
+    done
+fi

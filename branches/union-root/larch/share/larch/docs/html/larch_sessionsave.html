@@ -1,0 +1,271 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+
+<head>
+  <meta content="text/html;charset=UTF-8" http-equiv="Content-Type" />
+  <title>larch session saving</title>
+  <meta content="gradgrind" name="author" />
+</head>
+
+<body>
+
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+  <tbody>
+    <tr>
+      <td><a href="larch_fstab.html">Previous: /etc/fstab</a></td>
+
+      <td><a href="larch_docindex.html">Table of Contents</a></td>
+
+      <td><a href="larch_ssh.html">Next: ssh access</a></td>
+    </tr>
+  </tbody>
+</table>
+
+<br />
+
+<h1><big>larch</big> &ndash; a do-it-yourself live Archlinux CD</h1>
+
+<img style="border: 0px solid ; width: 290px; height: 192px;" alt="" src="larchsplash.jpg" name="graphics1" align="right" hspace="10" vspace="10" />
+<br /><br />
+
+<h2>Saving a session back to the boot device (or even somewhere else)</h2>
+
+<p>An easy way to create a customized live-CD or USB-stick is to start from an
+existing one, make whatever changes you like, and then save the result back to
+the CD or USB-stick.
+</p>
+
+<p>In <em>larch</em> the <em>overlay</em> file-system (in the
+<em>squashed</em> files 'overlay.sqf', 'etc.sqf' and 'home.sqf') can be rebuilt
+from the state of the live system when it shuts down.
+This is handled primarily by the script <strong>merge_overlay</strong>, which is
+called at shutdown if the file 'save' in the live-medium's root directory contains
+"yes" and there is no '/.livesys/nosave' file in the running system. That is, the user will be asked if(s)he wants to save the new overlay.
+It merges the contents of the writeable <em>unionfs</em> layer with the old
+overlay and creates a new overlay which will be saved back to the boot device,
+assuming this is writable. For directly writable devices (e.g. USB-stick) the
+default behaviour is to replace the existing files by the new ones, the old
+ones being backed up (same name with '~'-suffix). For CD/DVD indexed files are
+generated, with names like 'overlay_$$$$.sqf', 'etc_$$$$.sqf' and 'home_$$$$$.sqf',
+where the '$' characters are digits. With each save the indexes will be increased by
+one. The very first rewritten overlay will get index '0001'.
+</p>
+
+<p>At boot time, the latest overlay file is chosen, simply on the basis of an
+alphabetical search, so that many modified overlay files can be saved, without
+losing the old ones, and always booting with the newest. On a USB-stick it is
+probably more desirable to remove old overlay files, so the overwrite method is
+now the default in that case.
+</p>
+
+<p>It should be possible to include package addition and removal in the list
+of customizations undertaken using this method, but on the whole I wouldn't
+recommend this. I think it would be better to first rebuild the live-system
+with the desired packages, so that they land in 'system.sqf', keeping down the
+size and complexity of the overlay file. Especially if the aim is to
+develop a custom <em>profile</em>, all packages should definitely be in
+'system.sqf'. This session saving facility is mostly intended for developing
+customized configurations of already installed packages and for the retention
+of user data from one session to another.
+</p>
+
+<p>I'm not sure that I would trust important data to a multi-session CD, but
+I think this feature should open up some interesting possibilities.
+</p>
+
+<h4><a name="de-Act"></a>Activating and deactivating the session-saving feature</h4>
+
+<p>For this feature to be available, certain requirements must be fulfilled. Some
+are perhaps too obvious to be mentioned, but I will list them anyway.
+</p>
+
+<p>Writing to CD/DVD should only be done when the medium is unmounted.
+<em>growisofs</em> is
+more rigorous about this than <em>cdrecord</em>, but theoretically it is
+a requirement. In <em>larch</em> from version 3 the whole
+<em>unionfs</em> / <em>squashfs</em> structure has been organized so that
+the boot medium can be unmounted (at shutdown) even without running 'c2r'.
+Unfortunately this is quite a tricky business, as it is not always easy
+to ensure that there aren't still open files on one of the file-systems
+which has to be unmounted.
+</p>
+
+<p>As already mentioned, the 'save' file in the boot-medium's root directory
+must contain "yes". This is the default when building a <em>larch</em> CD.
+To change this, i.e. to make your original overlay permanent,
+you need to add a file called 'save' to the 'cd-root' directory
+of your build <a href="larch_profiles.html">profile</a>; this file should
+contain anything except "yes" ("no" might be appropriate!).
+</p>
+
+<p>A new overlay can only be saved if the boot medium is writable -
+i.e. USB-stick or writable CD/DVD (that means burnt in multi-session mode!) -
+and there must be enough space for the extra data on it.
+</p>
+
+<p>It can be a little annoying if one is always asked at shutdown whether
+a new overlay should be saved when you only occasionally (maybe only once
+or twice) want to do so. So the session-saving feature may also be
+turned on and off within the overlay. This is a little tricky,
+so pay attention :)!
+</p>
+
+<p>At shutdown, the session-save prompt will only occur if there is no
+'/.livesys/nosave' file. So you can disable or enable the prompt on a
+present-run-only basis by creating or removing this file (it can be an
+empty file, only the file's existence is tested).
+</p>
+
+<p>When the system boots it copies the file '/larch/nosave' (if it exists) to
+'/.livesys/nosave', thus providing a means of remembering your configuration
+from one run to the next. Of course, if you want your configuration to be
+remembered you must save the overlay (remove '/.livesys/nosave') even if
+'/larch/nosave' is present.
+</p>
+
+<h4><a name="custom"></a>Customizing the behaviour using scripts</h4>
+
+<p>Most aspects of the session saving can be customized by writing scripts to
+override the default behaviour. This is unfortunately not a particularly easy
+way to customize the behaviour, as these are shell scripts and their use requires
+some knowledge of the inner workings of the larch live system. If you want to
+write your own scripts to change the behaviour of the larch live system, it will
+almost certainly be necessary to read the existing larch scripts where the
+custom scripts are sourced.
+</p>
+<p>These optional scripts are placed in the
+folder <strong>scripts</strong> in the root folder of the boot device, which is
+copied to <strong>/.livesys/scripts</strong> during booting.
+</p>
+<p>Where the sqf files for booting from are found can be customized:
+</p>
+<ul>
+  <li><strong>get_etc</strong>
+    <p>In hook larch2 (BEWARE: klibc shell script in initramfs, very limited).
+    $etcx must be set to the path to etc*.sqf
+    On entry the value is the default one (from the boot device).
+    </p>
+  </li><strong>get_overlay</strong>
+  <li>
+    <p>  In rc.sysinit0, in 'base' system, so also quite limited.
+    Set $ovlx to the path to the overlay sqf,
+    set $ovlh to the path to the home sqf.
+    On entry the values are the default ones (from the boot device).
+    </p>
+  </li>
+</ul>
+    The session-saving at shutdown involves several scripts, each of the shutdown
+    scripts uses one. I'll start at the end, with the final shutdown code executed in
+    <strong>/etc/rc.shutdown3</strong> (note that only the rather limited
+    'base' environment is available from that script).
+<ul>
+  <li><strong>shutdown-save</strong>
+    <p>This is sourced by <strong>/etc/rc.shutdown3</strong> in order to
+    alter the default saving behaviour. The default behaviour depends on
+    $savedev and $ejectdev:
+    </p>
+    <ol>
+      <li>Save device is CD/DVD, which must be ejected ($savedev = $ejectdev)
+            e.g. savedev='/dev/sr0', ejectdev='/dev/sr0'
+      </li>
+      <li>CD/DVD needs ejecting, save device is USB-stick, etc.
+            e.g. savedev='/dev/sdb1', ejectdev='/dev/sr0'
+      </li>
+      <li>Nothing needs ejecting, save device is USB-stick, etc.
+            e.g. savedev='/dev/sdb1', ejectdev='-'
+      </li>
+      <li>Nothing needs saving, CD/DVD needs ejecting
+            e.g. savedev='-', ejectdev='/dev/sr0'
+      </li>
+      <li>Nothing needs saving, nothing needs ejecting
+            savedev='-', ejectdev='-'
+      </li>
+    </ol><br />
+    <p>Saving to CD/DVD means writing the files in
+    <strong>/.livesys/new-sqf</strong> to a new session.
+    </p>
+    <p>Saving to other devices means mounting the device and renaming any
+    files ending '.sqf_' to the same without the '_'.
+    </p>
+    <p>The script can use $savedev and $ejectdev, which are passed via
+    <strong>rc.shutdown2</strong> from <strong>rc.shutdown</strong>. It can
+    do the saving itself, in which
+    case it should set $savedev to '-', to inhibit the default saving, or
+    it can use the default saving. It can use $savepath (default '') to
+    use a subdirectory (which must exist) within the save device
+    (not CD/DVD), e.g.
+    savepath='/mysaves'
+    </p>
+  </li>
+  <li><strong>shutdown-unmount</strong>
+    <p>This is sourced by <strong>/etc/rc.shutdown3</strong><strong></strong>. It should
+    unmount any remaining mounts which are not accounted for elsewhere
+    (i.e. which arise through customizations). This should only be necessary
+    in the case where system.sqf/base.sqf, overlay.sqf/etc.sqf and home.sqf are
+    on 3 separate devices, as /.livesys/livecd and /.livesys/savedev are
+    already catered for.
+    </p>
+  </li>
+  <li><strong>session-save</strong>
+    <p>This is sourced by <strong>rc.shutdown</strong> after it has set
+    $bdev to the boot CD/DVD device (if there is one which is still
+    mounted at <strong>/.livesys/livecd</strong>), otherwise '-'. Also
+    $savedev='-'.
+    </p>
+    <p>The default behaviour (i.e. without this script) is to set $savedev
+    to the boot device (the device mounted at <strong>/.livesys/livecd</strong>)
+    if this feature is enabled via the <strong>/.livesys/livecd/save</strong>
+    and <strong>/.livesys/nosave</strong> files followed by user confirmation
+    (the old behaviour).
+    </p>
+    <p>This script can use $savedev and/or alternative means, in conjunction
+    with the later scripts (<strong>shutdown-unmount</strong> and
+    <strong>shutdown-save</strong>) to specify
+    how the saving should be done. If it sets $savedev != '-' then the user
+    will be asked if the overlay should be saved, and merge_overlay will
+    be called with $savepath (default <strong>/.livesys/livecd</strong>) as
+    argument. If some other behaviour is wanted, this must then be contained
+    in the script, including asking the user and calling
+    <strong>merge_overlay</strong>, which requires.
+    </p>
+  </li>
+  <li><strong>merge-adjust</strong>
+    <p>This script is sourced by <strong>merge_overlay</strong>, whose
+    default behaviour is to perform the overlay merging operation in memory
+    (in the system tmpfs, merge_base=<strong>/.livesys</strong>), but by
+    setting $merge_base to some other writable directory, say on a disk
+    drive, the merging can be done there.
+    The sqf files are then built (by default) in the $overlaypath directory,
+    with the original name + '_' (as suffix), unless this is not writable
+    (presumably a CD/DVD), in which case indexed files are built to
+    <strong>/.livesys/new-sqf</strong>. Possible customizations might be:
+    </p>
+    <ul>
+      <li>Only rebuild home sqf (no merging is necessary)
+      </li>
+      <li>Use different devices for overlay/etc and home sqfs
+      </li>
+      <li>Use indexed sqfs also on non CD/DVD devices
+      </li>
+    </ul><br />
+    <p>The variables which can be altered are defined and described at the
+    beginning of <strong>merge_overlay</strong>.
+    </p>
+  </li>
+
+</ul>
+
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+  <tbody>
+    <tr>
+      <td><a href="larch_fstab.html">Previous: /etc/fstab</a></td>
+
+      <td><a href="larch_docindex.html">Table of Contents</a></td>
+
+      <td><a href="larch_ssh.html">Next: ssh access</a></td>
+    </tr>
+  </tbody>
+</table>
+
+</body>
+</html>

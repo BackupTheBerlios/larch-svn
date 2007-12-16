@@ -1,0 +1,3 @@
+Before committing changes to larch, you should check that any
+overlay directories you have modified have been repacked.
+Run './pack_overlays'.

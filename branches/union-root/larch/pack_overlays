@@ -1,0 +1,33 @@
+#!/bin/sh
+
+# Test if the script is started by root user. If not, exit
+if [ $UID -ne 0 ]; then
+    echo "Only root can run this"; exit 1
+fi
+
+if ! [ -d share/larch/profiles ]; then
+    echo "No profiles directory found."
+    echo "Must be run from larch base directory."
+    exit 1
+fi
+
+# Pack up all overlays so that only root can unpack them
+#    (to preserve ownerships)
+# Note that profiles which don't have unpacked overlays (i.e. which just
+# have the 'overlay.xpk' archive) won't be touched, they are already ok.
+for p in $( ls share/larch/profiles ); do
+    echo -n "Profile ${p}:"
+    ovd="share/larch/profiles/${p}"
+    if [ -d ${ovd}/overlay ]; then
+        echo "repacking"
+        # remove files ending in ~ (backups)
+        find ${ovd}/overlay/ -name "*~" -exec rm -r '{}' 2>/dev/null \;
+        # and remove old archive
+        rm -f ${ovd}/overlay.xpk
+
+        bin/xpack -r ${ovd}/overlay ${ovd}/overlay.xpk
+        rm -r ${ovd}/overlay
+    else
+        echo "ok"
+    fi
+done

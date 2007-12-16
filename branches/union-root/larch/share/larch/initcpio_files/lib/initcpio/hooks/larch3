@@ -1,0 +1,184 @@
+# larch3 -  live 'hook' for mkinitcpio:
+#                 determine overlay file,
+#                 deal with c2r,
+#                 mount base system,
+#                 load overlay
+#                 set up unioned root filesystem,
+
+# Author: Michael Towers (gradgrind) <mt.42@web.de>
+#
+# This file is part of the larch project.
+#
+#    larch is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 2 of the License, or
+#    (at your option) any later version.
+#
+#    larch is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with larch; if not, write to the Free Software Foundation, Inc.,
+#    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+#
+#----------------------------------------------------------------------------
+# 2007.12.16
+
+run_hook ()
+{
+    if [ "x${LDEV}" = "x" ]; then
+        err "Sorry, couldn't find boot medium ..."
+        break="y"
+        return
+    fi
+
+
+    # Copy scripts to memory - NEED 'cp -a'
+    if [ -d /.livesys/livecd/scripts ]; then
+        cp  -a /.livesys/livecd/scripts /tfs
+    fi
+
+    # Get latest overlay file
+    pwdold=$( pwd )
+    cd /tfs/livecd
+    for ovl in overlay.ovl*; do ovlx=${ovl}; done
+    cd ${pwdold}
+
+    # A possibility to choose another one using a script:
+    # ovlx must be set to the path to the compressed overlay archive
+    if [ -f /tfs/livecd/scripts/get_ovl ]; then
+        . /tfs/livecd/scripts/get_ovl
+    fi
+
+    # Switch to newer overlay (trailing '_'), if available, backup up
+    # previous one - NEED 'mv -b'
+    # "${ovlx%_}" removes a trailing '_' (if any).
+    if [ "${ovlx%_}" != "${ovlx}" ]; then
+        msg_ ":: Using new overlay, backing up old"
+        /bin/mount -o remount,rw tmpfs /tfs/livecd
+        mv -b ${ovlx} ${ovlx%_}
+        ovlx=${ovlx%_}
+        /bin/mount -o remount,ro tmpfs /tfs/livecd
+    fi
+
+    # Path to compressed base system
+    sysSqf=/tfs/livecd/system.sqf
+    # Path to compressed home folder
+    homeSqf=/tfs/livecd/home.sqf
+    if ! [ -f ${homeSqf} ]; then
+        homeSqf=""
+    fi
+
+    # Boot option copy-to-ram (c2r)
+    if [ "${c2r}" = "y" ]; then
+        # force use of swap (if available)
+        :> /tfs/swapon
+        :> /tfs/c2r
+
+        msg_ ":: Copying base system to RAM, this will take a while ..."
+        /bin/cat /tfs/livecd/system.sqf > /tfs/system.sqf
+        sysSqf=/tfs/system.sqf
+
+        if [ "x${homeSqf}" != "x" ]; then
+            msg_ ":: Copying home folder to RAM, this might take a while ..."
+            /bin/cat /tfs/livecd/home.sqf > /tfs/home.sqf
+            homeSqf=/tfs/home.sqf
+        fi
+
+        # Unmount boot device
+        umount /tfs/livecd
+
+    else
+
+        if [ "${swap}" = "y" ]; then
+            :> /tfs/swapon
+        fi
+    fi
+
+    msg_ ":: Mounting squashed images"
+    /bin/mkdir /tfs/system
+    # The klibc mount command doesn't support '-o loop'
+    /bin/losetup /dev/loop0 ${sysSqf}
+    /bin/mount -r -t squashfs /dev/loop0 /tfs/system
+
+    if [ "x${homeSqf}" != "x" ]; then
+        /bin/mkdir /tfs/home
+        # The klibc mount command doesn't support '-o loop'
+        /bin/losetup /dev/loop0 ${homeSqf}
+        /bin/mount -r -t squashfs /dev/loop0 /tfs/home
+    fi
+
+    # NEED tar, lzop
+    msg_ ":: Initializing writeable layer for union (overlay)"
+    /usr/bin/lzop -d < /tfs/livecd/${ovlx} | tar -C /tfs -xf -
+
+    msg_ ":: Setting up union file system"
+    # Make union root
+    mkdir /union
+
+    layers="/tfs/overlay=rw"
+    if [ "x${homeSqf}" != "x" ]; then
+        layers=${layers}:/tfs/home=${sqfmnt}
+    fi
+    layers=${layers}:/tfs/system=${sqfmnt}
+    mount -t ${utype} -o ${bropt}${layers} ${utype} /union
+
+    echo "${utype}" > /tfs/utype
+
+    # Minimal device nodes needed before udev does its work
+    /bin/mkdir /union/dev
+    /bin/mknod /union/dev/console c 5 1
+    /bin/mknod /union/dev/null c 1 3
+    /bin/mknod /union/dev/zero c 1 5
+
+    # Make special directories
+    /bin/mkdir -m 1777 /union/tmp
+    /bin/mkdir /union/media
+    /bin/mkdir /union/sys
+    /bin/mkdir /union/proc
+
+    # Make the tmpfs stuff accessible within the union
+    /bin/mkdir /union/.livesys
+    /bin/mkdir /union/.livesys/system
+    /bin/mkdir /union/.livesys/overlay
+
+    if [ "${c2r}" != "y" ]; then
+        /bin/mkdir /union/.livesys/livecd
+        /bin/mount -o bind /tfs/livecd /union/.livesys/livecd
+    fi
+
+    /bin/mount -o bind /tfs /union/.livesys
+    /bin/mount -o bind /tfs/system /union/.livesys/system
+    /bin/mount -o bind /tfs/overlay /union/.livesys/overlay
+
+    if [ "x${homeSqf}" != "x" ]; then
+        /bin/mkdir /union/.livesys/home
+        /bin/mount -o bind /tfs/home /union/.livesys/home
+    fi
+
+    # Remember the boot device
+    echo "${LDEV}" > /tfs/bootdevice
+
+    msg_ ":: End of live system set-up"
+
+    # Now some tweaks to alter 'init' actions from non-larch hooks, etc.
+    # Override rootdelay from usb hook (?)
+    if [ "x${larchdelay}" = "x"  ]; then
+        # To avoid spurious udevd pid numbers
+        export rootdelay=1
+    else
+        # Allow adjustment via boot option
+        export rootdelay=${larchdelay}
+    fi
+    # root must be set to something or other, even though larch doesn't
+    # need it ...
+    export root="/dev/loop0"
+}
+
+#######
+# The actual root switch occurs later, when 'init' execs 'kinit'.
+# I handle this by overwriting the 'kinit' binary with my own script.
+# This will unmount dev, sys and proc and then exec run-init.
+#######
