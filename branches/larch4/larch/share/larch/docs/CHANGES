@@ -1,4 +1,6 @@
 16.12.2007:
+v.4.27:
+ - Updated syslinux stuff - the graphical isolinux boot now works in qemu!
 v.4.26:
  - Added automatic setting of init script to rc.sysinit0 when copying
    inittab from 'system'.
