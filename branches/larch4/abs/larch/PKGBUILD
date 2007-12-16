@@ -1,6 +1,6 @@
 # Maintainer: gradgrind <gradgrind@online.de>
 pkgname=larch
-pkgver=4.24
+pkgver=4.25
 pkgrel=1
 pkgdesc="Scripts for generating live Archlinux CDs and USB-sticks"
 url="http://larch.berlios.de"
