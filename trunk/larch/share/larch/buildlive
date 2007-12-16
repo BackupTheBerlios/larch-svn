@@ -256,6 +256,8 @@ mklive ()
     # There must be /etc/inittab and /etc/rc.conf in the final overlay
     if [ ! -f ${LARCHBUILD}/tmp/overlay/etc/inittab ]; then
         cp ${INSTLDIR}/etc/inittab ${LARCHBUILD}/tmp/overlay/etc
+        sed -i "s|^rc::sysinit:.*|rc::sysinit:/etc/rc.sysinit0|" \
+                ${LARCHBUILD}/tmp/overlay/etc/inittab
     fi
     # Generate customised /etc/rc.conf
     # If there is one in the given overlay, use that
