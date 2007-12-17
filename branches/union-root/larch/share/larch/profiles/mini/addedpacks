@@ -1,10 +1,10 @@
 # These are needed to build a live CD
 squashfs-tools
+lzop
 
 # At present these are also required packages
 # (needed to eject a cd, and for session saving)
-cdrkit
-dvd+rw-tools
+eject
 
 # You need a kernel with 'squashfs' and 'unionfs'.
 #kernel26 is now in 'base'
@@ -27,3 +27,5 @@ lynx
 mc
 unzip
 zip
+#cdrkit
+#dvd+rw-tools
