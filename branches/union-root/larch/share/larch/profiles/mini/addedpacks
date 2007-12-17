@@ -14,11 +14,10 @@ aufs
 #cvsup
 
 # Useful for use as installer, etc.
+# dialog, diffutils now in base
+# mdadm, lvm2 now in base
 ntfsprogs
 parted
-mdadm
-lvm2
-diffutils
 
 # generally useful tools which don't require X
 openssh

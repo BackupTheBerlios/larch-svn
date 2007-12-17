@@ -24,7 +24,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2007.12.16
+# 2007.12.17
 
 run_hook ()
 {
@@ -34,11 +34,10 @@ run_hook ()
         return
     fi
 
-
-    # Copy scripts to memory - NEED 'cp -a'
-    if [ -d /.livesys/livecd/scripts ]; then
-        cp  -a /.livesys/livecd/scripts /tfs
-    fi
+    # Path to compressed base system
+    sysSqf=/tfs/livecd/system.sqf
+    # Path to compressed home folder
+    homeSqf=/tfs/livecd/home.sqf
 
     # Get latest overlay file
     pwdold=$( pwd )
@@ -46,10 +45,9 @@ run_hook ()
     for ovl in overlay.ovl*; do ovlx=${ovl}; done
     cd ${pwdold}
 
-    # A possibility to choose another one using a script:
-    # ovlx must be set to the path to the compressed overlay archive
-    if [ -f /tfs/livecd/scripts/get_ovl ]; then
-        . /tfs/livecd/scripts/get_ovl
+    # A possibility to use alternative files:
+    if [ -f /tfs/livecd/boot-init ]; then
+        . /tfs/livecd/boot-init
     fi
 
     # Switch to newer overlay (trailing '_'), if available, backup up
@@ -63,10 +61,7 @@ run_hook ()
         /bin/mount -o remount,ro tmpfs /tfs/livecd
     fi
 
-    # Path to compressed base system
-    sysSqf=/tfs/livecd/system.sqf
-    # Path to compressed home folder
-    homeSqf=/tfs/livecd/home.sqf
+    # Maybe there is no separate 'home' image
     if ! [ -f ${homeSqf} ]; then
         homeSqf=""
     fi
@@ -143,11 +138,6 @@ run_hook ()
     /bin/mkdir /union/.livesys
     /bin/mkdir /union/.livesys/system
     /bin/mkdir /union/.livesys/overlay
-
-    if [ "${c2r}" != "y" ]; then
-        /bin/mkdir /union/.livesys/livecd
-        /bin/mount -o bind /tfs/livecd /union/.livesys/livecd
-    fi
 
     /bin/mount -o bind /tfs /union/.livesys
     /bin/mount -o bind /tfs/system /union/.livesys/system

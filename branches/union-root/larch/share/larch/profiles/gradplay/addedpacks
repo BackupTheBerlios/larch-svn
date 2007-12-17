@@ -12,16 +12,15 @@ aufs
 
 # Needed by the installer
 #python
-# dialog is now in basepacks!
+# dialog, diffutils now in base
 
 # If using 'abs':
 #cvsup
 
 # Useful for use as installer, etc.
+# mdadm, lvm2 now in base
 #ntfsprogs
 #parted
-#mdadm
-#lvm2
 #hwd
 
 # generally useful tools which don't require X

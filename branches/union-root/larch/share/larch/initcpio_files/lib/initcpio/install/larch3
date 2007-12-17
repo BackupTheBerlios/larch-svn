@@ -11,7 +11,6 @@ install ()
     add_binary /bin/tar
     add_binary /usr/bin/lzop
     add_binary /bin/mv
-    add_binary /bin/cp
 
     # do I need these?
     add_file /lib/libnss_files.so.2

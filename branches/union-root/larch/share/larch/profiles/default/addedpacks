@@ -15,16 +15,14 @@ aufs
 
 # Needed by the installer
 python
-# dialog is now in basepacks!
+# dialog, diffutils now in base
 # If using 'abs':
 cvsup
-diffutils
 
 # Useful for use as installer, etc.
+# mdadm, lvm2 now in base
 ntfsprogs
 parted
-mdadm
-lvm2
 hwd
 qtparted
 

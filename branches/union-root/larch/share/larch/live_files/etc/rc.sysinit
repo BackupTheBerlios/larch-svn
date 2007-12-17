@@ -4,7 +4,7 @@
 #
 # based on the version in 'initscripts-2007.11-2'
 #
-#2007.12.16
+#2007.12.17
 
 . /etc/rc.conf
 . /etc/rc.d/functions
@@ -211,9 +211,10 @@ stat_busy "Initializing /etc/mtab"
 
 /bin/rm -f /etc/mtab*
 
-# Make entries for tmpfs (~ the root file-system) and the live CD in /etc/mtab
-grep "^tmpfs */ " /proc/mounts >>/etc/mtab
-grep "/.livesys/livecd" /proc/mounts >>/etc/mtab
+# Make entries for aufs/unionfs and tmpfs in /etc/mtab
+grep "^aufs */ " /proc/mounts >>/etc/mtab
+grep "^unionfs */ " /proc/mounts >>/etc/mtab
+grep "^tmpfs */.livesys " /proc/mounts >>/etc/mtab
 
 ## make sure / gets written to /etc/mtab
 #/bin/mount -o remount,rw /

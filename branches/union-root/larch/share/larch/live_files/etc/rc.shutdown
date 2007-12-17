@@ -4,7 +4,7 @@
 #
 # based on the version in 'initscripts-2007.11-2'
 #
-# 2007.12.16
+# 2007.12.17
 
 . /etc/rc.conf
 . /etc/rc.d/functions
@@ -77,36 +77,60 @@ modprobe -r psmouse >/dev/null 2>&1
 
 ############################# Deal with ejecting
 # See if boot device still mounted and ejectable (CD/DVD)
-ejectdev=$( cat /.livesys/bootdevice )
-if [ -n "$( ls ${ejectdev} )" ]; then
-        if [ -n "$( echo "${ejectdev}" | grep "d[a-z][1-9]" )" ]; then
-            # does not need to be ejected
-            ejectdev=''
+bootdev=$( cat /.livesys/bootdevice )
+ejectdev=''
+savedev=${bootdev}
+cdroms=$( cat /proc/sys/dev/cdrom/info | { while read a b c; do
+        if [ "${a}" = "drive" -a "${b}" = "name:" ]; then
+            echo "${c}"
+            break
         fi
-fi
+    done
+} )
+for d in ${cdroms}; do
+    if [ "/dev/${d}" = "${bootdev}" ]; then
+        # booted from CD/DVD, by default no session-save possible
+        savedev=''
+        if grep "^${bootdev} " /proc/mounts &>/dev/null; then
+            # it needs to be ejected
+            ejectdev=${bootdev}
+        fi
+        break
+    fi
+done
 
 ############################# Deal with session saving
-#savedev='-'
-#savepath=/.livesys/livecd
-#if [ -f /.livesys/scripts/session-save ]; then
-#    . /.livesys/scripts/session-save
-#elif grep "yes" /.livesys/livecd/save &>/dev/null && \
-#        ! [ -e /.livesys/nosave ]; then
-    # Default is to save to the boot device
-#        mount -o remount,rw /.livesys/livecd
-#        savedev=${bdev}
-#fi
+# The default is to save to boot device if writeable (i.e. not CD/DVD)
+savepath=/.livesys/session
+mkdir -p ${savepath}
+overlay=overlay.ovl_
+dontask=''
 
-#if [ "${savedev}" != "-" ]; then
-#    read -p "// Save session? [Y/n]: " ans
-#    if [ -z "$( echo ${ans} | grep '^ *[Nn]' )" ]; then
-#        if ! /larch/merge_overlay "${savepath}"; then
-#            savedev='-'
-#        fi
-#    else
-#        savedev='-'
-#    fi
-#fi
+if [ -f /larch/session-save ]; then
+    . /larch/session-save
+
+elif [ -n "${savedev}" ]; then
+    mount ${savedev} ${savepath} &>/dev/null
+fi
+
+if [ -f ${savepath}/larchsave ]; then
+    if [ -z "${dontask}" ]; then
+        read -p "// Save session? [Y/n]: " ans
+        if [ -z "$( echo ${ans} | grep '^ *[Nn]' )" ]; then
+            dontask="y"
+        fi
+    if [ -n "${dontask}" ]; then
+        savedirs='etc'
+        for d in bin boot home larch lib mnt opt root sbin srv usr var; do
+            if [ -d /.livesys/session/overlay/${d} ]; then
+                savedirs="${savedirs},${d}"
+            fi
+        done
+        tar -cf - -C /.livesys/session overlay/{${savedirs}} | \
+                lzop > ${savepath}/${overlay}
+    fi
+fi
+#############################
 
 stat_busy "Deactivating Swap"
 /sbin/swapoff -a
@@ -145,9 +169,9 @@ if [ "$USELVM" = "yes" -o "$USELVM" = "YES" ]; then
     fi
 fi
 
-if [ "${ejectdev}" != "-" ]; then
+if [ -n "${ejectdev}" ]; then
     echo "Ejecting live CD"
-    cdrecord dev=${ejectdev} -eject >/dev/null 2>&1
+    eject ${ejectdev}
     echo "========================================"
     echo "It's safe to switch the computer off now"
     echo -ne "Press Enter to continue"
