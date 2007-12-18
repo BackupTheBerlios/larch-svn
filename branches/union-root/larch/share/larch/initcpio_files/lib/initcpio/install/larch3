@@ -10,6 +10,9 @@ install ()
 
     add_binary /bin/tar
     add_binary /usr/bin/lzop
+    add_binary /sbin/mksquashfs
+    add_binary /bin/mv
+    add_binary /bin/umount /bin/umountx
 
     # do I need these?
     add_file /lib/libnss_files.so.2

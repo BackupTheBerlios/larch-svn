@@ -248,11 +248,6 @@ mklive ()
 
     #***** Copy over files specific to larch system
 
-    # Should keep backups of certain original files:
-    #    rc.sysinit, rc.shutdown
-    # By never changing these (maybe the whole /etc directory) in system.sqf
-    # this can be guaranteed.
-
     # For deletion of live-only stuff (on installation) there needs to be
     # a list of the files concerned. Only those not in /larch need be noted.
     larchfiles=${LARCHBUILD}/tmp/overlay/larch/larchfiles
@@ -276,6 +271,15 @@ mklive ()
         if [ "${f:0:6}" != "/larch" ]; then
             echo "${f}" >> ${larchfiles}
         fi
+    done
+
+    # Should keep backups of certain original files:
+    backup="/etc/rc.sysinit /etc/rc.shutdown"
+    mkdir -p ${LARCHBUILD}/tmp/overlay/larch/backup
+    for f in ${backup}; do
+        d=$( dirname ${LARCHBUILD}/tmp/overlay/larch/backup${f} )
+        mkdir -p ${d}
+        cp ${INSTLDIR}${f} ${d}
     done
 
     # Copy over the larch documentation

@@ -26,6 +26,74 @@
 #----------------------------------------------------------------------------
 # 2007.12.18
 
+merge ()
+{
+    sysmerge=""
+    homemerge=""
+    newSysSqf=${sysSqf}_
+    newHomeSqf=${homeSqf}_
+
+    # A possibility to use alternative files:
+    if [ -f ${cdmount}/boot-merge ]; then
+        . ${cdmount}/boot-merge
+    fi
+
+    if [ "${merge}" = "all" ]; then
+
+        mount -o remount,rw ${LDEV} ${cdmount}
+        sysmerge="yes"
+
+        ignoredirs="dev mnt media proc sys tmp .livesys"
+        if [ "_" != "${newHomeSqf}" ]; then
+            ignoredirs="${ignoredirs} home"
+            homemerge="yes"
+        fi
+
+        msg_ ":: Merging system: ${sysSqf}"
+        /sbin/mksquashfs "/union" "${newSysSqf}" -e ${ignoredirs}
+
+    elif [ "${merge}" = "home" ] && [ "_" != "${newHomeSqf}" ]; then
+
+        mount -o remount,rw ${LDEV} ${cdmount}
+        homemerge="yes"
+
+    elif [ "x${merge}" = "x" ]; then
+
+        return 1
+
+    else
+
+        echo "ERROR: bad merge option (must be 'all' or 'home')"
+        return 0
+
+    fi
+
+    if [ "x${homemerge}" != "x" ]; then
+        msg_ ":: Merging /home: ${homeSqf}"
+        /sbin/mksquashfs "/union/home" "${newHomeSqf}" "-keep-as-directory"
+    fi
+
+    # Now need to unmount the old files, so that they can be replaced.
+    # NEEDS normal umount (with -d option), as umountx
+    /bin/umountx /union
+    /bin/umountx -d /tfs/system
+    /bin/umountx -d /tfs/home 2>1 >/dev/null
+
+    if [ "x${sysmerge}" != "x" ]; then
+        mv -f ${newSysSqf} ${sysSqf}
+    fi
+    if [ "x${homemerge}" != "x" ]; then
+        mv -f ${newHomeSqf} ${homeSqf}
+    fi
+
+    # Recreate the overlay archive
+    mkdir /overlay
+    tar -cf - -C / overlay | lzop > ${ovlx}
+
+    mount -o remount,ro ${LDEV} ${cdmount}
+    return 0
+}
+
 run_hook ()
 {
     if [ "x${LDEV}" = "x" ]; then
@@ -104,6 +172,12 @@ run_hook ()
     fi
     layers=${layers}:/tfs/system=${sqfmnt}
     mount -t ${utype} -o ${bropt}${layers} ${utype} /union
+
+    # Handle merging overly back into squashed system archives
+    if merge; then
+        echo "Rebooting"
+        /bin/reboot
+    fi
 
     echo "${utype}" > /tfs/utype
 
