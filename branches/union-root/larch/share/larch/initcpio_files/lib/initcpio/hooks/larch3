@@ -88,6 +88,7 @@ merge ()
 
     # Recreate the overlay archive
     mkdir /overlay
+    nuke ${ovlx}
     tar -cf - -C / overlay | lzop > ${ovlx}
 
     mount -o remount,ro ${LDEV} ${cdmount}
