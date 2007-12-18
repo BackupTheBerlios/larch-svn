@@ -38,9 +38,8 @@ run_hook ()
     sysSqf=${cdmount}/system.sqf
     # Path to compressed home folder
     homeSqf=${cdmount}/home.sqf
-
-    # Get latest overlay file
-    for ovl in ${cdmount}/overlay.ovl*; do ovlx=${ovl}; done
+    # Default overlay file
+    ovlx=${cdmount}/overlay.ovl
 
     # A possibility to use alternative files:
     if [ -f ${cdmount}/boot-init ]; then

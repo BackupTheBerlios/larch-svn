@@ -10,7 +10,6 @@ install ()
 
     add_binary /bin/tar
     add_binary /usr/bin/lzop
-    add_binary /bin/mv
 
     # do I need these?
     add_file /lib/libnss_files.so.2
