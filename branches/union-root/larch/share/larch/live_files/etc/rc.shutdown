@@ -4,7 +4,7 @@
 #
 # based on the version in 'initscripts-2007.11-2'
 #
-# 2007.12.17
+# 2007.12.18
 
 . /etc/rc.conf
 . /etc/rc.d/functions
@@ -101,33 +101,34 @@ done
 
 ############################# Deal with session saving
 # The default is to save to boot device if writeable (i.e. not CD/DVD)
-savepath=/.livesys/session
-mkdir -p ${savepath}
-overlay=overlay.ovl_
+savepath=/.livesys/medium
+#mkdir -p ${savepath}
+overlay=overlay.ovl
 dontask=''
 
 if [ -f /larch/session-save ]; then
     . /larch/session-save
-
-elif [ -n "${savedev}" ]; then
-    mount ${savedev} ${savepath} &>/dev/null
 fi
 
-if [ -f ${savepath}/larchsave ]; then
+if [ -n "${savedev}" ] && [ -f ${savepath}/save ]; then
+    mount -o remount,rw ${savepath} &>/dev/null
     if [ -z "${dontask}" ]; then
         read -p "// Save session? [Y/n]: " ans
         if [ -z "$( echo ${ans} | grep '^ *[Nn]' )" ]; then
             dontask="y"
         fi
+    fi
     if [ -n "${dontask}" ]; then
-        savedirs='etc'
+        savedirs='overlay/etc'
         for d in bin boot home larch lib mnt opt root sbin srv usr var; do
-            if [ -d /.livesys/session/overlay/${d} ]; then
-                savedirs="${savedirs},${d}"
+            if [ -d /.livesys/overlay/${d} ]; then
+                savedirs="${savedirs} overlay/${d}"
             fi
         done
-        tar -cf - -C /.livesys/session overlay/{${savedirs}} | \
-                lzop > ${savepath}/${overlay}
+        if [ -f ${savepath}/${overlay} ]; then
+            mv -f ${savepath}/${overlay} ${savepath}/${overlay}~
+        fi
+        tar -cf - -C /.livesys ${savedirs} | lzop > ${savepath}/${overlay}
     fi
 fi
 #############################

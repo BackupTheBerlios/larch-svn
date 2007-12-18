@@ -21,7 +21,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-#2007.12.10
+#2007.12.17
 
 # Replacement for msg which includes leading and trailing spaces
 msg_ () { [ "${quiet}" != "y" ] && echo "$@"; }
@@ -66,7 +66,7 @@ run_hook ()
     /bin/mount -t tmpfs -o "size=${TFSSIZE}" tmpfs "/tfs"
 
     # Directory for test mounts (and then for live CD)
-    cdmount="/tfs/livecd"
+    cdmount="/livecd"
     /bin/mkdir "${cdmount}"
 
     # look for livecd data directory, first try ${root}

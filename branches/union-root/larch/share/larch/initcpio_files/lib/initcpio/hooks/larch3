@@ -24,7 +24,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2007.12.17
+# 2007.12.18
 
 run_hook ()
 {
@@ -35,30 +35,16 @@ run_hook ()
     fi
 
     # Path to compressed base system
-    sysSqf=/tfs/livecd/system.sqf
+    sysSqf=${cdmount}/system.sqf
     # Path to compressed home folder
-    homeSqf=/tfs/livecd/home.sqf
+    homeSqf=${cdmount}/home.sqf
 
     # Get latest overlay file
-    pwdold=$( pwd )
-    cd /tfs/livecd
-    for ovl in overlay.ovl*; do ovlx=${ovl}; done
-    cd ${pwdold}
+    for ovl in ${cdmount}/overlay.ovl*; do ovlx=${ovl}; done
 
     # A possibility to use alternative files:
-    if [ -f /tfs/livecd/boot-init ]; then
-        . /tfs/livecd/boot-init
-    fi
-
-    # Switch to newer overlay (trailing '_'), if available, backup up
-    # previous one - NEED 'mv -b'
-    # "${ovlx%_}" removes a trailing '_' (if any).
-    if [ "${ovlx%_}" != "${ovlx}" ]; then
-        msg_ ":: Using new overlay, backing up old"
-        /bin/mount -o remount,rw tmpfs /tfs/livecd
-        mv -b ${ovlx} ${ovlx%_}
-        ovlx=${ovlx%_}
-        /bin/mount -o remount,ro tmpfs /tfs/livecd
+    if [ -f ${cdmount}/boot-init ]; then
+        . ${cdmount}/boot-init
     fi
 
     # Maybe there is no separate 'home' image
@@ -73,17 +59,17 @@ run_hook ()
         :> /tfs/c2r
 
         msg_ ":: Copying base system to RAM, this will take a while ..."
-        /bin/cat /tfs/livecd/system.sqf > /tfs/system.sqf
+        /bin/cat ${sysSqf} > /tfs/system.sqf
         sysSqf=/tfs/system.sqf
 
         if [ "x${homeSqf}" != "x" ]; then
             msg_ ":: Copying home folder to RAM, this might take a while ..."
-            /bin/cat /tfs/livecd/home.sqf > /tfs/home.sqf
+            /bin/cat ${homeSqf} > /tfs/home.sqf
             homeSqf=/tfs/home.sqf
         fi
 
         # Unmount boot device
-        umount /tfs/livecd
+        umount ${cdmount}
 
     else
 
@@ -107,7 +93,7 @@ run_hook ()
 
     # NEED tar, lzop
     msg_ ":: Initializing writeable layer for union (overlay)"
-    /usr/bin/lzop -d < /tfs/livecd/${ovlx} | tar -C /tfs -xf -
+    /usr/bin/lzop -d < ${ovlx} | tar -C /tfs -xf -
 
     msg_ ":: Setting up union file system"
     # Make union root
@@ -136,12 +122,13 @@ run_hook ()
 
     # Make the tmpfs stuff accessible within the union
     /bin/mkdir /union/.livesys
-    /bin/mkdir /union/.livesys/system
-    /bin/mkdir /union/.livesys/overlay
-
     /bin/mount -o bind /tfs /union/.livesys
+
+    /bin/mkdir /union/.livesys/medium
+
     /bin/mount -o bind /tfs/system /union/.livesys/system
     /bin/mount -o bind /tfs/overlay /union/.livesys/overlay
+    /bin/mount -o bind ${cdmount} /union/.livesys/medium
 
     if [ "x${homeSqf}" != "x" ]; then
         /bin/mkdir /union/.livesys/home
