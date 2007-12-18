@@ -128,7 +128,8 @@ if [ -n "${savedev}" ] && [ -f ${savepath}/save ]; then
         if [ -f ${savepath}/${overlay} ]; then
             mv -f ${savepath}/${overlay} ${savepath}/${overlay}~
         fi
-        tar -cf - -C /.livesys ${savedirs} | lzop > ${savepath}/${overlay}
+        tar -cf - --exclude=overlay/var/log -C /.livesys ${savedirs} | \
+                lzop > ${savepath}/${overlay}
     fi
 fi
 #############################
