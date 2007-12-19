@@ -63,9 +63,8 @@ generating entries in '/etc/fstab' and mount points in '/mnt'.
 This must however be enabled
 in '/etc/rc.conf' (e.g. by putting the required entries in 'rcconfx' in the
 <em>profile</em> used to build the <em>larch</em> system). USELVM="yes" must
-be set and the module 'dm-mod' must be loaded (as of larch-3.6 this is done
-automatically when USELVM="yes" is set, previously it had to be in the
-MODULES array). The supplied 'mini' profile
+be set and the module 'dm-mod' must be loaded (this is done
+automatically when USELVM="yes" is set). The supplied 'mini' profile
 (not 'mini_de') contains this feature, and can thus be taken as an example.
 </p>
 

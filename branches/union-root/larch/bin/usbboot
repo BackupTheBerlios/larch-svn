@@ -21,7 +21,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-#
+# 2007.12.19
 
 APP="$( basename $0 )"
 # Get path to larch base directory, via the location of this script
@@ -127,9 +127,8 @@ if [ $? != 0 ]; then
   exit 3
 fi
 cp -a ${CDDATA}/* ${stick}
-mv ${stick}/isolinux/* ${stick}
-mv ${stick}/isolinux.cfg ${stick}/syslinux.cfg
-rm -r ${stick}/isolinux*
+mv ${stick}/isolinux ${stick}/syslinux
+mv ${stick}/syslinux/isolinux.cfg ${stick}/syslinux/syslinux.cfg
 
 umount ${stick}
 

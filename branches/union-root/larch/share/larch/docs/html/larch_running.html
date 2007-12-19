@@ -81,21 +81,20 @@ automatic configuration.
 newbie friendly as an X11 desktop, but still quite capable. I always like to have
 <em>mc</em> available, it's a real godsend for non-geeks (you should also install
 <em>lynx</em> so that HTML files can be displayed on the console - at a
-pinch you can also surf with it, but it is painful). Because of the high
-probability of my using <em>mc</em> in a console I have not set my default
-locale to UTF-8 - at present <em>mc</em> can't cope with it (but in the
-community repo there is mc-utf8, which seems to work pretty well).
+pinch you can also surf with it, but it is painful). Note that the <em>mc</em>
+package in the Arch 'extra' repository is not UTF-8 enabled, but in the
+community repo there is <em>mc-utf8</em>, which seems to work pretty well).
 </p>
 
 <p> If your console keyboard map is
 wrong, try running <i>km</i> (I stole this from the
 standard Arch install CD and modified it a bit to work in <em>larch</em>).
-But bear in mind that this only changes the keyboard map for the current run.
-If you want to 'session-save' the keyboard change, the keyboard map must also be
-set in '/etc/rc.conf'.
+It also modifies '/etc/rc.conf', so the change can be retained for subsequent
+runs by performing a 'session-save'.
 </p>
 
 <p>To get X working, you can try <em>xorgconfig</em>, or maybe <em>hwd</em>.
+Nowadays X often works quite well even without an 'xorg.conf'.
 As a last resort, or for final tweaking, you can edit <strong>/etc/X11/xorg.conf</strong>
 by hand. Start X with <em>startx</em>.
 </p>
@@ -120,26 +119,9 @@ Nearly all configuration details should be just the same as in a normal,
 hard-disk based installation.
 </p>
 
-<h4><a name="eject"></a>Ejecting the live CD (only with copy-to-ram)</h4>
-
-<p>The script <strong>eject_boot_dev</strong> may be used to unmount and eject
-the boot CD, if the boot parameter 'c2r' was used, i.e. if the system has
-been copied to memory, thus freeing up the drive for other disks.
-</p>
-
-<h4><a name="larch_repo"></a>Using a custom package repository on the boot medium</h4>
-
-<p>The build scripts allow the inclusion of a custom package repository on the
-boot medium, in the directory 'packages'. This repository is given the name 'live'.
-By default this is not activated in
-'/etc/pacman.conf', but a little script, <strong>live_repo_on</strong>,
-is provided to activate it. It is placed at the head of the repository list,
-so it will have the highest priority. Note that 'pacman -Sy' must then
-be run before the repository can be used. It will of course only work while the
-medium is mounted, so if using 'copy-to-ram', don't remove the medium.
-</p>
-
 <h4><a name="install"></a>Installation to hard disk</h4>
+
+<p><em>Not currently available for this release.</em></p>
 
 <p>The Arch installer <em>archin</em> may be used to install Archlinux to hard disk.
 It is actually a separate project because it is not

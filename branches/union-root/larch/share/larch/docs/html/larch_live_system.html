@@ -36,51 +36,44 @@ a do-it-yourself live Archlinux CD</h1>
 the same as in a normal system running from hard disk.
 The main differences arise through the live CD/USB system being based on
 a read-only root file-system, so various adjustments are necessary to
-make the areas that must be writeable appear to be so. I say 'appear to be'
+make the areas that must be writable appear to be so. I say 'appear to be'
 because in general any changes will be lost when the system shuts down,
-the actual changes being made only in a RAM-based filesystem.
+the actual changes being made only in a RAM-based filesystem (but see
+<a href="larch_sessionsave.html">"Session saving"</a>).
 </p>
 
-<h4><a name="Squashfs_and_Unionfs"></a>Squashfs and Unionfs</h4>
+<h3><a name="Squashfs_and_Unionfs"></a>Squashfs and Unionfs</h3>
 
 <p>In <em>larch</em>, as in many (most?) other live CD/USB systems, the ability to (apparently)
-write to a read-only file-system is provided by <em>unionfs</em>. The
-file-system is also compressed, using <em>squashfs</em>, so as to fit more data
+write to a read-only file-system is provided by <em>unionfs</em> (or <em>aufs</em>).
+The file-system is also compressed, using <em>squashfs</em>, so as to fit more data
 onto the storage device (normally about 2GB of uncompressed code and data
 can be squeezed onto a 700MB CDROM using this approach). A custom
 Archlinux installation (you can choose which packages are installed) is
-compressed into a <em>squashfs</em> file-system in the files
-<strong>system.sqf</strong> and <strong>base.sqf</strong>, which are placed
-in the root directory of the boot device.
+compressed into a <em>squashfs</em> file-system in the file
+<strong>system.sqf</strong> (and, optionally, <strong>home.sqf</strong>),
+which is placed in the root directory of the boot device.
 </p>
 
 <p>For use in a live CD/USB system a few changes must be made to some files in the
-installation. In <em>larch</em> this is not done directly, the installed
-system is left in a 'clean' state. Instead of that, additional <em>squashfs</em>
-file-systems are created, in the files <strong>overlay.sqf</strong> and
-<strong>etc.sqf</strong>, containing all the modified
+installation. In <em>larch</em> this is (at first) not done directly, the installed
+system is left in a 'clean' state. Instead of that, an additional <em>union</em> layer
+is created, in the archive <strong>overlay.ovl</strong>, containing all the modified
 files. The user is free to include (pretty well) any customizations (s)he wants
-in these file-systems. The '/etc' directory overlays are separated out because
-these must be copied to memory and loaded before the <em>unionfs</em> mounts
-are set up. These file are also placed in the root directory of the boot device.
+in these file-systems. This file is also placed in the root directory of the boot device.
 </p>
 
-<p>The <em>squashfs</em> file-systems are combined when the live CD/USB system
-boots. They are mounted as branches of <em>unionfs</em> file-systems with
-the overlays above the 'standard' system, so that files in the overlay have
-priority over the original ones. In <em>larch</em> version 3, a separate
-<em>unionfs</em> file-system is created for each of the main root directories
-('/bin', '/etc', '/usr', etc.).
+<p>These system archives are combined when the live CD/USB system
+boots. They are mounted as branches of a <em>union</em> file-system with
+the overlay above the 'standard' system, so that files in the overlay have
+priority over the original ones. The top layer of the <em>union</em> is a <em>tmpfs</em>
+writable layer (thus, effectively, making the whole system writable),
+into which the overlay is copied at boot. As the changes are only stored in RAM, they
+will, however, be lost when the system shuts down (unless using the
+<a href="larch_sessionsave.html">session saving</a> feature).
 </p>
 
-<p>In order to make the whole file-system writeable, a further branch is added
-to the top of each <em>unionfs</em> file-system, a <em>tmpfs</em> file-system.
-Thus all directories and files are effectively writeable (subject to
-permissions!), but the changes are only stored in RAM and will be lost when
-the system shuts down.
-</p>
-
-<h4><a name="initramfs"></a><em>initramfs</em> and <em>mkinitcpio</em></h4>
+<h3><a name="initramfs"></a><em>initramfs</em> and <em>mkinitcpio</em></h3>
 
 <p>It is, in general, not possible to boot directly into a live CD/USB system.
 Some form of 'initrd' or 'initramfs' is required, in order to find the boot
@@ -94,38 +87,31 @@ Archlinux, and <em>larch</em> also takes advantage of it, although some
 additions need to be made to boot live CD/USB systems.
 </p>
 
-<h4><a name="rc_files"></a>/etc/rc.sysinit and /etc/rc.shutdown</h4>
+<h3><a name="rc_files"></a>/etc/rc.sysinit and /etc/rc.shutdown</h3>
 
 <p>These are the other main files which must be customized for use in a live-CD
-environment. In <em>larch</em>-3, these have each been split into two, with the
-additional scripts dealing with setting up ('rc.sysinit0') or closing down
-('rc.shutdown2') in the minimal, non-<em>unioned</em> environment of 'base.sqf'
-+ 'etc.sqf'. 'rc.sysinit0', mounts the bulk of the system (after having copied
-it to memory if the 'c2r' boot parameter was passed) and sets up the
-<em>unionfs</em> mounts. Then it 'exec's 'rc.sysinit' to do the normal system
-set-up, though also this has to be modified for use in a live CD situation.
-</p>
-<p>
-One addition is the automatic generation of a new '/etc/fstab' (using the
-script <strong>gen_fstab</strong>, which
+environment. One addition is the automatic generation of a new '/etc/fstab'
+(using the script <strong>gen_fstab</strong>, which
 bases the result on the devices which are detected in the system). Otherwise
 it behaves much the same as the version in
 a normal Archlinux system. However, the remount of the root-filessystem and
 file-system checks have been left out as they are not relevant in a live-CD
-environment. No partitions are mounted and by default, swap is not enabled.
-The reason is primarily that for use as an installation CD, it is better not to have any partitions mounted, because it is quite likely that the partitions will be edited in preparation for the installation. Passing boot parameter 'swap' will enable swap if there is a suitable partition (or it can be done manually using 'swapon -a').
-I removed the 'depmod' call because that is done during CD preparation, so it serves no purpose here.
-Quite a bit of the standard rc.sysinit will not be relevant in a live CD situation. I have cut some bits out, but I dare say the whole thing could be tidied up by someone who knows what he is doing!
+environment. No partitions are mounted and, by default, swap is not enabled.
+The reason is primarily that for use as an installation CD, it is better not
+to have any partitions mounted, because it is quite likely that the partitions
+will be edited in preparation for the installation. Passing boot parameter
+'swap' will enable swap if there is a suitable partition (or it can be done
+manually using 'swapon -a').
+I removed the 'depmod' call because that is done during CD preparation,
+so it serves no purpose here.
+Quite a bit of the standard rc.sysinit will not be relevant in a live CD situation.
+I have cut some bits out, but I dare say the whole thing could be tidied up
+by someone who knows what he is doing!
+</p>
 
 <p>'/etc/rc.shutdown' is adapted by adding code to deal with session-saving
 (writing changes back to the boot medium) and to eject the live-CD. Unlike in
-the normal version, the hardware clock is not reset. The part dealing with
-writing to CD/DVD and ejecting the device have been delegated to
-'rc.shutdown3', which must be run in the 'base' environment, after the CD
-has been unmounted. To achieve this, 'rc.shutdown2' (which is compiled using
-statically linked klibc from a small C-file) is copied out of the <em>unionfs/aufs</em>
-union and 'exec'ed. This in turn runs 'rc.shutdown3', which is also copied
-out of the union (in case it has been modified - unlikely but possible).
+the normal version, the hardware clock is not reset.
 </p>
 
 <table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">

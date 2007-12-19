@@ -1,7 +1,7 @@
-larch - scripts for building a highly customizable Archlinux live CD
+larch - scripts for building a highly customizable Archlinux live CD/DVD/USB-stick
       - also suitable for installing Archlinux to a hard disk
 
-Author: Michael Towers (gradgrind) <mt.42@web.de>
+Author: Michael Towers (gradgrind at online dot de)
 Licence: GPL (see COPYING, LICENCE)
 
 
@@ -18,20 +18,17 @@ The main documentation is in the larch/docs subdirectory, please read it.
 
 The key components are:
 
-    pacin  - Install a fresh Arch system (with customizable package
+    inpacs  - Install a fresh Arch system (with customizable package
            selection), to a convenient (possibly temporary) location.
 
-    mklarch - Uses 'pacin' to build an Arch installation in a convenient
+    mklarch - Uses 'inpacs' to build an Arch installation in a convenient
            directory, which it then makes into a live CD, adding
 	   modifications (in an overlay) to suit it for use as a live
 	   system and for customization.
 
-'pacin' is now packaged separately. There is also a small
-'initcpio_larch' package, which extends the Arch 'mkinitcpio' system
-to allow it to boot larch.
-A hard-disk-installer, 'archin' is also packaged separately, as is
-the extension, 'larchin' to allow installation of the live CD contents.
+    larchify - Build a larch live system from an existing Arch Linux
+           installation (including from one made by 'mklarch').
 
 Some files are included from the syslinux project. These are also
 licensed under the GPL. Home page:  http://syslinux.zytor.com
-SYSLINUX is:   Copyright 1994-2006 H. Peter Anvin - All Rights Reserved
+SYSLINUX is:   Copyright 1994-2007 H. Peter Anvin - All Rights Reserved

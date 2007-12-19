@@ -24,8 +24,11 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2007.12.18
+# 2007.12.19
 
+# Merge overlay into system sqfs
+#TODO:
+# some way of using memory and/or swap for the rebuilds
 merge ()
 {
     sysmerge=""
@@ -34,13 +37,13 @@ merge ()
     newHomeSqf=${homeSqf}_
 
     # A possibility to use alternative files:
-    if [ -f ${cdmount}/boot-merge ]; then
-        . ${cdmount}/boot-merge
+    if [ -f ${cdmount}/larch/boot-merge ]; then
+        . ${cdmount}/larch/boot-merge
     fi
 
+    mount -o remount,rw ${LDEV} ${cdmount}
     if [ "${merge}" = "all" ]; then
 
-        mount -o remount,rw ${LDEV} ${cdmount}
         sysmerge="yes"
 
         ignoredirs="dev mnt media proc sys tmp .livesys"
@@ -51,34 +54,44 @@ merge ()
 
         msg_ ":: Merging system: ${sysSqf}"
         /sbin/mksquashfs "/union" "${newSysSqf}" -e ${ignoredirs}
+        if [ $? -ne 0 ]; then
+            echo "ERROR: squash failed --- not merging"
+            nuke ${newSysSqf}
+            return 1
+        fi
 
     elif [ "${merge}" = "home" ] && [ "_" != "${newHomeSqf}" ]; then
 
-        mount -o remount,rw ${LDEV} ${cdmount}
         homemerge="yes"
-
-    elif [ "x${merge}" = "x" ]; then
-
-        return 1
 
     else
 
         echo "ERROR: bad merge option (must be 'all' or 'home')"
-        return 0
+        return 1
 
     fi
 
     if [ "x${homemerge}" != "x" ]; then
         msg_ ":: Merging /home: ${homeSqf}"
         /sbin/mksquashfs "/union/home" "${newHomeSqf}" "-keep-as-directory"
+        if [ $? -ne 0 ]; then
+            echo "ERROR: squashing home failed --- not merging"
+            nuke "${newHomeSqf}"
+            if [ -f ${newSysSqf} ]; then
+                nuke ${newSysSqf}
+            fi
+            return 1
+        fi
     fi
 
     # Now need to unmount the old files, so that they can be replaced.
-    # NEEDS normal umount (with -d option), as umountx
+    # NEEDS normal umount (with -d option), renamed to umountx
     /bin/umountx /union
     /bin/umountx -d /tfs/system
     /bin/umountx -d /tfs/home 2>1 >/dev/null
 
+    # Remove the old overlay first, in case there are space problems
+    nuke ${ovlx}
     if [ "x${sysmerge}" != "x" ]; then
         mv -f ${newSysSqf} ${sysSqf}
     fi
@@ -87,9 +100,16 @@ merge ()
     fi
 
     # Recreate the overlay archive
-    mkdir /overlay
-    nuke ${ovlx}
-    tar -cf - -C / overlay | lzop > ${ovlx}
+    if [ "${merge}" = "all" ]; then
+        # Make new, empty overlay
+        overlayb="/"
+        mkdir /overlay
+        overlayx=""
+    else
+        overlayb="/tfs"
+        overlayx="--exclude=overlay/home"
+    fi
+    tar -cf - ${overlayx} -C ${overlayb} overlay | lzop > ${ovlx}
 
     mount -o remount,ro ${LDEV} ${cdmount}
     return 0
@@ -111,8 +131,8 @@ run_hook ()
     ovlx=${cdmount}/overlay.ovl
 
     # A possibility to use alternative files:
-    if [ -f ${cdmount}/boot-init ]; then
-        . ${cdmount}/boot-init
+    if [ -f ${cdmount}/larch/boot-init ]; then
+        . ${cdmount}/larch/boot-init
     fi
 
     # Maybe there is no separate 'home' image
@@ -175,7 +195,8 @@ run_hook ()
     mount -t ${utype} -o ${bropt}${layers} ${utype} /union
 
     # Handle merging overly back into squashed system archives
-    if merge; then
+    if [ "x${merge}" != "x" ]; then
+        merge
         echo "Rebooting"
         /bin/reboot
     fi
@@ -215,7 +236,7 @@ run_hook ()
     msg_ ":: End of live system set-up"
 
     # Now some tweaks to alter 'init' actions from non-larch hooks, etc.
-    # Override rootdelay from usb hook (?)
+    # Override rootdelay from usb hook
     if [ "x${larchdelay}" = "x"  ]; then
         # To avoid spurious udevd pid numbers
         export rootdelay=1

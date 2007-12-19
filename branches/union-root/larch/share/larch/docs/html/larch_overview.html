@@ -42,7 +42,7 @@ important data on it. <strong>You have been warned!</strong></em>
 </p>
 </blockquote>
 
-<h4><a name="larch_installation"></a>Installation of the <em>larch</em> build system</h4>
+<h3><a name="larch_installation"></a>Installation of the <em>larch</em> build system</h3>
 
 <p>The <em>larch</em> package may be installed in the normal Arch Linux way using
 <em>pacman</em>. This method will only work on an Arch
@@ -59,7 +59,7 @@ need to add a path prefix when running it (e.g. './mklarch' if your current
 directory is the one containing the script).
 </p>
 
-<h4><a name="larch_using"></a>Using the <em>larch</em> build system</h4>
+<h3><a name="larch_using"></a>Using the <em>larch</em> build system</h3>
 
 <p>For building a live medium from a 'profile' you need, primarily, <strong>mklarch</strong>;
 for building from an existing installation (including rebuilding after using
@@ -76,7 +76,7 @@ should normally be acceptable (the building work is done in the '.larch' sub-dir
 Note that lots of space is necessary in ${INSTLDIR}, nearly 4GB for a 700MB CD.
 </p>
 
-<h4><a name="running_mklarch"></a>Quick <strong>mklarch</strong> overview</h4>
+<h3><a name="running_mklarch"></a>Quick <strong>mklarch</strong> overview</h3>
 
 <p>That first stage is very much like a normal Arch installation to a
 partition - which is another possibility with the <strong>inpacs</strong> script.
@@ -123,7 +123,7 @@ you have destroyed some important data and/or your system doesn't
 work any more. But that's life - Share and Enjoy!
 </p>
 
-<h4><a name="running_larchify"></a>Quick <em>larchify</em> overview</h4>
+<h3><a name="running_larchify"></a>Quick <em>larchify</em> overview</h3>
 
 <p><strong>larchify</strong> uses the functions in <strong>buildlive</strong> to
 build a live medium from an existing Arch Linux installation. It can also be
@@ -137,7 +137,7 @@ The '-r' option causes the old squashed images to be used, which can save a lot
 time. To see all the options run 'larchify -h'.
 </p>
 
-<h4><a name="Minimal_build_system_requirements"></a>Minimal build system requirements</h4>
+<h3><a name="Minimal_build_system_requirements"></a>Minimal build system requirements</h3>
 
 <p>The <em>larch</em> scripts have been designed to work without heavy
 demands on the build system. Although they have been developed under Arch Linux,
@@ -160,61 +160,54 @@ a dialog will be presented by <strong>larch-setup.sh</strong> to select a mirror
 On an Arch system it is assumed that you have already set up your mirrors appropriately.
 </p>
 
-<h4><a name="Squashfs_and_Unionfs"></a>Squashfs and Unionfs</h4>
+<h3><a name="Squashfs_and_Unionfs"></a>squashfs and unionfs/aufs</h3>
 
 <p>The newly installed system is made into a <em>squashed</em> file-system in the
-file <strong>system.sqf</strong>. However, a small but essential part is
-extracted and packaged separately in <strong>base.sqf</strong>. This is
-copied to memory at boot (regardless of the 'c2r' boot parameter), and deals
-with mounting the rest of the system using <em>unionfs</em>. It also
-contains the binaries for writing to CD/DVD, for session saving at
-shutdown - as these don't work with a mounted device. The modifications
-to the basic system to customize it for use as a live CD/USB are done
-separately from this in additional <em>squashed</em> file-systems,
-<strong>overlay.sqf</strong> and <strong>etc.sqf</strong> (the latter also
-being copied to memory as it contains essential boot files).
-The overlay files are placed 'on top of' those in the underlying system by
-building <em>unionfs</em> hierarchies, each with a writable layer on top
-so that the whole file-system appears writable, although the files may be on
-a read only medium. Of course only the <em>tmpfs</em> top layer can actually
-be written to,
+file <strong>system.sqf</strong>. The /home directory can be (optionally) squashed
+into a separate archive. These are mounted as the lower layers of a <em>union</em>
+(<em>aufs</em> or <em>unionfs</em>) file-system. On top of that there is a writable
+<em>tmpfs</em> so that the file-system as a whole appears writable. An 'overlay'
+archive is copied into the writable layer.
+Of course only the <em>tmpfs</em> top layer can actually be written to,
 and its contents disappear when the system reboots, so the writing is only
 temporary.
-</p>
-<p>The entire 'home' directory is kept in its own <em>squashed</em> file-system
-in the file <strong>home.sqf</strong>.
 </p>
 
 <p>In order to boot into a system constructed in that way, you need an
 <em>initramfs</em> which deals with mounting all the various bits in the right
 way before entering the normal boot sequence. In <em>larch</em> the
 <em>initramfs</em> is built using the standard Arch 'mkinitcpio' system, for
-which special 'hooks' (essentially code plug-ins) have been developed.
+which special 'hooks' (essentially code plug-ins) have been developed to
+manage the requirements of a <em>larch</em> live system.
 </p>
 
 <h4><a name="aufs"></a>aufs as an alternative to unionfs</h4>
-<p>It is possible to use <em>aufs</em> instead of <em>unionfs</em>. In order
-to do that you need package 'aufs' in <strong>addedpacks</strong>, the rest
+<p><em>larch</em> was initially designed around <em>unionfs</em>, but since then
+<em>aufs</em> has been generally a more reliable alternative, and is now
+available as a package in Arch Linux. In order to use <em>aufs</em> its
+kernel module needs to be installed (which, if using <em>mklarch</em>, can be
+achieved by placing package 'aufs' in <strong>addedpacks</strong>), the rest
 will then be handled automatically.
 </p>
 
-<h4><a name="Partial_rebuilding"></a>Partial rebuilding</h4>
+<h3><a name="Partial_rebuilding"></a>Partial rebuilding</h3>
 
 <p>If you make some changes to a build which don't require a renewed
 installation (the Arch installation in '${INSTLDIR}'), you can use the
 <strong>larchify</strong> script to rebuild the system. Such changes might
 be tweaks to the overlay, or 'rcconfx', for example (but note that the glibc
 locales are in the installation so if you want to change these, you have to rerun the
-whole installation, or handle that manually). If - as is likely - the 'system.sqf'
-and 'base.sqf' files from the previous build are still there and are still valid,
-these can be reused by passing the '-r' option.
+whole installation, or handle that manually). If - as is likely - the squashed system
+from the previous build are still there and are still valid,
+these can be reused by passing the '-r' option (thus saving the time required to
+squash the system).
 </p>
 
 <p> If you only make changes to files in '${INSTLDIR}/.larch/cd', you can rebuild
 the iso using the '-i' option to <strong>larchify</strong>. But be aware that
-some of the files in the directories
-'isolinux' (when using the <em>isolinux</em> bootloader) and 'boot' (when using the <em>GRUB</em> bootloader) are renewed from 'larch/cd-root' and the 'cd-root'
-directory in the profile.
+some of the files in the directories 'isolinux' (when using the
+<em>isolinux</em> bootloader) and 'boot' (when using the <em>GRUB</em> bootloader)
+are renewed from 'larch/cd-root' and the 'cd-root' directory in the profile.
 </p>
 
 <p><em><strong>N.B.</strong> Even though the Arch installation is
@@ -223,7 +216,7 @@ rebuild using <strong>larchify</strong>, because this installation is used (via 
 for some of the build functions.</em>
 </p>
 
-<h4><a name="Custom_packages"></a>Custom packages</h4>
+<h3><a name="Custom_packages"></a>Custom packages</h3>
 
 <p>It is possible to include your own 'custom' packages in the installation.
 Maybe ones you have compiled yourself, e.g. from the AUR, or modified versions
@@ -237,15 +230,16 @@ Any packages you want installed now just need to be
 listed in <strong>addedpacks</strong>.
 </p>
 
-<p>The standard kernel ('kernel26') can be used. It includes <em>unionfs</em>
+<p>It is not necessary to build a custom kernel for <em>larch</em>, the
+standard kernel ('kernel26') can be used. It includes <em>unionfs</em>
 and <em>squashfs</em> modules, and is now included in the set of 'base'
 packages. If <em>aufs</em> is desired (which is likely, as at the time of writing,
 <em>unionfs</em> didn't work very well), this must be included in
 <strong>addedpacks</strong>.
 </p>
 
-<h4><a name="Generating_the_basepacks_list"></a>Generating
-the <em>basepacks</em> list</h4>
+<h3><a name="Generating_the_basepacks_list"></a>Generating
+the <em>basepacks</em> list</h3>
 
 <p>In case the base package set changes, <strong>inpacs</strong> provides
 for downloading <strong>packages.txt</strong> from the 'core' repository (the
@@ -268,7 +262,7 @@ Be aware, however, that vetoed packages will be installed anyway if they are
 required by some other installed package.
 </p>
 
-<h4><a name="addedpacks"></a><em>addedpacks</em></h4>
+<h3><a name="addedpacks"></a><em>addedpacks</em></h3>
 
 <p>This group of packages is the main place for defining your system.
 Here you can enter all the applications you would like in your live CD/USB system
@@ -280,11 +274,10 @@ onto a CD - my first experiments included most of <i>KDE</i>,
 <i>OpenOffice</i>, <i>K3b</i>, <i>GIMP</i>, and quite a lot
 besides.</p>
 
-<h4><a name="Installation"></a>Installation of the 'pristine' system</h4>
+<h3><a name="Installation"></a>Installation of the 'pristine' system</h3>
 
 <p>The foundation of the <em>larch</em> live CD/USB system is, in a way, a pretty clean,
-unconfigured Arch Linux system, <em>squashed</em> up in the file 'system.sqf'
-(and 'base.sqf').
+unconfigured Arch Linux system, <em>squashed</em> up in the file 'system.sqf'.
 The initial installation of this system is handled by <em>pacman</em>, which
 installs all the constituent packages using
 the '-r' option to install to the chosen location, which can be anywhere where
@@ -297,8 +290,8 @@ cache location to be used. Note that this can also be on a remote machine,
 mounted using <em>sshfs</em> or <em>NFS</em>.
 </p>
 
-<h4><a name="existingSystem"></a>Making a live CD from an existing Arch
-installation</h4>
+<h3><a name="existingSystem"></a>Making a live CD from an existing Arch
+installation</h3>
 
 <p>As mentioned above, <strong>larchify</strong> can be used to make a live
 medium from an existing Arch installation, using the mount point of the
@@ -321,13 +314,14 @@ maybe to customize the 'mkinitcpio.conf' used to build the live system's
 folder, for example.
 </p>
 
-<p>In order to support the build process, certain packages must be
-installed in the system. These are:
-<pre style="margin-left: 80px;">cdrkit, dvd+rw-tools, squashfs-tools,
-  (and aufs if you want to use that instead of unionfs)
+<p>In order to support building a <em>larch</em> system, certain packages outside
+the Arch base group must be installed in the system to be 'larchified':
+<pre style="margin-left: 80px;">squashfs-tools, lzop (and aufs if you want to use
+that instead of unionfs)
 </pre>
 It is also recommended to install archin and larchin from the larch repository
-to enable use of the resulting live CD for system installation.
+to enable use of the resulting live CD for system installation (or at least it
+would be recommended, if they had been updated to match this version of larch ...).
 </p>
 
 

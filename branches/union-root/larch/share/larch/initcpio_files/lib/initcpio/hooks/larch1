@@ -21,13 +21,13 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-#2007.12.17
+#2007.12.19
 
 # Replacement for msg which includes leading and trailing spaces
 msg_ () { [ "${quiet}" != "y" ] && echo "$@"; }
 
 # Try to mount a disk, partition or cdrom and look for the file
-# 'larchboot' in the root directory.
+# 'larchboot' in the /larch directory.
 # If LiveCD system found in the device, return 0, else return 1
 # and leave the device mounted.
 # $1 = device name (e.g. "/dev/hda2")
@@ -39,13 +39,13 @@ test_live_data_dir ()
     /bin/mount -r -t vfat "$1" $2 >/dev/null 2>/dev/null || \
     /bin/mount -r -t ext2 "$1" $2 >/dev/null 2>/dev/null
     if [ $? -eq 0 ]; then
-        if [ -f "$2/larchboot" ]; then
+        if [ -f "$2/larch/larchboot" ]; then
             LDEV="$1"
             msg_ " ... found at $1"
             return 0
         else
             /bin/umount $2 2>/dev/null
-            msg_ " ... $1 mounted, but no 'larchboot' found"
+            msg_ " ... $1 mounted, but no 'larch/larchboot' found"
         fi
     else
         msg_ "  ... not $1"
@@ -76,7 +76,7 @@ run_hook ()
         /bin/mount -r -t vfat "${LDEV}" "${cdmount}" >/dev/null 2>/dev/null || \
         /bin/mount -r -t ext2 "${LDEV}" "${cdmount}" >/dev/null 2>/dev/null
         if [ $? -eq 0 ]; then
-            if [ -f "${cdmount}/larchroot" ]; then
+            if [ -d "${cdmount}/larch" ]; then
                 msg_ ":: larch system at ${LDEV}"
             else
                 /bin/umount "${cdmount}" 2>/dev/null

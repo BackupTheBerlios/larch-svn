@@ -1,5 +1,5 @@
-2007.12.09
- - Version 5.0.5
- - Added acceptance of 'root=' boot option to select location of larch system.
-   In this case the root directory must contain a file 'larchroot' (not
-   'larchboot'!).
+2007.12.19
+larch-ur (with simplified union structure, no CD/DVD session save) available
+for testing.
+
+Initial test release.
