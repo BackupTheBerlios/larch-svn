@@ -101,9 +101,10 @@ merge ()
 
     # Recreate the overlay archive
     if [ "${merge}" = "all" ]; then
-        # Make new, empty overlay
+        # Make new overlay with only /mnt
         overlayb="/"
         mkdir /overlay
+        mv /tfs/overlay/mnt /overlay
         overlayx=""
     else
         overlayb="/tfs"
