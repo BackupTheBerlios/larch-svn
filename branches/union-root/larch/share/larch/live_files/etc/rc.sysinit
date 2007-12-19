@@ -4,7 +4,7 @@
 #
 # based on the version in 'initscripts-2007.11-2'
 #
-#2007.12.18
+#2007.12.19
 
 . /etc/rc.conf
 . /etc/rc.d/functions
@@ -215,7 +215,7 @@ stat_busy "Initializing /etc/mtab"
 grep "^aufs */ " /proc/mounts >>/etc/mtab
 grep "^unionfs */ " /proc/mounts >>/etc/mtab
 grep "^tmpfs */.livesys " /proc/mounts >>/etc/mtab
-if [ -f /.livesys/medium/larchboot ] || [ -f /.livesys/medium/larchroot ]; then
+if [ -d /.livesys/medium/larch ]; then
     grep " /.livesys/medium " /proc/mounts >>/etc/mtab
 fi
 

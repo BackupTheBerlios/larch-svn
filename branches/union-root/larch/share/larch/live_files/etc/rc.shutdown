@@ -140,7 +140,7 @@ if [ -n "${savedev}" ] && [ -f ${savepath}/larch/save ]; then
                 lzop > ${savepath}/${overlay}
         if [ $? -ne 0 ]; then
             echo "ERROR: couldn't save overlay"
-            nuke ${savepath}/${overlay}
+            rm ${savepath}/${overlay}
             mv -f ${savepath}/${overlay}~ ${savepath}/${overlay}
         fi
     fi
