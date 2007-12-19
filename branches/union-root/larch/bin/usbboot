@@ -129,6 +129,7 @@ fi
 cp -a ${CDDATA}/* ${stick}
 mv ${stick}/isolinux ${stick}/syslinux
 mv ${stick}/syslinux/isolinux.cfg ${stick}/syslinux/syslinux.cfg
+rm -f ${stick}/syslinux/isolinux*
 
 umount ${stick}
 
