@@ -1,0 +1,2 @@
+For testing convenience I have put the extra binaries in cd-root/larch.
+For releasing, I must remove them, they will then be built by makepkg/PKGBUILD.

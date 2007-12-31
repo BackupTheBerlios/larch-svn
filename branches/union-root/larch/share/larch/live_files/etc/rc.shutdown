@@ -4,7 +4,7 @@
 #
 # based on the version in 'initscripts-2007.11-2'
 #
-# 2007.12.19
+# 2007.12.30
 
 . /etc/rc.conf
 . /etc/rc.d/functions
@@ -100,51 +100,24 @@ for d in ${cdroms}; do
 done
 
 ############################# Deal with session saving
-# The default is to save to boot device if writeable (i.e. not CD/DVD)
-savepath=/.livesys/medium
-#mkdir -p ${savepath}
-overlay=overlay.ovl
-dontask=''
+. /larch/saveovl
 
-if [ -f ${savepath}/larch/session-save ]; then
-    . ${savepath}/larch/session-save
+if ! session_save; then
+    echo
+    echo "If you know what you are doing, you may be able to recover"
+    echo "something from this unpleasant situation."
+    echo
+    echo "You may use the command line to investigate further ..."
+    echo
+    echo "You may attempt to save the overlay by running:"
+    echo "       saveovl [folder/to/save/to]"
+    echo "If no folder path is passed, the default location (${savepath})"
+    echo "will be used."
+    echo "When finished please enter 'exit', the shutdown process will"
+    echo "then continue."
+    sh -i
 fi
 
-if [ -n "${savedev}" ] && [ -f ${savepath}/larch/save ]; then
-    mount -o remount,rw ${savepath} &>/dev/null
-    if [ -z "${dontask}" ]; then
-        read -p "// Save session? [Y/n]: " ans
-        if [ -z "$( echo ${ans} | grep '^ *[Nn]' )" ]; then
-            dontask="y"
-        fi
-    fi
-    if [ -n "${dontask}" ]; then
-        savedirs='overlay/etc'
-        for d in bin boot home larch lib mnt opt root sbin srv usr var; do
-            if [ -d /.livesys/overlay/${d} ]; then
-                savedirs="${savedirs} overlay/${d}"
-            fi
-        done
-
-#TODO:
-# What if I don't want a backup file (to save space)?
-# What about error recovery, e.g. if new overlay doesn't fit on device?
-# Enter command line and allow the user to specify where to save to?
-# e.g. 'save <path>'
-# Or allow deletion of old overlay and a retry? (What if it still doesn't fit?!)
-
-        if [ -f ${savepath}/${overlay} ]; then
-            mv -f ${savepath}/${overlay} ${savepath}/${overlay}~
-        fi
-        tar -cf - --exclude=overlay/var/log -C /.livesys ${savedirs} | \
-                lzop > ${savepath}/${overlay}
-        if [ $? -ne 0 ]; then
-            echo "ERROR: couldn't save overlay"
-            rm ${savepath}/${overlay}
-            mv -f ${savepath}/${overlay}~ ${savepath}/${overlay}
-        fi
-    fi
-fi
 #############################
 
 stat_busy "Deactivating Swap"

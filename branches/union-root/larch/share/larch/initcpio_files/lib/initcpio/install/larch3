@@ -1,28 +1,18 @@
 install ()
 {
-    MODULES="squashfs"
+    MODULES="squashfs reiserfs"
     BINARIES=""
     FILES=""
     SCRIPT="larch3"
 #    add_file "/lib/initcpio/kinit" "/bin/kinit"  ##### This doesn't work, so:
     sed -i 's|.*/usr/lib/klibc/bin/kinit\.shared.*||' "${FILELIST}"
     sed -i 's|/usr/lib/klibc/bin/kinit|/lib/initcpio/kinit|' "${FILELIST}"
-
-    add_binary /bin/tar
-    add_binary /usr/bin/lzop
-    add_binary /sbin/mksquashfs
-    add_binary /bin/mv
-    add_binary /bin/umount /bin/umountx
-
-    # do I need these?
-    add_file /lib/libnss_files.so.2
-    add_file /lib/$( cd /lib; ls ld-linux*.so.2 )
 }
 
 help ()
 {
 cat<<HELPEOF
   This hook deals with booting a larch live CD. It is the last larch hook,
-setting up the tmpfs root file system.
+setting up the tmpfs/union root file system.
 HELPEOF
 }

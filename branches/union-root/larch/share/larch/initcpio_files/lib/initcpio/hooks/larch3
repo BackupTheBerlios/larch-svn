@@ -1,11 +1,11 @@
 # larch3 -  live 'hook' for mkinitcpio:
-#                 determine overlay file,
 #                 deal with c2r,
 #                 mount base system,
-#                 load overlay
-#                 set up unioned root filesystem,
+#                 load overlay,
+#                 set up unioned root filesystem.
+#                 Also manages overlay merging.
 
-# Author: Michael Towers (gradgrind) <mt.42@web.de>
+# Author: Michael Towers <gradgrind[at]online[dot]de>
 #
 # This file is part of the larch project.
 #
@@ -24,97 +24,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2007.12.19
-
-# Merge overlay into system sqfs
-#TODO:
-# some way of using memory and/or swap for the rebuilds
-merge ()
-{
-    sysmerge=""
-    homemerge=""
-    newSysSqf=${sysSqf}_
-    newHomeSqf=${homeSqf}_
-
-    # A possibility to use alternative files:
-    if [ -f ${cdmount}/larch/boot-merge ]; then
-        . ${cdmount}/larch/boot-merge
-    fi
-
-    mount -o remount,rw ${LDEV} ${cdmount}
-    if [ "${merge}" = "all" ]; then
-
-        sysmerge="yes"
-
-        ignoredirs="dev mnt media proc sys tmp .livesys"
-        if [ "_" != "${newHomeSqf}" ]; then
-            ignoredirs="${ignoredirs} home"
-            homemerge="yes"
-        fi
-
-        msg_ ":: Merging system: ${sysSqf}"
-        /sbin/mksquashfs "/union" "${newSysSqf}" -e ${ignoredirs}
-        if [ $? -ne 0 ]; then
-            echo "ERROR: squash failed --- not merging"
-            nuke ${newSysSqf}
-            return 1
-        fi
-
-    elif [ "${merge}" = "home" ] && [ "_" != "${newHomeSqf}" ]; then
-
-        homemerge="yes"
-
-    else
-
-        echo "ERROR: bad merge option (must be 'all' or 'home')"
-        return 1
-
-    fi
-
-    if [ "x${homemerge}" != "x" ]; then
-        msg_ ":: Merging /home: ${homeSqf}"
-        /sbin/mksquashfs "/union/home" "${newHomeSqf}" "-keep-as-directory"
-        if [ $? -ne 0 ]; then
-            echo "ERROR: squashing home failed --- not merging"
-            nuke "${newHomeSqf}"
-            if [ -f ${newSysSqf} ]; then
-                nuke ${newSysSqf}
-            fi
-            return 1
-        fi
-    fi
-
-    # Now need to unmount the old files, so that they can be replaced.
-    # NEEDS normal umount (with -d option), renamed to umountx
-    /bin/umountx /union
-    /bin/umountx -d /tfs/system
-    /bin/umountx -d /tfs/home 2>1 >/dev/null
-
-    # Remove the old overlay first, in case there are space problems
-    nuke ${ovlx}
-    if [ "x${sysmerge}" != "x" ]; then
-        mv -f ${newSysSqf} ${sysSqf}
-    fi
-    if [ "x${homemerge}" != "x" ]; then
-        mv -f ${newHomeSqf} ${homeSqf}
-    fi
-
-    # Recreate the overlay archive
-    if [ "${merge}" = "all" ]; then
-        # Make new overlay with only /mnt
-        overlayb="/"
-        mkdir /overlay
-        mv /tfs/overlay/mnt /overlay
-        overlayx=""
-    else
-        overlayb="/tfs"
-        overlayx="--exclude=overlay/home"
-    fi
-    tar -cf - ${overlayx} -C ${overlayb} overlay | lzop > ${ovlx}
-
-    mount -o remount,ro ${LDEV} ${cdmount}
-    return 0
-}
+# 2007.12.31
 
 run_hook ()
 {
@@ -128,13 +38,16 @@ run_hook ()
     sysSqf=${cdmount}/system.sqf
     # Path to compressed home folder
     homeSqf=${cdmount}/home.sqf
-    # Default overlay file
-    ovlx=${cdmount}/overlay.ovl
+    # Default overlay file and directory
+    overlay=${cdmount}/overlay.ovl
 
     # A possibility to use alternative files:
     if [ -f ${cdmount}/larch/boot-init ]; then
         . ${cdmount}/larch/boot-init
     fi
+
+    # Make union root
+    /bin/mkdir /union
 
     # Maybe there is no separate 'home' image
     if ! [ -f ${homeSqf} ]; then
@@ -143,28 +56,31 @@ run_hook ()
 
     # Boot option copy-to-ram (c2r)
     if [ "${c2r}" = "y" ]; then
-        # force use of swap (if available)
-        :> /tfs/swapon
-        :> /tfs/c2r
-
         msg_ ":: Copying base system to RAM, this will take a while ..."
         /bin/cat ${sysSqf} > /tfs/system.sqf
+        if [ $? -ne 0 ]; then
+            err "Sorry, not enough RAM"
+            break="y"
+            return
+        fi
         sysSqf=/tfs/system.sqf
 
         if [ "x${homeSqf}" != "x" ]; then
             msg_ ":: Copying home folder to RAM, this might take a while ..."
             /bin/cat ${homeSqf} > /tfs/home.sqf
+            if [ $? -ne 0 ]; then
+                err "Sorry, not enough RAM"
+                break="y"
+                return
+            fi
             homeSqf=/tfs/home.sqf
         fi
 
-        # Unmount boot device
-        umount ${cdmount}
+        # force use of swap (if available)
+        :> /tfs/swapon
 
-    else
-
-        if [ "${swap}" = "y" ]; then
-            :> /tfs/swapon
-        fi
+    elif [ "${swap}" = "y" ]; then
+        :> /tfs/swapon
     fi
 
     msg_ ":: Mounting squashed images"
@@ -173,34 +89,44 @@ run_hook ()
     /bin/losetup /dev/loop0 ${sysSqf}
     /bin/mount -r -t squashfs /dev/loop0 /tfs/system
 
+    # Make stuff in 'system' available by providing the loader and
+    # library path
+    ldli=$( cd /tfs/system; echo lib/ld-linux*.so.2 )
+    /bin/ln -s /tfs/system/${ldli} /${ldli}
+    export LD_LIBRARY_PATH=/tfs/system/lib:/tfs/system/usr/lib
+
+    # Handle merging overlay back into squashed system archives
+    if [ "x${merge}" != "x" ]; then
+        # Make boot device writable
+        /bin/mount -o remount,rw ${LDEV} ${cdmount}
+
+        if ! merge_overlay; then
+            sh -i
+        fi
+        echo ":: Rebooting"
+        /bin/reboot
+    fi
+
     if [ "x${homeSqf}" != "x" ]; then
         /bin/mkdir /tfs/home
         # The klibc mount command doesn't support '-o loop'
-        /bin/losetup /dev/loop0 ${homeSqf}
-        /bin/mount -r -t squashfs /dev/loop0 /tfs/home
+        /bin/losetup /dev/loop1 ${homeSqf}
+        /bin/mount -r -t squashfs /dev/loop1 /tfs/home
     fi
 
-    # NEED tar, lzop
-    msg_ ":: Initializing writeable layer for union (overlay)"
-    /usr/bin/lzop -d < ${ovlx} | tar -C /tfs -xf -
+    # Unpack the overlay
+    msg_ ":: Initializing writable layer for union (overlay)"
+    /tfs/system/usr/bin/lzop -d < ${overlay} | \
+            /tfs/system/bin/tar -C /tfs -xf -
 
     msg_ ":: Setting up union file system"
-    # Make union root
-    mkdir /union
 
     layers="/tfs/overlay=rw"
     if [ "x${homeSqf}" != "x" ]; then
         layers=${layers}:/tfs/home=${sqfmnt}
     fi
     layers=${layers}:/tfs/system=${sqfmnt}
-    mount -t ${utype} -o ${bropt}${layers} ${utype} /union
-
-    # Handle merging overly back into squashed system archives
-    if [ "x${merge}" != "x" ]; then
-        merge
-        echo "Rebooting"
-        /bin/reboot
-    fi
+    /bin/mount -t ${utype} -o ${bropt}${layers} ${utype} /union
 
     echo "${utype}" > /tfs/utype
 
@@ -234,6 +160,14 @@ run_hook ()
     # Remember the boot device
     echo "${LDEV}" > /tfs/bootdevice
 
+    if [ "${c2r}" = "y" ]; then
+        # Set flag to inform system of copy-to-ram
+        :> /tfs/c2r
+
+        # Unmount boot device
+        /bin/umount ${cdmount}
+    fi
+
     msg_ ":: End of live system set-up"
 
     # Now some tweaks to alter 'init' actions from non-larch hooks, etc.
@@ -255,3 +189,304 @@ run_hook ()
 # I handle this by overwriting the 'kinit' binary with my own script.
 # This will unmount dev, sys and proc and then exec run-init.
 #######
+
+########################################### OVERLAY MERGING
+# The old archives are moved to some backup location, which will be the
+# boot device, if there is enough space. Otherwise an attempt is made to
+# find a mountable partition with enough space.
+# Alternatively, an auxiliary script can provide a backup location.
+# Then build the union using the newly located archives and generate the
+# new archives on the boot device.
+
+merge_overlay ()
+{
+    # First see if there is space for the new archives on the boot device
+    # (assuming backup copies are retained)
+    if ! archive_sizes; then
+        err "Couldn't determine archive sizes"
+        return 1
+    fi
+
+    # What is to be merged?
+    if [ "x${homeSqf}" != "x" ] && [ "${merge}" = "system" ]; then
+        sz_needed=$(( ${sz_system} + ${sz_overlay} ))
+    elif [ "x${homeSqf}" != "x" ] && [ "${merge}" = "home" ]; then
+        sz_needed=$(( ${sz_home} + ${sz_overlay} ))
+    elif [ "${merge}" = "all" ]; then
+            sz_needed=$(( ${sz_home} + ${sz_system} + ${sz_overlay} ))
+    else
+        err "Invalid merge option: ${merge}"
+    fi
+
+    if [ ${sz_bootfree} -gt ${sz_needed} ]; then
+        # Use the boot device for the backups
+        oldSysSqf=${sysSqf}~
+        oldOverlay=${overlay}~
+        if [ "x${homeSqf}" != "x" ]; then
+            oldHomeSqf=${homeSqf}~
+        else
+            oldHomeSqf=""
+        fi
+
+        move=mv_rename
+
+
+    else
+
+        # Use another device for the backups
+        bu_dir=/larchbu
+        bu_dev=""
+        /bin/mkdir -p /mnt
+        if [ -f ${cdmount}/larch/backup-dev ]; then
+            # set bu_dev and mount it (can also change bu_dir)
+            . ${cdmount}/larch/backup-dev
+        fi
+
+        oldSysSqf=/mnt/${bu_dir}/system.sqf
+        oldHomeSqf=/mnt/${bu_dir}/home.sqf
+        oldOverlay=/mnt/${bu_dir}/overlay.ovl
+
+        if [ "x${bu_dev}" != "x" ]; then
+
+            if [ -d /mnt/${bu_dir} ]; then
+                /bin/nuke ${oldSysSqf}
+                /bin/nuke ${oldHomeSqf}
+                /bin/nuke ${oldOverlay}
+            fi
+            bu_sz=$( free_kb /mnt )
+            if [ $? -ne 0 ]; then
+                err "Couldn't determine free space on ${bu_dev}"
+                return 1
+            fi
+            if [ ${bu_sz} -le ${sz_needed} ]; then
+                err "Not enough free space on ${bu_dev}"
+                return 1
+            fi
+
+        else
+
+            # seek large enough partition (!= boot partition)
+            parts="$( /bin/cat /proc/partitions | { while read a b c d; do
+                echo ${d} | /tfs/system/bin/grep '[hs]d[a-z][1-9]'; done } )"
+
+            for d in ${parts}; do
+                if [ "/dev/${d}" != "${LDEV}" ] && \
+                        mount_dev /dev/${d} /mnt; then
+
+                    if [ -d /mnt/${bu_dir} ]; then
+                        /bin/nuke ${oldSysSqf}
+                        /bin/nuke ${oldHomeSqf}
+                        /bin/nuke ${oldOverlay}
+                    fi
+                    dsz=$( free_kb /mnt )
+                    if [ $? -eq 0 ] && [ ${dsz} -gt ${sz_needed} ]; then
+                        bu_dev=/dev/${d}
+                        break
+                    fi
+                    /bin/umount /mnt
+
+                fi
+            done
+            if [ "x${bu_dev}" = "x" ]; then
+                err "No usable partition found"
+                return 1
+            fi
+
+        fi
+
+        /bin/mkdir -p /mnt/${bu_dir}
+        move=mv_copy
+
+    fi
+
+    # Start configuring union
+    layers="/tfs/overlay=rw"
+
+    msg_ ":: Moving (old) archives"
+
+    if [ "${merge}" != "home" ]; then
+        # Unmount system.sqf
+        #do I need to remove the loader symlink?
+        /bin/umount /tfs/system
+#        /bin/lodel /dev/loop0
+#TEMP?
+${cdmount}/larch/lodel /dev/loop0
+
+        msg_ ":: Backing up system archive"
+        ${move} ${sysSqf} ${oldSysSqf}
+        # Mount moved system.sqf
+        #do I need to replace the loader symlink?
+        /bin/losetup /dev/loop0 ${oldSysSqf}
+        /bin/mount -r -t squashfs /dev/loop0 /tfs/system
+    fi
+    if [ "x${homeSqf}" != "x" ] && [ "${merge}" != "system" ]; then
+        msg_ ":: Backing up home archive"
+        ${move} ${homeSqf} ${oldHomeSqf}
+        /bin/mkdir /tfs/home
+        /bin/losetup /dev/loop1 ${oldHomeSqf}
+        /bin/mount -r -t squashfs /dev/loop1 /tfs/home
+        layers=${layers}:/tfs/home=${sqfmnt}
+    fi
+
+    # Move and unpack the overlay
+    msg_ ":: Unpacking overlay"
+    ${move} ${overlay} ${oldOverlay}
+    /tfs/system/usr/bin/lzop -d < ${oldOverlay} | \
+            /tfs/system/bin/tar -C /tfs -xf -
+
+    # Add system layer
+    layers=${layers}:/tfs/system=${sqfmnt}
+    # Mount union
+    /bin/mount -t ${utype} -o ${bropt}${layers} ${utype} /union
+
+    # Items excluded from overlay
+    overlayx=""
+
+    if [ "x${homeSqf}" != "x" ] && [ "${merge}" != "system" ]; then
+        # make new home.sqf
+        msg_ ":: Merging /home: ${homeSqf}"
+        /tfs/system/sbin/mksquashfs /union/home ${homeSqf} -keep-as-directory
+        if [ $? -ne 0 ]; then
+            echo "ERROR: squashing home failed --- not merging"
+            /bin/nuke ${homeSqf}
+            return 1
+        fi
+        overlayx="--exclude=overlay/home"
+    fi
+
+    if [ "${merge}" != "home" ]; then
+        # make new system.sqf
+        msg_ ":: Merging system: ${sysSqf}"
+        ignoredirs="mnt"
+        if [ "x${homeSqf}" != "x" ]; then
+            ignoredirs="${ignoredirs} home"
+            overlayx="--exclude=overlay/home"
+        fi
+#        /tfs/system/sbin/mksquashfs "/union" "${sysSqf}" -no-progress -e ${ignoredirs} >${sysSqf}_log 2>1
+        /tfs/system/sbin/mksquashfs "/union" "${sysSqf}" -e ${ignoredirs}
+        if [ $? -ne 0 ]; then
+            echo "ERROR: squash failed --- not merging"
+            /bin/nuke ${sysSqf}
+            return 1
+        fi
+        # Prepare overlay excludes
+        dirs="$( cd /tfs; echo overlay/* )"
+        for d in ${dirs}; do
+            if [ "${d}" != "home" ] && [ "${d}" != "mnt" ]; then
+                overlayx="${overlayx} --exclude=${d}"
+            fi
+        done
+    fi
+
+    # Recreate the overlay archive
+    /tfs/system/bin/tar -cf - ${overlayx} -C /tfs overlay | \
+            /tfs/system/usr/bin/lzop > ${overlay}
+
+}
+
+# Get present archive sizes, and free space on boot device
+# All sizes in kB (1024 bytes)
+archive_sizes ()
+{
+    if [ "x${homeSqf}" != "x" ]; then
+        sz_home=$(  /tfs/system/usr/bin/stat -c "%b" ${homeSqf} )
+        if [ $? -ne 0 ]; then
+            return 1
+        fi
+        # Convert to kB
+        sz_home=$(( ${sz_home} / 2 ))
+    else
+        sz_home=0
+    fi
+    sz_system=$(  /tfs/system/usr/bin/stat -c "%b" ${sysSqf} ) && \
+    sz_overlay=$( /tfs/system/usr/bin/stat -c "%b" ${overlay} ) && \
+    sz_bootfree=$( free_kb ${sysSqf} )
+    if [ $? -ne 0 ]; then
+        return 1
+    fi
+
+    # Convert to kB
+    sz_system=$(( ${sz_system} / 2 ))
+    sz_overlay=$(( ${sz_overlay} / 2 ))
+}
+
+# Get free kB on device containing given file/directory (can also accept
+# mount point, when mounted)
+free_kb ()
+{
+    freesz=$( /tfs/system/usr/bin/stat -f -c "%b" $1 ) && \
+    blocksz=$( /tfs/system/usr/bin/stat -f -c "%S" $1 )
+    if [ $? -ne 0 ]; then
+        return 1
+    fi
+
+    # Convert to kB
+    blocksz=$(( ${blocksz} / 512 ))
+    echo "$(( ${freesz} / 2 * ${blocksz} ))"
+}
+
+# Mount device $1 at mount point $2
+# This should perhaps be in larch3 hook so that the necessary modules
+# can be included in the initramfs
+mount_dev ()
+{
+    for fst in ext3 ext2 vfat reiserfs; do
+        /bin/mount -w -t ${fst} $1 $2 >/dev/null 2>/dev/null
+        if [ $? -eq 0 ]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+mv_rename ()
+{
+#    /bin/rename $1 $2
+#TEMP
+${cdmount}/larch/rename $1 $2
+}
+
+mv_copy ()
+{
+    /bin/cat $1 >$2
+    /bin/nuke $1
+}
+
+# Find and use largest swap device, if big enough (> $1 kB).
+# Not used at present.
+useswap ()
+{
+    # This handles subsequent calls, after swap has already been set up
+    if [ "x${swapdev}" != "x" ]; then
+        if [ ${swapsize} -gt $1 ]; then
+            return 0
+        else
+            return 1
+        fi
+    fi
+
+    # Find largest swap partition
+    eval $( /tfs/system/sbin/sfdisk -d | /tfs/system/bin/grep "Id=82" | {
+            s0=0
+            d0=""
+            while read d x; do
+                s=$( echo ${x} | \
+                        /tfs/system/bin/sed -r "s|.*size= *([0-9]+),.*|\1|" )
+                s=$(( ${s} / 2 ))
+                if [ ${s} -gt ${s0} ]; then
+                    d0=${d}
+                    s0=${s}
+                fi
+            done
+            if [ ${s0} -gt $1 ]; then
+                echo "swapdev=${d0}; swapsize=${s0}"
+            fi
+        } )
+
+    if [ "x${swapdev}" != "x" ] && /tfs/system/sbin/swapon ${swapdev}; then
+        /bin/mkdir /swap
+        /bin/mount -t tmpfs -o size="${swapsize}k" tmpfs /swap
+    else
+        return 1
+    fi
+}

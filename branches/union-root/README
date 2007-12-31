@@ -3,6 +3,7 @@ This branch is for a simplified live-medium structure using a union-root.
 Session saving on CD/DVD is dropped, but will be retained on USB-stick, in
 a slightly modified form.
 
+
 I am testing a hardwired copy2ram for the overlay (of which there is now
 only be one). The underlying system is in system.sqf, but the home directory
 can, optionally, be squashed separately.
@@ -10,7 +11,7 @@ can, optionally, be squashed separately.
 Session saving is - I hope - simply a matter of compressing the overlay layer
 of the union. That should speed up session saving a bit.
 
-To further increas speed I am trying tar and lzop instead of squashfs for
+To further increase speed I am trying tar and lzop instead of squashfs for
 this overlay.
 
 If the overlay gets big, there should be support for merging it back into
@@ -38,10 +39,3 @@ twice as fast?), decompression is similar in all cases, but gzip may be
 very slightly slower. squashfs looks better than gzip - smaller file,
 slightly faster - but it may just be the settings. lzf/lzo lose a few
 percent of compression (squashfs ~10% smaller?).
-
-
-Difficulties:
-There is no tar (among other things) in initramfs system, so I would need
-to compile that as well as the compression utility, or include bulkier
-stuff from the main system, including glibc, in the initramfs. If I am
-doing squashfs merging in the initramfs this may be necessary in any case.
