@@ -30,7 +30,7 @@ Building:
 =========
 
 Export from svn:
-
+   svn export svn://svn.berlios.de/larch/trunk
 
 Then go to the 'misc' directory and run 'mklarchpak'. This will create a
 convenient packet from which larch can be run - after unpacking and running
