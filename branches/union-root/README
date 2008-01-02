@@ -26,6 +26,19 @@ mods.sqf: A union layer (between system and overlay). Can be updated by
           /etc changes.
 
 
+Building:
+=========
+
+Export from svn:
+
+
+Then go to the 'misc' directory and run 'mklarchpak'. This will create a
+convenient packet from which larch can be run - after unpacking and running
+larch-setup. It contains the larch package in the 'larchpacks' subdirectory,
+which is needed for 'mklarch', but that package can also be installed with
+'pacman -U'.
+
+
 tar / lzo:
 ==========
 
