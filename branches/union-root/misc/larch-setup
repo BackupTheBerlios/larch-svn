@@ -1,6 +1,6 @@
 #! /bin/bash
 #
-# larch-setup.sh
+# larch-setup
 #
 # Author: Michael Towers <gradgrind[at]online[dot]de>
 #
@@ -25,15 +25,15 @@
 
 
 if [ "$1" = "-h" ]; then
-    echo "larch-setup.sh -h"
+    echo "larch-setup -h"
     echo "        # Display this information."
-    echo "larch-setup.sh"
+    echo "larch-setup"
     echo "        # Set up a larch build environment in the current directory."
     echo "        # x86_64 should be detected automatically."
     echo
-    echo "This script fetches and unpacks larch, so that 'mklarch', etc.,"
+    echo "This script unpacks larch, so that 'mklarch', etc.,"
     echo "can be run from this directory, without installing."
-    echo "It also generates appropriate soft links."
+    echo "It also generates appropriate symlinks."
     echo
     echo "If there is no pacman in the PATH, a package can be fetched from"
     echo "an Arch server and a statically linked pacman extracted to larch/bin."
@@ -72,6 +72,7 @@ rm -rf tmp
 mkdir tmp
 tar -xzf larchpacks/larch-*.pkg.tar.gz -C tmp
 mv tmp/opt/larch .
+rm -rf tmp
 
 ln -s ${scriptdir}/larch/bin/mklarch mklarch
 ln -s ${scriptdir}/larch/bin/larchify larchify
