@@ -21,7 +21,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2007.12.04
+# 2008.01.02
 
 
 if [ "$1" = "-h" ]; then
@@ -52,11 +52,6 @@ if [ "${sysarch}" != "x86_64" ]; then
     sysarch="i686"
 fi
 
-#REPO="ftp://archie.dotsrc.org/projects/archie/larch/testing"
-#REPO="http://www.faunos.com/larch/testing"
-#REPO="file:///home/larch/testing"
-REPO=""
-
 archcore="ftp://ftp.archlinux.org/core/os \
           ftp://ftp.heanet.ie/mirrors/ftp.archlinux.org/core/os \
           ftp://ftp.belnet.be/packages/archlinux/core/os"
@@ -73,38 +68,10 @@ if [ -d larch ]; then
     exit 1
 fi
 
-fetch ()
-{
-    if [ -n "$( echo ${REPO} | grep "file://" )" ]; then
-        base="$( echo ${REPO} | sed "s|file://||" )"
-        cp ${base}/$1 .
-    else
-        wget ${REPO}/$1
-    fi
-}
-
 rm -rf tmp
 mkdir tmp
-if [ -n "${REPO}" ]; then
-    cd tmp
-    fetch larch.db.tar.gz
-    tar -xzf larch.db.tar.gz
-    d=$( ls | grep "^larch-" )
-    larchpak=$( grep -A 1 -e "%FILENAME%" ${d}/desc | grep -v "%" )
-    rm -rf tmp/*
-    fetch ${larchpak}
-else
-    larchpak=$( ls larch-*.pkg.tar.gz )
-    cp ${larchpak} tmp
-    cd tmp
-fi
-tar -xzf ${larchpak}
-cd ${scriptdir}
-path=$( find tmp -name mklarch )
-root=$( dirname $( dirname ${path} ) )
-rm -rf larch
-cp -a ${root} larch
-rm -rf tmp
+tar -xzf larchpacks/larch-*.pkg.tar.gz -C tmp
+mv tmp/opt/larch .
 
 ln -s ${scriptdir}/larch/bin/mklarch mklarch
 ln -s ${scriptdir}/larch/bin/larchify larchify

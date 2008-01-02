@@ -21,7 +21,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2007.12.15
+# 2008.01.01
 
 # Default target directory:
 INSTLDIR=larchroot
@@ -30,7 +30,7 @@ APP="$( basename $0 )"
 # Get path to larch base directory, via the location of this script
 FULLPATH="$( readlink -f $0 )"
 SCRIPTDIR="$( dirname ${FULLPATH} )"
-LARCHDATA="$( dirname ${SCRIPTDIR} )/share/larch"
+LARCHDATA="$( dirname ${SCRIPTDIR} )/share"
 
 startdir=$( pwd )
 # cd to ensure that the following test works even if '.' is in PATH
@@ -45,7 +45,7 @@ usage () {
     echo "Usage:"
     echo "  ${APP} -h     # Show this message"
     echo
-    echo "  ${APP} [-irugfH] [-p <profile directory>] [<target directory>]"
+    echo "  ${APP} [-irugf] [-p <profile directory>] [<target directory>]"
     echo
     echo "          -p    Use the 'profile' in the given directory."
     echo "                The default is the directory 'profile' in the"
@@ -62,16 +62,14 @@ usage () {
     echo "                The script will just plough straight on and destroy"
     echo "                your file-system without first asking."
     echo
-    echo "          -H    Create a separately squashed /home (home.sqf)"
-    echo
     echo "${APP} builds a larch live CD / live USB-stick from the Arch Linux"
     echo "installation in <target directory>. The default target directory"
     echo "(which can also be a symlink) is 'larchroot' in the current"
     echo "working directory."
     echo
     echo "A profile is a directory containing all the necessary"
-    echo "configuration details for a larch build."
-    echo "A number of examples are provided in the larch package."
+    echo "configuration details for a larch build. See documentation"
+    echo "and examples."
     echo
     exit
 }
@@ -83,7 +81,6 @@ GRUB=""
 REISO=""
 REBUILD=""
 REUSE=""
-HOMESQF=""
 while getopts ":p:irugf" Option
 do
   case ${Option} in
@@ -93,7 +90,6 @@ do
     u ) USB="-u" ;;
     g ) GRUB="-g" ;;
     f ) DONTASK="-f" ;;
-    H ) HOMESQF="-H" ;;
     * ) usage ;;
   esac
 done

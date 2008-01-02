@@ -21,15 +21,16 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-#2007.12.08
+#2008.01.02
 
 # Note that this has quite a few differences to 'pacin' (now deprecated).
 # Read the usage blurb carefully, for example the options -c, -a (changed
 # defaults), and -x (the format of the veto file has changed slightly).
 
+
 # Working directory:
 TMPDIR=/tmp/inpacs$$
-# File containing (filtered) list of base packages
+# File containing (filtered) list of base packages + added packages
 basepacks=${TMPDIR}/basepacks
 
 APP="$( basename $0 )"
@@ -53,7 +54,7 @@ usage () {
     echo "                base installation"
     echo
     echo "          -c    Use given package cache (on host). Default is to"
-    echo "                create '/var/cache/pacman/pkg' on the target and"
+    echo "                create '${CACHE}' on the target and"
     echo "                use this. If an empty path ('') is given, use the"
     echo "                default on the host."
     echo
@@ -89,7 +90,9 @@ usage () {
     exit
 }
 
+# Default package cache (this is not editable!)
 CACHE="/var/cache/pacman/pkg"
+
 # A host or remote package cache:
 HOSTCACHE=""
 # Absolute /path/to/file containing list of packages for 2nd install phase:
@@ -102,23 +105,49 @@ VETOFILE=""
 DBDIR=""
 # pacman executable:
 PACMANX="pacman"
-# pacman configuration file (empty => default, /etc/pacman.conf)
-PACMANK=""
+# pacman configuration file
+PACMANK="/etc/pacman.conf"
+
+checkfile ()
+{
+    f=$( readlink -m $1 )
+    if ! [ -f "${f}" ]; then
+        echo "ERROR: File doesn't exist: ${f}"
+        exit
+    fi
+}
+
+checkdir ()
+{
+    f=$( readlink -m $1 )
+    if ! [ -d "${f}" ]; then
+        echo "ERROR: Directory doesn't exist: ${f}"
+        exit
+    fi
+}
 
 while getopts ":k:a:c:b:x:y:P:" Option
 do
   case ${Option} in
-    k ) PACMANK="--config $( readlink -f "${OPTARG}" )" ;;
-    a ) ADDEDPACKS="$( readlink -f "${OPTARG}" )" ;;
+    k ) checkfile ${OPTARG}
+        PACMANK=${f} ;;
+    a ) checkfile ${OPTARG}
+        ADDEDPACKS=${f} ;;
     c ) if [ -z "${OPTARG}" ]; then
-            HOSTCACHE=/var/cache/pacman/pkg
+            HOSTCACHE=${CACHE}
         else
-            HOSTCACHE="$( readlink -f "${OPTARG}" )"
-        fi ;;
-    b ) BASEPACKSFILE="$( readlink -f "${OPTARG}" )" ;;
-    x ) VETOFILE="$( readlink -f "${OPTARG}" )" ;;
-    y ) DBDIR="$( readlink -f "${OPTARG}" )" ;;
-    P ) PACMANX="$( readlink -f "${OPTARG}" )" ;;
+            HOSTCACHE=${OPTARG}
+        fi
+        checkdir ${HOSTCACHE}
+        HOSTCACHE=${f} ;;
+    b ) checkfile ${OPTARG}
+        BASEPACKSFILE=${f} ;;
+    x ) checkfile ${OPTARG}
+        VETOFILE=${f} ;;
+    y ) checkdir ${OPTARG}
+        DBDIR=${f} ;;
+    P ) checkfile ${OPTARG}
+        PACMANX=${f} ;;
     * ) usage ;;
   esac
 done
@@ -157,7 +186,7 @@ fi
 echo "//"
 echo "// Installing Arch Linux to directory ${INSTLDIR}"
 
-PACMAN="${PACMANX} ${PACMANK} --noconfirm"
+PACMAN="${PACMANX} --config ${PACMANK} --noconfirm"
 
 rm -rf ${TMPDIR}
 mkdir -p ${TMPDIR}
@@ -165,23 +194,18 @@ mkdir -p ${TMPDIR}
 ########## GET LIST OF BASE PACKAGES
 
 # Get the package server from the pacman configuration file
-if [ -n "${PACMANK}" ]; then
-    PACMANCONF=${PACMANK}
-else
-    PACMANCONF=/etc/pacman.conf
-fi
-CORESERVER=$( grep -m1 "^[ ]*Server.*/core/" ${PACMANCONF} | \
+CORESERVER=$( grep -m1 "^[ ]*Server.*/core/" ${PACMANK} | \
         sed "s|^[ ]*Server[= ]*||" )
 
 echo "//"
 echo -n "// ** Getting base package list from: "
 if [ -n "${BASEPACKSFILE}" ]; then
     echo "${BASEPACKSFILE}"
-    BASEPKGS=$( cat ${BASEPACKSFILE} )
+    BASEPKGS=$( cat ${BASEPACKSFILE} | grep -v "#" )
 else
     # If no 'core' repository source found, get it from /etc/pacman.d/core
     # (if using standard locations)
-    if [ -z "${CORESERVER}" ] && [ -z "${PACMANK}" ]; then
+    if [ -z "${CORESERVER}" ]; then
         CORESERVER=$( grep -m1 "^[ ]*Server.*/core/" /etc/pacman.d/core | \
                 sed "s|^[ ]*Server[= ]*||" )
         xs="or '/etc/pacman.d/core' "
@@ -190,7 +214,7 @@ else
     fi
     if [ -z "${CORESERVER}" ]; then
         echo "???"
-        echo "ERROR: No 'core' repository found in '${PACMANCONF}'"
+        echo "ERROR: No 'core' repository found in '${PACMANK}'"
         echo "${xs}and no explicit source for list of"
         echo "base packages ('-b' option)."
         echo
@@ -220,11 +244,6 @@ echo "//"
 : > ${basepacks}
 #
 # Filter out vetoed packages
-if [ -n "${VETOFILE}" ] && [ ! -f ${VETOFILE} ]; then
-    echo "ERROR: supplied VETOFILE not found: ${VETOFILE}"
-    echo
-    exit 1
-fi
 for p in ${BASEPKGS}; do
     if [ -z "${VETOFILE}" ] || \
             ! grep "^[ ]*${p}[ ]*\$" ${VETOFILE} &>/dev/null; then
@@ -236,36 +255,27 @@ done
 
 # Helper function for installing a list of packages
 doInstall() {
-    echo "// Installing following packages:"
-    echo ${PKGLIST}
     mkdir -p ${INSTLDIR}/sys
     mkdir -p ${INSTLDIR}/proc
     mount --bind /sys ${INSTLDIR}/sys
     mount --bind /proc ${INSTLDIR}/proc
-    ${PACMAN} -r ${INSTLDIR} -S ${PKGLIST}
+    ${PACMAN} -r ${INSTLDIR} -S $( cat $1 )
     RET=$?
     umount ${INSTLDIR}/proc
     umount ${INSTLDIR}/sys
     if [ ${RET} -ne 0 ]; then
         echo "//"
-        echo "// Package installation from ${pklist} FAILED."
+        echo "// Package installation from $1 FAILED."
         echo "//"
         return 1
     fi
 }
 
-if [ -n "${ADDEDPACKS}" ] && [ ! -f ${ADDEDPACKS} ]; then
-    echo "ERROR: supplied file ADDEDPACKS not found:"
-    echo "          ${ADDEDPACKS}"
-    echo
-    exit 1
-fi
-
 if [ -n "${HOSTCACHE}" ]; then
     # This redirects the package cache, so that, for example,
     # an existing one can be used.
     mkdir -p ${INSTLDIR}/var/cache/pacman
-    ln -s ${HOSTCACHE} ${INSTLDIR}/var/cache/pacman/pkg
+    ln -s ${HOSTCACHE} ${INSTLDIR}${CACHE}
 fi
 
 if [ -n "${DBDIR}" ]; then
@@ -286,28 +296,27 @@ else
     ${PACMAN} -r ${INSTLDIR} -Sy
 fi
 
-echo "//"
-echo "// ************** Installing base package set **************"
-echo "//"
-pklist=${basepacks}
-PKGLIST=$( grep -v "#" ${pklist} )
-doInstall
-if [ $? -ne 0 ]; then exit 1; fi
-
 if [ -n "${ADDEDPACKS}" ]; then
-    pklist=${ADDEDPACKS}
     echo "//"
-    echo "// ************** Additional packages **************"
+    echo "// ***** Adding additional packages to install list *****"
     echo "//"
-    PKGLIST=$( grep -v "^#" ${pklist} )
-    doInstall
-    if [ $? -ne 0 ]; then exit 1; fi
+    for p in $( cat ${ADDEDPACKS} | grep -v "#" ); do
+        if ! grep "^[ ]*${p}[ ]*\$" ${basepacks} &>/dev/null; then
+            echo ${p} >> ${basepacks}
+        fi
+    done
 fi
+
+echo "//"
+echo "// ************** Installing selected packages **************"
+echo "//"
+doInstall ${basepacks}
+if [ $? -ne 0 ]; then exit 1; fi
 
 # Clean up package cache
 if [ -n "${HOSTCACHE}" ]; then
     # Remove the package cache redirection
-    rm ${INSTLDIR}/var/cache/pacman/pkg
+    rm ${INSTLDIR}${CACHE}
 fi
 
 # Remove temporary files

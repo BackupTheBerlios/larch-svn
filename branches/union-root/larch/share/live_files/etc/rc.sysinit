@@ -1,0 +1,371 @@
+#!/bin/sh
+#
+# /etc/rc.sysinit  --- modified for larch
+#
+# based on the version in 'initscripts-2007.11-2'
+#
+# 2008.01.01
+
+. /etc/rc.conf
+. /etc/rc.d/functions
+
+echo " "
+printhl "Live CD based on Arch Linux"
+printsep
+
+# start up our mini logger until syslog takes over
+/sbin/minilogd
+
+# mount /proc
+mount -n -t proc none /proc
+
+# anything more serious than KERN_WARNING goes to the console
+# 'verbose' cmdline parameter enables more messages
+if grep -q " verbose" /proc/cmdline; then
+    /bin/dmesg -n 8
+else
+    /bin/dmesg -n 3
+fi
+
+# mount /sys
+mount -n -t sysfs none /sys
+# mount usbfs
+/sbin/modprobe usbcore >/dev/null 2>&1
+grep -qw usbfs /proc/filesystems && mount -n -t usbfs none /proc/bus/usb
+
+if [ -x /etc/start_udev -a -d /sys/block ]; then
+    # We have a start_udev script and /sys appears to be mounted, use UDev
+    status "Starting UDev Daemon" /etc/start_udev init
+else
+    # Static /dev, our last resort
+    status "Using static /dev filesystem" /bin/true
+fi
+
+# Load modules from the MODULES array defined in rc.conf
+if ! [ "$load_modules" = "off" ]; then
+    if [ -f /proc/modules ]; then
+        stat_busy "Loading Modules"
+        for mod in "${MODULES[@]}"; do
+            if [ "$mod" = "${mod#!}" ]; then
+                /sbin/modprobe $mod
+            fi
+        done
+        stat_done
+    fi
+    if [ -d /proc/acpi ]; then
+        stat_busy "Loading standard ACPI modules"
+        ACPI_MODULES="ac battery button fan processor thermal"
+        k="$(echo $BLACKLIST ${MOD_BLACKLIST[@]} | sed 's|-|_|g')"
+        j="$(echo ${MODULES[@]} | sed 's|-|_|g')"
+        #add disabled MODULES (!) to blacklist - much requested feature
+        for m in ${j}; do
+                [ "$m" != "${m#!}" ] && k="${k} ${m#!}"
+        done
+        # add disablemodules= from commandline to blacklist
+        k="${k} $(echo ${disablemodules} | sed 's|-|_|g' | sed 's|,| |g')"
+        for n in ${ACPI_MODULES}; do
+                    if ! echo ${k} | /bin/grep "\<$n\>" 2>&1 >/dev/null; then
+                        /sbin/modprobe $n > /dev/null 2>&1
+                    fi
+        done
+        stat_done
+    fi
+fi
+
+# run udev uevents
+if pidof -o %PPID /sbin/udevd >/dev/null; then
+    status "Loading UDev uevents" /etc/start_udev uevents
+fi
+
+# bring up the loopback interface
+if [ -d /sys/class/net/lo ]; then
+    stat_busy "Bringing up loopback interface"
+    ifconfig lo 127.0.0.1 up
+    if [ $? -ne 0 ]; then
+        stat_fail
+    else
+        stat_done
+    fi
+fi
+
+# If necessary, find md devices and manually assemble RAID arrays
+if [ -f /etc/mdadm.conf -a "$(grep ^ARRAY /etc/mdadm.conf 2>/dev/null)" ]; then
+    # udev won't create these md nodes, so we do it ourselves
+    for dev in $(grep ^ARRAY /etc/mdadm.conf | awk '{print $2}'); do
+        path=$(echo $dev | sed 's|/[^/]*$||')
+        node=$(echo $dev | sed "s|^$path/||")
+        minor=$(echo $node | sed 's|^[^0-9]*||')
+        [ ! -e $path/$node ] && /bin/mknod $path/$node b 9 $minor
+    done
+    status "Activating RAID arrays" /sbin/mdadm --assemble --scan
+fi
+
+if [ "$USELVM" = "yes" -o "$USELVM" = "YES" ]; then
+    if [ -x /sbin/lvm -a -d /sys/block ]; then
+        # Kernel 2.6.x, LVM2 groups
+        /sbin/modprobe -q dm-mod 2>/dev/null
+        stat_busy "Activating LVM2 groups"
+        /sbin/lvm vgscan --ignorelockingfailure --mknodes >/dev/null
+        /sbin/lvm vgchange --ignorelockingfailure -a y >/dev/null
+        if [ $? -ne 0 ]; then
+            stat_fail
+        else
+            stat_done
+        fi
+    fi
+fi
+
+# Set up non-root encrypted partition mappings
+if [ -f /etc/crypttab -a -n "$(grep -v ^# /etc/crypttab | grep -v ^$)" ]; then
+    /sbin/modprobe -q dm-mod 2>/dev/null
+    stat_busy "Unlocking encrypted volumes:"
+    csfailed=0
+    CS=/sbin/cryptsetup.static
+    do_crypt() {
+        if [ $# -ge 3 ]; then
+            cname="$1"
+            csrc="$2"
+            cpass="$3"
+            shift 3
+            copts="$*"
+            stat_append "${cname}.."
+            # For some fun reason, the parameter ordering varies for
+            # LUKS and non-LUKS devices.  Joy.
+            if [ "${cpass}" = "SWAP" ]; then
+                # This is DANGEROUS! The only possible safety check
+                # is to not proceed in case we find a LUKS device
+                # This may cause dataloss if it is not used carefully
+                if $CS isLuks $csrc 2>/dev/null; then
+                    false
+                else
+                    $CS -d /dev/urandom $copts create $cname $csrc >/dev/null
+                    if [ $? -eq 0 ]; then
+                        stat_append "creating swapspace.."
+                        mkswap -L $cname /dev/mapper/$cname >/dev/null
+                    fi
+                fi
+            elif [ "${cpass}" = "ASK" ]; then
+                echo -e "\nOpening '${cname}' volume:"
+
+                if $CS isLuks $csrc 2>/dev/null; then
+                    $CS $copts luksOpen $csrc $cname < /dev/console
+                else
+                    $CS $copts create $cname $csrc < /dev/console
+                fi
+            elif [ "${cpass:0:1}" != "/" ]; then
+                if $CS isLuks $csrc 2>/dev/null; then
+                    echo "$cpass" | $CS $copts luksOpen $csrc $cname >/dev/null
+                else
+                    echo "$cpass" | $CS $copts create $cname $csrc >/dev/null
+                fi
+            else
+                if $CS isLuks $csrc 2>/dev/null; then
+                    $CS -d $cpass $copts luksOpen $csrc $cname >/dev/null
+                else
+                    $CS -d $cpass $copts create $cname $csrc >/dev/null
+                fi
+            fi
+            if [ $? -ne 0 ]; then
+                csfailed=1
+                stat_append "failed "
+            else
+                stat_append "ok "
+            fi
+        fi
+    }
+    while read line; do
+        eval do_crypt "$line"
+    done </etc/crypttab
+    if [ $csfailed -eq 0 ]; then
+        stat_done
+    else
+        stat_fail
+    fi
+    # Maybe someone has LVM on an encrypted block device
+    if [ "$USELVM" = "yes" -o "$USELVM" = "YES" ]; then
+        if [ -x /sbin/lvm -a -d /sys/block ]; then
+            /sbin/lvm vgscan --ignorelockingfailure --mknodes >/dev/null
+            /sbin/lvm vgchange --ignorelockingfailure -a y >/dev/null
+        fi
+    fi
+fi
+
+#status "Mounting Root Read-only" /bin/mount -n -o remount,ro /
+
+# Set clock early to fix some bugs with filesystem checks
+# Clock is set again later to match rc.conf
+if [ -f /etc/localtime ]; then
+    if [ "$HARDWARECLOCK" = "UTC" ]; then
+        /sbin/hwclock --directisa --utc --hctosys --noadjfile
+    else
+        /sbin/hwclock --directisa --localtime --hctosys --noadjfile
+    fi
+fi
+
+FORCEFSCK=
+[ -f /forcefsck ] && FORCEFSCK="-- -f"
+NETFS="nonfs,nosmbfs,nocifs,nocodafs,noncpfs,nosysfs,nousbfs,noshfs,nofuse,nofuseblk"
+
+stat_busy "Initializing /etc/mtab"
+#/bin/mount -n -o remount,rw /
+
+/bin/rm -f /etc/mtab*
+
+# Make entries for aufs/unionfs, tmpfs and live medium in /etc/mtab
+grep "^aufs */ " /proc/mounts >>/etc/mtab
+grep "^unionfs */ " /proc/mounts >>/etc/mtab
+grep "^tmpfs */.livesys " /proc/mounts >>/etc/mtab
+if [ -d /.livesys/medium/larch ]; then
+    grep " /.livesys/medium " /proc/mounts >>/etc/mtab
+fi
+
+## make sure / gets written to /etc/mtab
+#/bin/mount -o remount,rw /
+# re-mount /proc , /sys  and usbfs so they can be written to /etc/mtab
+umount /proc/bus/usb
+if [ -e /proc/mounts ]; then
+    grep -e "/proc " -e "/sys " -e "/dev " /proc/mounts >> /etc/mtab
+fi
+if grep -qw usbfs /proc/filesystems; then
+    # Some people use custom permissions for their usbfs
+    if grep -qw /proc/bus/usb /etc/fstab; then
+        mount /proc/bus/usb
+    else
+        mount -t usbfs none /proc/bus/usb
+    fi
+fi
+stat_done
+
+if [ -z "$( cat /etc/fstab | grep "^#KEEP" )" ]; then
+    stat_busy "Generating fresh /etc/fstab"
+    /opt/larch/bin/gen_fstab -l
+    stat_done
+fi
+
+# now mount all the local filesystems
+stat_busy "Mounting Local Filesystems"
+/bin/mount -a -t $NETFS
+stat_done
+
+#+*** Copy session-save flag-file (if it exists)
+[ -f /larch/nosave ] && cp /larch/nosave /.livesys
+#-***
+
+#*** Conditional swap activation
+if [ -e /.livesys/swapon ]; then
+    status "Activating Swap" /sbin/swapon -a
+fi
+
+stat_busy "Configuring System Clock"
+if [ ! -f /var/lib/hwclock/adjtime ]; then
+    echo "0.0 0 0.0" > /var/lib/hwclock/adjtime
+fi
+if [ "$TIMEZONE" != "" -a -e /usr/share/zoneinfo/$TIMEZONE ]; then
+    /bin/rm -f /etc/localtime
+    /bin/cp /usr/share/zoneinfo/$TIMEZONE /etc/localtime
+fi
+if [ "$HARDWARECLOCK" = "UTC" ]; then
+    /sbin/hwclock --directisa --utc --hctosys
+else
+    /sbin/hwclock --directisa --localtime --hctosys
+fi
+stat_done
+
+if [ -f /var/run/random-seed ]; then
+    stat_busy "Initializing Random Seed"
+    /bin/cat /var/run/random-seed >/dev/urandom
+    stat_done
+fi
+
+stat_busy "Removing Leftover Files"
+/bin/rm -f /etc/nologin &>/dev/null
+/bin/rm -f /etc/shutdownpid &>/dev/null
+/bin/rm -f /var/lock/* &>/dev/null
+/bin/rm -rf /tmp/* /tmp/.* &>/dev/null
+/bin/rm -f /forcefsck &>/dev/null
+(cd /var/run && find . ! -type d -exec rm -f -- {} \; )
+: > /var/run/utmp
+# Keep {x,k,g}dm happy with xorg
+mkdir /tmp/.ICE-unix && chmod 1777 /tmp/.ICE-unix
+mkdir /tmp/.X11-unix && chmod 1777 /tmp/.X11-unix
+stat_done
+
+#status "Updating Shared Library Links" /sbin/ldconfig
+
+if [ "$HOSTNAME" != "" ]; then
+    status "Setting Hostname: $HOSTNAME" /bin/hostname $HOSTNAME
+fi
+
+# Set the NIS domain name, if necessary
+[ -f /etc/conf.d/nisdomainname ] && . /etc/conf.d/nisdomainname
+if [ "$NISDOMAINNAME" != "" ]; then
+    status "Setting NIS Domain Name: $NISDOMAINNAME" /bin/nisdomainname $NISDOMAINNAME
+fi
+
+#status "Updating Module Dependencies" /sbin/depmod -A
+
+# Flush old locale settings
+: >/etc/profile.d/locale.sh
+chmod 755 /etc/profile.d/locale.sh
+# Set user defined locale
+[ -z "$LOCALE" ] && LOCALE="en_US"
+stat_busy "Setting Locale: $LOCALE"
+echo "export LANG=$LOCALE" >>/etc/profile.d/locale.sh
+stat_done
+
+if echo "$LOCALE" | /bin/grep -qi utf ; then
+    stat_busy "Setting Consoles to UTF-8"
+    /usr/bin/kbd_mode -u
+    for i in $(seq 1 63); do
+        echo -ne "\e%G" > /dev/vc/${i}
+    done
+    # the $CONSOLE check helps us avoid this when running scripts from cron
+    echo 'if [ "$CONSOLE" = "" -a "$TERM" = "linux" -a -t 1 ]; then echo -ne "\e%G"; fi' >>/etc/profile.d/locale.sh
+    stat_done
+    stat_busy "Loading Keyboard Map: $KEYMAP in utf-8 mode"
+    /bin/loadkeys -q -u "$KEYMAP" > /dev/null 2>&1
+    stat_done
+else
+    stat_busy "Loading Keyboard Map: $KEYMAP in legacy mode"
+    /bin/loadkeys -q "$KEYMAP" > /dev/null 2>&1
+    stat_done
+fi
+
+if [ -n "$CONSOLEFONT" ]; then
+    stat_busy "Loading Console Font: $CONSOLEFONT"
+    #CONSOLEMAP in UTF-8 shouldn't be used
+    if [ -n "$CONSOLEMAP" ] && echo "$LOCALE" | /bin/grep -qi utf ; then
+        CONSOLEMAP=""
+    fi
+    for i in $(seq 1 63); do
+        if [ -n "$CONSOLEMAP" ]; then
+            /usr/bin/setfont -m $CONSOLEMAP $CONSOLEFONT -C /dev/vc/${i}
+        else
+            /usr/bin/setfont $CONSOLEFONT -C /dev/vc/${i}
+        fi
+    done
+    for i in $(seq 1 63); do
+        echo -ne "\e(K" > /dev/vc/${i}
+    done
+    # the $CONSOLE check helps us avoid this when running scripts from cron
+    echo 'if [ "$CONSOLE" = "" -a "$TERM" = "linux" -a -t 1 ]; then echo -ne "\e(K"; fi' >>/etc/profile.d/locale.sh
+    stat_done
+fi
+
+# Adding persistent network/cdrom generated rules
+if [ -f "/dev/.udev/tmp-rules--70-persistent-cd.rules" ]; then
+    stat_busy "Adding persistent cdrom udev rules"
+    /bin/cat /dev/.udev/tmp-rules--70-persistent-cd.rules >> /etc/udev/rules.d/70-persistent-cd.rules
+    stat_done
+fi
+if [ -f "/dev/.udev/tmp-rules--70-persistent-net.rules" ]; then
+    stat_busy "Adding persistent network udev rules"
+    /bin/cat /dev/.udev/tmp-rules--70-persistent-net.rules >> /etc/udev/rules.d/70-persistent-net.rules
+    stat_done
+fi
+
+# Screen blanks after 15 minutes idle time
+/usr/bin/setterm -blank 15
+
+# End of file
+# vim: set ts=2 noet:

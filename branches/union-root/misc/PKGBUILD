@@ -1,6 +1,6 @@
 # Maintainer: Michael Towers <gradgrind[at]online[dot]de>
 pkgname=larch
-pkgver=5ur.0.1
+pkgver=5ur.0.5
 pkgrel=1
 
 # If I need the architecture, I can get it as ${CARCH}
@@ -16,11 +16,13 @@ build() {
   mkdir -p ${startdir}/pkg/opt/larch
   cp -dr ${startdir}/src/larch/bin ${startdir}/pkg/opt/larch
   cp -dr ${startdir}/src/larch/share ${startdir}/pkg/opt/larch
+  cp -dr ${startdir}/src/larch/etc ${startdir}/pkg
 
   # Compile additional initramfs utilities
   cd ${startdir}/src/larch/src
   klcc -static -o lodel lodel.c || return 1
   klcc -static -o rename rename.c || return 1
-  cp lodel ${startdir}/pkg/usr/share/larch/cd-root/larch
-  cp rename ${startdir}/pkg/usr/share/larch/cd-root/larch
+  mkdir ${startdir}/pkg/opt/larch/share/klibc
+  cp lodel ${startdir}/pkg/opt/larch/share/klibc
+  cp rename ${startdir}/pkg/opt/larch/share/klibc
 }

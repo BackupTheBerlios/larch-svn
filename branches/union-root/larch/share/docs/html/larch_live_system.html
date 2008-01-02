@@ -1,0 +1,130 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+  <meta content="text/html;charset=UTF-8" http-equiv="Content-Type">
+  <title>larch live system structure</title>
+  <meta content="gradgrind" name="author">
+</head>
+
+<body>
+
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+  <tbody>
+    <tr>
+      <td><a href="larch_profiles.html">Previous: Profiles</a></td>
+
+      <td><a href="larch_docindex.html">Table of Contents</a></td>
+
+      <td><a href="larch_fstab.html">Next: /etc/fstab</a></td>
+    </tr>
+  </tbody>
+</table>
+
+<br>
+
+<h1><big>larch</big>
+&ndash;
+a do-it-yourself live Archlinux CD</h1>
+
+<img style="border: 0px solid ; width: 290px; height: 192px;" alt="" src="larchsplash.jpg" name="graphics1" align="right" hspace="10" vspace="10">
+<br>
+<br>
+
+<h2>Structure of a <em>larch</em> live CD</h2>
+
+<p>The vast majority of the code that runs in a live CD/USB system is exactly
+the same as in a normal system running from hard disk.
+The main differences arise through the live CD/USB system being based on
+a read-only root file-system, so various adjustments are necessary to
+make the areas that must be writable appear to be so. I say 'appear to be'
+because in general any changes will be lost when the system shuts down,
+the actual changes being made only in a RAM-based filesystem (but see
+<a href="larch_sessionsave.html">"Session saving"</a>).
+</p>
+
+<h3><a name="Squashfs_and_Unionfs"></a>Squashfs and Unionfs</h3>
+
+<p>In <em>larch</em>, as in many (most?) other live CD/USB systems, the ability to (apparently)
+write to a read-only file-system is provided by <em>unionfs</em> (or <em>aufs</em>).
+The file-system is also compressed, using <em>squashfs</em>, so as to fit more data
+onto the storage device (normally about 2GB of uncompressed code and data
+can be squeezed onto a 700MB CDROM using this approach). A custom
+Archlinux installation (you can choose which packages are installed) is
+compressed into a <em>squashfs</em> file-system in the file
+<strong>system.sqf</strong> (and, optionally, <strong>home.sqf</strong>),
+which is placed in the root directory of the boot device.
+</p>
+
+<p>For use in a live CD/USB system a few changes must be made to some files in the
+installation. In <em>larch</em> this is (at first) not done directly, the installed
+system is left in a 'clean' state. Instead of that, an additional <em>union</em> layer
+is created, in the archive <strong>overlay.ovl</strong>, containing all the modified
+files. The user is free to include (pretty well) any customizations (s)he wants
+in these file-systems. This file is also placed in the root directory of the boot device.
+</p>
+
+<p>These system archives are combined when the live CD/USB system
+boots. They are mounted as branches of a <em>union</em> file-system with
+the overlay above the 'standard' system, so that files in the overlay have
+priority over the original ones. The top layer of the <em>union</em> is a <em>tmpfs</em>
+writable layer (thus, effectively, making the whole system writable),
+into which the overlay is copied at boot. As the changes are only stored in RAM, they
+will, however, be lost when the system shuts down (unless using the
+<a href="larch_sessionsave.html">session saving</a> feature).
+</p>
+
+<h3><a name="initramfs"></a><em>initramfs</em> and <em>mkinitcpio</em></h3>
+
+<p>It is, in general, not possible to boot directly into a live CD/USB system.
+Some form of 'initrd' or 'initramfs' is required, in order to find the boot
+device, get hold of the file-system
+and prepare it for running. Many modern GNU/Linux systems use
+initrd/initramfs (the former being now deprecated)
+as a matter of course, for loading the necessary kernel modules, and
+Archlinux is no exception. Recently a modular initramfs system,
+<em>mkinitcpio</em> has been introduced as the standard way to boot
+Archlinux, and <em>larch</em> also takes advantage of it, although some
+additions need to be made to boot live CD/USB systems.
+</p>
+
+<h3><a name="rc_files"></a>/etc/rc.sysinit and /etc/rc.shutdown</h3>
+
+<p>These are the other main files which must be customized for use in a live-CD
+environment. One addition is the automatic generation of a new '/etc/fstab'
+(using the script <strong>gen_fstab</strong>, which
+bases the result on the devices which are detected in the system). Otherwise
+it behaves much the same as the version in
+a normal Archlinux system. However, the remount of the root-filessystem and
+file-system checks have been left out as they are not relevant in a live-CD
+environment. No partitions are mounted and, by default, swap is not enabled.
+The reason is primarily that for use as an installation CD, it is better not
+to have any partitions mounted, because it is quite likely that the partitions
+will be edited in preparation for the installation. Passing boot parameter
+'swap' will enable swap if there is a suitable partition (or it can be done
+manually using 'swapon -a').
+I removed the 'depmod' call because that is done during CD preparation,
+so it serves no purpose here.
+Quite a bit of the standard rc.sysinit will not be relevant in a live CD situation.
+I have cut some bits out, but I dare say the whole thing could be tidied up
+by someone who knows what he is doing!
+</p>
+
+<p>'/etc/rc.shutdown' is adapted by adding code to deal with session-saving
+(writing changes back to the boot medium) and to eject the live-CD. Unlike in
+the normal version, the hardware clock is not reset.
+</p>
+
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+  <tbody>
+    <tr>
+      <td><a href="larch_profiles.html">Previous: Profiles</a></td>
+
+      <td><a href="larch_docindex.html">Table of Contents</a></td>
+
+      <td><a href="larch_fstab.html">Next: /etc/fstab</a></td>
+    </tr>
+  </tbody>
+</table>
+
+</body>
+</html>

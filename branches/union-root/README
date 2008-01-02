@@ -4,24 +4,27 @@ Session saving on CD/DVD is dropped, but will be retained on USB-stick, in
 a slightly modified form.
 
 
-I am testing a hardwired copy2ram for the overlay (of which there is now
-only be one). The underlying system is in system.sqf, but the home directory
-can, optionally, be squashed separately.
-
-Session saving is - I hope - simply a matter of compressing the overlay layer
-of the union. That should speed up session saving a bit.
+Basic session saving is now simply a matter of compressing the overlay layer
+of the union. That should speed up session saving a bit. There is also a
+second stage of session saving, more akin to the old version, where a
+read-only (squashfs) layer between the main system and the top overlay
+is rewritten, merging in the top overlay.
 
 To further increase speed I am trying tar and lzop instead of squashfs for
-this overlay.
+the top overlay.
 
-If the overlay gets big, there should be support for merging it back into
-the underlying squashed system. That could be done as via a special boot
-option, which would perform the merge and then reboot (if necessary).
+If the total overlay size gets big, there should be support for recreating
+the live system (using larchify).
 
-This restriction of squashfs to the base system would also clear the way to
-supporting lzma, because the speed should be less important if the
-overlays don't need to be compressed with it, and recreation of the
-squashed files will be relatively rare.
+
+system.sqf: The main squashed system, mounted to union root in initramfs
+
+overlay.ovl: The saved state of the writable union layer, unpacked in initramfs
+
+mods.sqf: A union layer (between system and overlay). Can be updated by
+          merging in overlay (needs old merge algorithm)? Doesn't contain
+          /etc changes.
+
 
 tar / lzo:
 ==========

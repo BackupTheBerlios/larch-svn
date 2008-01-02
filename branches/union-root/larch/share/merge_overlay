@@ -1,0 +1,161 @@
+#!/bin/sh
+
+# merge_overlay   - recreate 'mods' squashfs
+
+# Author: Michael Towers <gradgrind[at]online[dot]de>
+#
+# This file is part of the larch project.
+#
+#    larch is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 2 of the License, or
+#    (at your option) any later version.
+#
+#    larch is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with larch; if not, write to the Free Software Foundation, Inc.,
+#    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+#
+#----------------------------------------------------------------------------
+# 2008.01.02
+
+# The new overlay will be built in memory (main tmpfs?)
+merge_base=/.livesys
+
+# test if the script is started by root user. If not, exit
+if [ $UID -ne 0 ]; then
+    echo "Only root can run ${APP}"; exit 1
+fi
+
+# Underlying system:        /.livesys/system
+# 'mods' layer:             /.livesys/mods
+# Overlay:                  /.livesys/overlay
+
+# The overlay device (where the archives will be saved)
+if [ -d $1 ]; then
+    overlaypath=$1
+else
+    echo "ERROR: invalid directory ($1)"
+    exit 1
+fi
+
+if [ -f ${overlaypath}/larch/merge-adjust ] ; then
+    . ${overlaypath}/larch/merge-adjust
+fi
+
+# Make temporary directory for new overlay
+builddir=${merge_base}/merge_overlay
+mkdir -p ${builddir}
+rm -rf ${builddir}/*
+echo "Copying 'mods' files to ${builddir}"
+
+# Copy existing mods layer
+cp -a /.livesys/mods/* ${builddir}
+
+# Function to merge a top-level directory
+merge ()
+{
+    d=$1
+    cd /.livesys/overlay/${d}
+
+    if [ ! -d "${builddir}/${d}" ]; then
+        mkdir "${builddir}/${d}"
+        chmod "${builddir}/${d}" --reference="/${d}"
+    fi
+    # Prepare directories, checking for directory whiteouts
+    find . -type d | sed "s|^\./||" | while read n
+        do
+            if [ "${n}" = "." ]; then continue; fi
+            if $( basename ${n} | grep "^\.wh\." &>/dev/null ); then continue; fi
+            mkdir -p ${builddir}/${d}/${n}
+            chmod ${builddir}/${d}/${n} --reference=${n}
+            chown ${builddir}/${d}/${n} --reference=${n}
+            touch ${builddir}/${d}/${n} --reference=${n}
+            if [ -e ${n}/${opq} ]; then
+                # remove existing (old) overlay files within this directory
+                rm -rf ${builddir}/${d}/${n}/*
+                if [ -e /.livesys/system/${d}/${n} ]; then
+                    cp -a ${n}/${opq} ${builddir}/${d}/${n}
+                fi
+            fi
+        done
+
+    # Copy files
+    find -not \( -regex '.*/\.wh\.[^/]*' -type f \) -not -type d | \
+            sed "s|^\./||" | while read n
+        do
+            # Remove existing whiteout file for this file (if there is one)
+            dn=$( dirname ${n} )
+            if [ "${dn}" = "." ]; then
+                dn=""
+            else
+                dn="${dn}/"
+            fi
+            rm -f ${builddir}/${d}/${dn}.wh.$( basename ${n} )
+            # Copy the new overlay file to build area
+            #  ... unless it is vetoed
+            if [ "${d}" = "var" ]; then
+                if [ "${dn:0:4}" = "log/" ] || \
+                        [ "${dn:0:4}" = "tmp/" ] || \
+                        [ "${dn:0:17}" = "cache/pacman/pkg/" ]; then
+                    continue
+                fi
+            fi
+            # removing any existing (old) overlay file with same name
+            rm -rf "${builddir}/${d}/${n}"
+            cp -a ${n} ${builddir}/${d}/${n}
+        done
+
+    # Handle whiteouts
+    find \( -regex '.*/\.wh\.[^/]*' -type f \) | \
+            sed "s|^\./||" | while read w
+        do
+            n=$( echo "${w}" | sed 's/\.wh\.//' )
+            # Remove an existing (old) overlay file with this name
+            rm -rf ${builddir}/${d}/${n}
+            if [ -e /.livesys/system/${d}/${n} ]; then
+                cp -a ./${w} ${builddir}/${d}/${w}
+            fi
+        done
+}
+
+
+# Update with files from the union writable branch
+if grep "aufs" /.livesys/utype &>/dev/null; then
+    opq=".wh..wh..opq"
+else
+    opq=".wh.__dir_opaque"
+fi
+
+echo "Copying 'overlay' files to ${builddir}"
+
+# Note that 'etc' is not included - mods.sqf has no /etc directory.
+# The following directories are ignored:
+#      /var/log /var/tmp /var/cache/pacman/pkg
+for d in bin boot home lib mnt opt root sbin srv usr var; do
+    if [ -d /.livesys/overlay/${d} ]; then
+        merge ${d}
+    fi
+done
+
+echo "creating mods.sqf_"
+mksquashfs ${builddir} ${overlaypath}/mods.sqf_
+if [ $? -ne 0 ]; then
+    echo "ERROR: Couldn't create ${overlaypath}/mods.sqf_"
+    rm -f ${overlaypath}/mods.sqf_
+    exit 1
+fi
+rm -rf ${builddir}
+
+echo "creating overlay.ovl_"
+# Compress the overlay (with root dir 'overlay' retained)
+tar -cf - -C /.livesys overlay/etc | lzop > ${overlaypath}/overlay.ovl_
+if [ $? -ne 0 ]; then
+    echo "ERROR: couldn't create ${overlaypath}/overlay.ovl_"
+    rm -f ${overlaypath}/overlay.ovl_
+    exit 1
+fi
