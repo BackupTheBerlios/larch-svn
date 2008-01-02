@@ -19,17 +19,18 @@
   </tbody>
 </table>
 
-<br>
+<br />
 
 <h1><big>larch</big>
 &ndash;
 a do-it-yourself live Arch Linux CD</h1>
 
-<img style="border: 0px solid ; width: 290px; height: 192px;" alt="" src="larchsplash.jpg" name="graphics1" align="right" hspace="10" vspace="10">
-<br>
-<br>
+<img style="border: 0px solid ; width: 320px; height: 320px;" alt="" src="larch1.jpg"
+  name="graphics1" align="right" hspace="10" vspace="10" />
+<br /><br />
 
 <h2>Overview of the <em>larch</em> build system</h2>
+<br />
 
 <blockquote>
 <h3>Warning</h3>
@@ -50,10 +51,10 @@ system, of course.
 </p>
 
 <p>Alternatively, <em>larch</em> may be used without installing it.
-This should also work on non-Arch Linux systems. Create an empty
-directory somewhere convenient and place the <strong>larch-setup.sh</strong> script
-in it. 'cd' to the directory and run the script. A sub-directory 'larch' will be
-created containing the <em>larch</em> scripts, and also a few symbolic links to them.
+This should also work on non-Arch Linux systems. Unpack the 'larchpak.tar.gz' archive
+somewhere convenient, enter the 'larchpak' directory and run <strong>larch-setup</strong>.
+A sub-directory 'larch' will be created containing the <em>larch</em> scripts, as will
+a few symbolic links to them.
 If you don't put this new directory on your 'PATH', you may well
 need to add a path prefix when running it (e.g. './mklarch' if your current
 directory is the one containing the script).
@@ -66,7 +67,7 @@ for building from an existing installation (including rebuilding after using
 <strong>mklarch</strong>) <strong>larchify</strong>. <strong>mklarch</strong>
 uses <strong>inpacs</strong> to do the actual installation of the packages,
 and the functions for performing the live CD creation are in the file
-(larch/share/larch/)<strong>buildlive</strong>.
+(larch/share/)<strong>buildlive</strong>.
 </p>
 
 <p>Unlike a normal installation, that used by larch need not be a separate partition,
@@ -83,15 +84,18 @@ partition - which is another possibility with the <strong>inpacs</strong> script
 A couple of small tweaks are made to this base installation to make it more
 convenient for live CD/USB use: some glibc locales are generated (set by the file
 locale.gen in the profile) and, if <em>openssh</em> is installed, the initial
-ssh-keys are generated. Also a few unnecessary files are removed (pacman
-database files and invalid initrd images).
+ssh-keys are generated.
 </p>
 
 <p>Before <strong>mklarch</strong> can be used a 'profile' for the live medium must
 be built. This is a folder containing configuration files determining which packages
-are installed, where they are fetched from (<em>pacman</em> configuration), which
-glibc locales are installed, and generally which files should be customized. Further
-details are given in <a href="larch_profiles.html">'Profiles'</a>.
+are installed, which glibc locales are installed, and generally which files should
+be customized. Further details are given in <a href="larch_profiles.html">'Profiles'</a>.
+</p>
+
+<p>Also necessary is the 'larchpacks' directory within the working directory (the
+current directory when <strong>mklarch</strong> is called) - this contains the
+<em>larch</em> package needed for installation in the target system.
 </p>
 
 <p>A simple way to build an iso would then be:
@@ -134,7 +138,7 @@ but with a changed overlay - maybe an alteration to rc.conf. In that case you
 could make the necessary changes to the profile and call:
 <pre style="margin-left: 80px;">./larchify -rp myprofile</pre>
 The '-r' option causes the old squashed images to be used, which can save a lot
-time. To see all the options run 'larchify -h'.
+time. To see all the options run './larchify -h'.
 </p>
 
 <h3><a name="Minimal_build_system_requirements"></a>Minimal build system requirements</h3>
@@ -149,28 +153,33 @@ the build system. <em>bash</em>, <em>mkisofs</em>, <em>wget</em> and <em>python<
 are assumed to be available. If you are not running Arch Linux you will need to
 fetch the pacman package from an Arch mirror (core repository, for your processor
 architecture) and extract the needed files. The installation script
-(<strong>larch-setup.sh</strong>) deals with this automatically. If you want to
+(<strong>larch-setup</strong>) deals with this automatically. If you want to
 use a local pacman package rather than downloading it, put that package in the
-installation directory before running <strong>larch-setup.sh</strong>.
+working ('larchpak') directory before running <strong>larch-setup</strong>.
 </p>
 <p>You also need an appropriate 'pacman.conf' file (either at /etc/pacman.conf or
-in the <em>larch</em> installation directory). On a non-Arch system, unless a pacman.conf
-is already present in the installation directory, this will be created afresh and
-a dialog will be presented by <strong>larch-setup.sh</strong> to select a mirror.
+in the working directory). On a non-Arch system, unless a pacman.conf
+is already present in the working directory, this will be created afresh and
+a dialog will be presented by <strong>larch-setup</strong> to select a mirror.
 On an Arch system it is assumed that you have already set up your mirrors appropriately.
 </p>
 
 <h3><a name="Squashfs_and_Unionfs"></a>squashfs and unionfs/aufs</h3>
 
 <p>The newly installed system is made into a <em>squashed</em> file-system in the
-file <strong>system.sqf</strong>. The /home directory can be (optionally) squashed
-into a separate archive. These are mounted as the lower layers of a <em>union</em>
+file <strong>system.sqf</strong>. This is mounted as the lower layer of a <em>union</em>
 (<em>aufs</em> or <em>unionfs</em>) file-system. On top of that there is a writable
 <em>tmpfs</em> so that the file-system as a whole appears writable. An 'overlay'
-archive is copied into the writable layer.
+archive is copied into the writable layer. As this top layer is compressed using
+<em>lsop</em>, this package must be installed in the target.
 Of course only the <em>tmpfs</em> top layer can actually be written to,
 and its contents disappear when the system reboots, so the writing is only
 temporary.
+</p>
+
+<p>There is also a second overlay archive, a squashed file system which forms
+the middle layer of the union file-system, which increases the flexibillity of
+the session saving facility.
 </p>
 
 <p>In order to boot into a system constructed in that way, you need an
@@ -198,8 +207,8 @@ installation (the Arch installation in '${INSTLDIR}'), you can use the
 be tweaks to the overlay, or 'rcconfx', for example (but note that the glibc
 locales are in the installation so if you want to change these, you have to rerun the
 whole installation, or handle that manually). If - as is likely - the squashed system
-from the previous build are still there and are still valid,
-these can be reused by passing the '-r' option (thus saving the time required to
+from the previous build is still there and are still valid,
+this can be reused by passing the '-r' option (thus saving the time required to
 squash the system).
 </p>
 
@@ -223,7 +232,7 @@ Maybe ones you have compiled yourself, e.g. from the AUR, or modified versions
 (fixes or customizations) of standard packages. To do this you need to put your
 packages in a directory and run <strong>gen-repo</strong> on this directory
 (run it without arguments to get usage instructions). Then place an entry for
-this new repository in your 'pacman.conf' (probably the one in the profile).
+this new repository in your 'pacman.conf' (probably the one in the working directory).
 If your packages replace some in the existing repositories, your custom
 repository needs to come before those repositories in 'pacman.conf'.
 Any packages you want installed now just need to be
@@ -274,12 +283,13 @@ onto a CD - my first experiments included most of <i>KDE</i>,
 <i>OpenOffice</i>, <i>K3b</i>, <i>GIMP</i>, and quite a lot
 besides.</p>
 
-<h3><a name="Installation"></a>Installation of the 'pristine' system</h3>
+<h3><a name="Installation"></a>Installation of the initial system</h3>
 
-<p>The foundation of the <em>larch</em> live CD/USB system is, in a way, a pretty clean,
-unconfigured Arch Linux system, <em>squashed</em> up in the file 'system.sqf'.
-The initial installation of this system is handled by <em>pacman</em>, which
-installs all the constituent packages using
+<p>The foundation of the <em>larch</em> live CD/USB system is an initial,
+potentially unconfigured Arch Linux system <em>squashed</em> up in the file
+'system.sqf'. The installation of this system is can be handled by <em>mklarch</em>,
+which uses <em>inpacs</em>, which in turn uses <em>pacman</em> to
+install all the constituent packages using
 the '-r' option to install to the chosen location, which can be anywhere where
 there is enough space.</p>
 
