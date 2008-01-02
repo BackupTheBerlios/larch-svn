@@ -14,7 +14,7 @@ so don't blame Tomas!
 Thanks are, nevertheless, due to him for his great work, which helped me
 get started.
 
-The main documentation is in the larch/docs subdirectory, please read it.
+The main documentation is in the share/docs subdirectory, please read it.
 
 The key components are:
 
@@ -23,8 +23,8 @@ The key components are:
 
     mklarch - Uses 'inpacs' to build an Arch installation in a convenient
            directory, which it then makes into a live CD, adding
-	   modifications (in an overlay) to suit it for use as a live
-	   system and for customization.
+           modifications (in an overlay) to suit it for use as a live
+           system and for customization.
 
     larchify - Build a larch live system from an existing Arch Linux
            installation (including from one made by 'mklarch').

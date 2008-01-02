@@ -7,8 +7,8 @@ in larch is called bkgd.jpg)!
 
 =======================================================================
 
-But here are the old instructions, just in case ... (the files are still
-in the 'oldmini' profile):
+But here are the old instructions, just in case ... (the utility programs
+are in the 'syslinux' package):
 
 Splash screen for isolinux/syslinux
 -----------------------------------
