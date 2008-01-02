@@ -1,10 +1,11 @@
-2007.12.19
-larch-ur (with simplified union structure, no CD/DVD session save)
+2008.01.02
+larch-5 (with simplified union structure, no CD/DVD session save,
+         extended USB-stick session save)
 
 Changes from larch-4:
 
-Split functionality of mklarch, so that rebuilds after a mklarch run and
-other builds from existing Arch installations are now handled by the
+Split functionality of 'mklarch', so that rebuilds after a 'mklarch' run,
+and other builds from existing Arch installations, are now handled by the
 'larchify' script - 'larchify -h' for usage notes. 'mklarch' now only covers
 initial builds including installation - 'mklarch -h' for usage notes. Note
 that the options have changed!!! For instance, 'mklarch -p' now expects a
@@ -21,14 +22,16 @@ system.
 Completely new union/overlay structure. The overlay is now copied to the
 writable union layer at boot, and can be copied back at shutdown. This
 should speed up session-saving, especially through the use of lzop
-compression rather than squashfs.
+compression rather than squashfs. An additional advantage is that no extra
+memory is required for the reconstruction of the archive.
 
-When the overlay gets too large it can be merged back into the squashed
-system archive(s). This can be a lengthy process (as before) and is
-provided as a boot option, booting to a special merge function instead
-of the normal boot. When finished it reboots.
-By keeping the home directory in a separate squashed archive (larch build
-option), it is possible to choose whether to merge the whole overlay or
-just the home directory.
+When the overlay gets too large it can be merged into the secondary overlay,
+a squashfs archive (like in previous larch versions). This takes somewhat
+longer and requires memory for its construction, but subsequent simple
+session saves (to the primary layer) will be faster because of the reduced
+size.
 
-
+It should now also be possible to run 'larchify' on a running live system,
+allowing a complete reconstruction of the system from within itself,
+merging in updates - in principle even kernel updates should be manageable
+using this method.
