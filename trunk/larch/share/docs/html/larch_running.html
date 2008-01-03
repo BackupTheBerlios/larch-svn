@@ -26,28 +26,28 @@
 
 <h1><big>larch</big>
 &ndash;
-a do-it-yourself live Archlinux CD</h1>
+a do-it-yourself live Arch Linux CD</h1>
 
-<img style="border: 0px solid ; width: 290px; height: 192px;" alt="" src="larchsplash.jpg" name="graphics1" align="right" hspace="10" vspace="10">
+<img style="border: 0px solid ; width: 320px; height: 320px;" alt="" src="larch1.jpg"
+  name="graphics1" align="right" hspace="10" vspace="10" />
 <br /><br />
 
 <h2>Running a <em>larch</em> live-CD/USB system</h2>
 
 <p>Of course the details depend on what you have installed and how you have
-configured it. For example, the 'mini' profile builds a console-only system,
+configured it. For example, the 'mini2' example profile builds a console-only system,
 the 'default' profile boots to KDE.
 </p>
 
 <p>One thing worth noting is that these supplied profiles automatically login
-to the root account,
-which - potentially - allows all sorts of 'dangerous' actions, like reformatting
-your disks or making a mess of your file-systems in other ways. This is because
-one of the main <em>raisons d'être</em> for <em>larch</em> is its use as an
-Arch-installation-and-rescue medium. For this, you need root access.
+to the root account, which - potentially - allows all sorts of 'dangerous' actions,
+like reformatting your disks or making a mess of your file-systems in other ways.
+This is because one of the main <em>raisons d'être</em> for <em>larch</em> is its use
+as an Arch-installation-and-rescue medium. For this, you need root access.
 However, if you want to use the system in other ways, e.g. for text or image editing,
 or for internet browsing or e-mail writing, it might be safer to do this as an
 unprivileged user. Such a user is easily created with the 'adduser' command, or
-in KDE with 'kuser'. If you have a writeable boot medium, such changes can be
+in KDE with 'kuser'. If you have a writable boot medium, such changes can be
 'remembered' by saving the session when you shut the system down (the possibility
 will normally be offered automatically).
 </p>
@@ -71,10 +71,12 @@ arranged it so that 'c2r' also implies 'swap'.
 <p>The supplied profiles are just intended as starting points for your own
 configurations, they are fairly primitive, in fact only a little more than a newly
 installed Arch sytem. If you are running a profile with X11, you may find that you
-need to configure it before it will run. A basic <strong>/etc/X11/xorg.conf</strong>
-is supplied, which should work in many cases, but if not you will need to go
-through the normal configuration procedure. At present no attempt is made at
-automatic configuration.
+need to configure it before it will run. Since <em>Xorg</em> version 7.3, it
+is often possible to run without an <strong>/etc/X11/xorg.conf</strong>, but
+it may be necessary to create and tweak the configuration file for your system.
+A basic vesa configuration is supplied in the 'default' profile, which should
+also work in many cases, but you can also try 'X -configure', 'xorgconfig' or
+'hwd'. Start X with <em>startx</em>.
 </p>
 
 <p>If you are stuck with the console, there is still hope. It's not as pretty or
@@ -93,19 +95,13 @@ It also modifies '/etc/rc.conf', so the change can be retained for subsequent
 runs by performing a 'session-save'.
 </p>
 
-<p>To get X working, you can try <em>xorgconfig</em>, or maybe <em>hwd</em>.
-Nowadays X often works quite well even without an 'xorg.conf'.
-As a last resort, or for final tweaking, you can edit <strong>/etc/X11/xorg.conf</strong>
-by hand. Start X with <em>startx</em>.
-</p>
-
 <p>If you have a DHCP server on your network, you might well find that
 the network interface is configured automatically (assuming your <em>rc.conf</em>
 is configured appropriately). On my prototype, I could just fire up <em>konqueror</em>
 and the world was my oyster, as they say. If not, well I'm afraid it's
 not so easy. Until someone comes up with something better, you'll have
 to edit the appropriate configuration files (primarily '/etc/rc.conf')
-- see the Archlinux documentation for details - and then do
+- see the Arch Linux documentation for details - and then do
 '/etc/rc.d/network start'. If you already have a running network
 interface but want to change it, you may need to stop it running first,
 using 'stop' instead of 'start', then make the changes, then start it.
@@ -123,7 +119,7 @@ hard-disk based installation.
 
 <p><em>Not currently available for this release.</em></p>
 
-<p>The Arch installer <em>archin</em> may be used to install Archlinux to hard disk.
+<p>The Arch installer <em>archin</em> may be used to install Arch Linux to hard disk.
 It is actually a separate project because it is not
 tied to <em>larch</em> and should thus get its own documentation (unfortunately
 this hasn't happened yet, but it's usage should be very straightforward - just
