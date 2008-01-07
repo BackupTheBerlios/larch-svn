@@ -1,4 +1,7 @@
 2008.01.02
+Fixes for merging when file paths contain spaces (merge_overlay), version 5.0.7
+
+2008.01.02
 larch-5 (with simplified union structure, no CD/DVD session save) available
 for testing.
 

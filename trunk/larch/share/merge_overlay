@@ -21,7 +21,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.02
+# 2008.01.07
 
 # The new overlay will be built in memory (main tmpfs?)
 merge_base=/.livesys
@@ -49,8 +49,8 @@ fi
 
 # Make temporary directory for new overlay
 builddir=${merge_base}/merge_overlay
+rm -rf ${builddir}
 mkdir -p ${builddir}
-rm -rf ${builddir}/*
 echo "Copying 'mods' files to ${builddir}"
 
 # Copy existing mods layer
@@ -70,16 +70,17 @@ merge ()
     find . -type d | sed "s|^\./||" | while read n
         do
             if [ "${n}" = "." ]; then continue; fi
-            if $( basename ${n} | grep "^\.wh\." &>/dev/null ); then continue; fi
-            mkdir -p ${builddir}/${d}/${n}
-            chmod ${builddir}/${d}/${n} --reference=${n}
-            chown ${builddir}/${d}/${n} --reference=${n}
-            touch ${builddir}/${d}/${n} --reference=${n}
-            if [ -e ${n}/${opq} ]; then
+            if $( basename "${n}" | grep "^\.wh\." &>/dev/null ); then continue; fi
+            mkdir -p "${builddir}/${d}/${n}"
+            chmod "${builddir}/${d}/${n}" --reference="${n}"
+            chown "${builddir}/${d}/${n}" --reference="${n}"
+            touch "${builddir}/${d}/${n}" --reference="${n}"
+            if [ -e "${n}/${opq}" ]; then
                 # remove existing (old) overlay files within this directory
-                rm -rf ${builddir}/${d}/${n}/*
-                if [ -e /.livesys/system/${d}/${n} ]; then
-                    cp -a ${n}/${opq} ${builddir}/${d}/${n}
+                rm -rf "${builddir}/${d}/${n}/"*
+                rm -rf "${builddir}/${d}/${n}/".* 2>/dev/null
+                if [ -e "/.livesys/system/${d}/${n}" ]; then
+                    cp -a "${n}/${opq} ${builddir}/${d}/${n}"
                 fi
             fi
         done
@@ -89,13 +90,13 @@ merge ()
             sed "s|^\./||" | while read n
         do
             # Remove existing whiteout file for this file (if there is one)
-            dn=$( dirname ${n} )
+            dn="$( dirname "${n}" )"
             if [ "${dn}" = "." ]; then
                 dn=""
             else
                 dn="${dn}/"
             fi
-            rm -f ${builddir}/${d}/${dn}.wh.$( basename ${n} )
+            rm -f "${builddir}/${d}/${dn}.wh.$( basename "${n}" )"
             # Copy the new overlay file to build area
             #  ... unless it is vetoed
             if [ "${d}" = "var" ]; then
@@ -107,18 +108,18 @@ merge ()
             fi
             # removing any existing (old) overlay file with same name
             rm -rf "${builddir}/${d}/${n}"
-            cp -a ${n} ${builddir}/${d}/${n}
+            cp -a "${n}" "${builddir}/${d}/${n}"
         done
 
     # Handle whiteouts
     find \( -regex '.*/\.wh\.[^/]*' -type f \) | \
             sed "s|^\./||" | while read w
         do
-            n=$( echo "${w}" | sed 's/\.wh\.//' )
+            n="$( echo "${w}" | sed 's/\.wh\.//' )"
             # Remove an existing (old) overlay file with this name
-            rm -rf ${builddir}/${d}/${n}
-            if [ -e /.livesys/system/${d}/${n} ]; then
-                cp -a ./${w} ${builddir}/${d}/${w}
+            rm -rf "${builddir}/${d}/${n}"
+            if [ -e "/.livesys/system/${d}/${n}" ]; then
+                cp -a "./${w}" "${builddir}/${d}/${w}"
             fi
         done
 }

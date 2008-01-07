@@ -3,7 +3,7 @@
 # distributable larch packet, containing the actual larch package and
 # a set-up script to make it usable without installing via pacman.
 
-version=5.0.6
+version=5.0.7
 
 # Get path to this directory, via the location of this script
 fullpath="$( readlink -f $0 )"
