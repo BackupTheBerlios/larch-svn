@@ -1,3 +1,6 @@
+07.01.2008:
+v.4.28:
+ - Fixes for file names with spaces in overlay merging.
 16.12.2007:
 v.4.27:
  - Updated syslinux stuff - the graphical isolinux boot now works in qemu!
@@ -92,7 +95,7 @@ v4.4:
 v4.3:
  - buildlive fix.
  - Documentation updates, including a section on the new possibilities
-   for customizing session-saving. 
+   for customizing session-saving.
 v4.2:
  - Various fixes.
    Now INSTLDIR is specified in config_larch and LARCHBUILD is at

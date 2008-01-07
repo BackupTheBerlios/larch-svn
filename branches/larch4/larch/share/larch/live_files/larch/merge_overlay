@@ -21,7 +21,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2007.10.01
+# 2008.01.07
 
 # test if the script is started by root user. If not, exit
 if [ $UID -ne 0 ]; then
@@ -52,8 +52,8 @@ overwrite="1"
 #================ END OF CONFIGURATION VARIABLE DECLARATIONS
 
 newsqf=/.livesys/new-sqf
+rm -rf ${newsqf}
 mkdir -p ${newsqf}
-rm -rf ${newsqf}/*
 
 if [ -f /.livesys/scripts/merge-adjust ] ; then
     . /.livesys/scripts/merge-adjust
@@ -97,8 +97,8 @@ fi
 
 # Make temporary directory for new overlay
 builddir="${merge_base}/merge_overlay"
+rm -rf ${builddir}
 mkdir -p ${builddir}
-rm -rf ${builddir}/*
 echo "Copying overlay files to ${builddir}"
 
 # Copy existing overlays
@@ -126,9 +126,9 @@ for d in bin boot etc larch lib opt root sbin usr var; do
     find -type d | while read n
     do
         if [ "${n}" = "." ]; then continue; fi
-        if $( basename ${n} | grep "^\.wh\." &>/dev/null ); then continue; fi
+        if $( basename "${n}" | grep "^\.wh\." &>/dev/null ); then continue; fi
         # Remove leading './'
-        n=${n:2}
+        n="${n:2}"
         mkdir -p "${builddir}/${d}/${n}"
         chmod "${builddir}/${d}/${n}" --reference="${n}"
         chown "${builddir}/${d}/${n}" --reference="${n}"
@@ -136,6 +136,7 @@ for d in bin boot etc larch lib opt root sbin usr var; do
         if [ -e "${n}/${opq}" ]; then
             # remove existing (old) overlay files within this directory
             rm -rf "${builddir}/${d}/${n}/"*
+            rm -rf "${builddir}/${d}/${n}/".* 2>/dev/null
             if [ -e "/.livesys/system/${d}/${n}" ] ||
                     [ -e "/.livesys/base/${d}/${n}" ]; then
                 cp -a "${n}/${opq}" "${builddir}/${d}/${n}"
@@ -148,11 +149,11 @@ for d in bin boot etc larch lib opt root sbin usr var; do
             while read n
     do
         # Remove leading './'
-        n=${n:2}
+        n="${n:2}"
         # Remove existing (old) overlay file with same name (if there is one)
         rm -rf "${builddir}/${d}/${n}"
         # Remove existing whiteout file for this file (if there is one)
-        dn=$( dirname "${n}" )
+        dn="$( dirname "${n}" )"
         if [ "${dn}" = "." ]; then
             dn=""
         else
@@ -168,8 +169,8 @@ for d in bin boot etc larch lib opt root sbin usr var; do
             while read w
     do
         # Remove leading './'
-        w=${w:2}
-        n=$( echo "${w}" | sed 's/\.wh\.//' )
+        w="${w:2}"
+        n="$( echo "${w}" | sed 's/\.wh\.//' )"
         # Remove an existing (old) overlay file with this name
         rm -rf "${builddir}/${d}/${n}"
         if [ -e "/.livesys/system/${d}/${n}" ] ||
