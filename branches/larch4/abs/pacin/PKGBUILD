@@ -1,7 +1,7 @@
 # Maintainer: gradgrind <gradgrind@online.de>
 pkgname=pacin
-pkgver=2.10
-pkgrel=2
+pkgver=2.11
+pkgrel=1
 pkgdesc="An installer for Archlinux packages"
 url="http://larch.berlios.de"
 depends=('python' 'wget')

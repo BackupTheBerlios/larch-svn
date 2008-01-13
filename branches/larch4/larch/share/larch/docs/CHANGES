@@ -1,3 +1,7 @@
+13.01.2008:
+v.4.29:
+ - Minor change (pacman sync dir deletion) for pacman 3.1 in mklarch.
+   This now won't work for pacman<3.1
 07.01.2008:
 v.4.28:
  - Fixes for file names with spaces in overlay merging.

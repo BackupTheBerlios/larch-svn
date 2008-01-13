@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-#2007.10.14
+#2008.01.13
 
 # location of temporary pacman configuration file
 PACMANCONF="/tmp/pacman_conf"
@@ -230,15 +230,16 @@ cat ${PACMANCONF}_ | while read line; do
 done
 
 PKGSERV="$( grep -m1 "^#<<<pkglist>>>" ${PACMANCONF} )"
-# If no 'core' repository source found, get it from /etc/pacman.d/core
+# If no 'core' repository source found, get it from /etc/pacman.d/mirrorlist
 if [ -z "${PKGSERV}" ]; then
-    PKGSERV="$( grep -m1 "^Server" /etc/pacman.d/core )"
+    PKGSERV="$( grep -m1 "^Server" /etc/pacman.d/mirrorlist | \
+            sed 's|$repo|core|' )"
     if [ -z "${PKGSERV}" ]; then
         echo "ERROR: No source for 'core' repository found."
         exit 1
     fi
 fi
-PKGSERV=$( echo ${PKGSERV} | cut -d'=' -f2 )
+PKGSERV=$( echo ${PKGSERV} | sed -e 's|.*= *||' )
 
 # Check that pacman is available
 which pacman &> /dev/null
@@ -363,8 +364,8 @@ cleancache ()
 
 cleancache
 
-# Remove the custom db
-rm -rf ${INSTLDIR}/var/lib/pacman/custom
+# Remove the custom db (location as of pacman-3.1):
+rm -rf ${INSTLDIR}/var/lib/pacman/sync/custom
 
 # Remove temporary files
 rm ${PACMANCONF}

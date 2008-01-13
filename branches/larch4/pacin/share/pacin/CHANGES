@@ -1,15 +1,17 @@
+2008/01/13:
+  v2.11: Changes for pacman-3.1 - pacman<3.1 no longer suported.
 2007/10/14:
   v2.10: First svn-based release. Small cosmetic fix.
 2007/10/03:
   v2.9: Mount sys and dev also for base package installation, so error
         during kernel installation doesn't occur (not that the error
-	was a problem for larch - the affected image is not used anyway).
+    was a problem for larch - the affected image is not used anyway).
 2007/09/17:
   v2.8: Updated pacin and fallback/example pacman.conf for repository
         renaming (current -> core), pacin was changed more extensively
         because of the reorganization. Now the set of base packages
         may only be obtained from packages.txt in the core repository.
-	Also packages with the architecture tag should work now.
+    Also packages with the architecture tag should work now.
 2007/07/07:
   v2.7: Updated fallback/example pacman.conf and added community repository.
         gen_repo now uses pacman's 'repo-add'.

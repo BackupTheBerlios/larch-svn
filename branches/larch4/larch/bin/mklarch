@@ -21,7 +21,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2007.10.02
+# 2008.01.13
 
 
 APP="$( basename $0 )"
@@ -280,9 +280,7 @@ pacin ${DONTASK} -a ${PROFILE}/addedpacks ${PACINOPTS} ${INSTLDIR}
 if [ $? -ne 0 ]; then exit 1; fi
 
 # Remove unneeded pacman db info
-for d in $( ls ${INSTLDIR}/var/lib/pacman ); do
-    if [ "${d}" != "local" ]; then rm -r ${INSTLDIR}/var/lib/pacman/${d}; fi
-done
+rm -r ${INSTLDIR}/var/lib/pacman/sync/*
 
 # Generate glibc locales
 if [ -f ${PROFILE}/locale.gen ]; then
