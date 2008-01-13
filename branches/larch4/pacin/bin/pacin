@@ -312,12 +312,17 @@ if [ -n "${ADDEDPACKS}" ] && [ ! -f ${ADDEDPACKS} ]; then
 fi
 
 if [ -n "${PKGCACHE}" ]; then
-    # This redirects the package cache, so that, for example,
-    # an existing one can be used.
-    mkdir -p ${INSTLDIR}/var/cache/pacman
-    mkdir -p ${PKGCACHE}
-    ln -s ${PKGCACHE} ${INSTLDIR}/var/cache/pacman/pkg
+    if [ "${PKGCACHE}" != "/var/cache/pacman/pkg" ]; then
+        # This redirects the package cache, so that, for example,
+        # an existing one can be used.
+        PACMAN="${PACMAN} --cachedir ${PKGCACHE}"
+    fi
+else
+    PACMAN="${PACMAN} --cachedir ${INSTLDIR}/var/cache/pacman/pkg"
 fi
+
+# Need to create /var/lib/pacman for pacman-3.1
+mkdir -p ${INSTLDIR}/var/lib/pacman
 
 echo "//"
 echo "// ************** Synchronising package dbs **************"
@@ -345,24 +350,22 @@ fi
 # Clean up package cache
 cleancache ()
 {
-    if [ -n "${PKGCACHE}" ]; then
-        # Remove the package cache redirection
-        rm ${INSTLDIR}/var/cache/pacman/pkg
-    else
-        PKGCACHE=${INSTLDIR}/var/cache/pacman/pkg
+    echo "// Deleting cached packages"
+    if [ -z "${DONTASK}" ]; then
+        # Await yes or no
+        read -p "// Shall I delete all cached packages? [y/N]: " ans
+        if [ -z "$( echo ${ans} | grep '^ *[yY]' )" ]; then return; fi
     fi
-    if [ -n "${NOCACHE}" ]; then
-        echo "// Deleting cached packages"
-        if [ -z "${DONTASK}" ]; then
-            # Await yes or no
-            read -p "// Shall I delete all cached packages? [y/N]: " ans
-            if [ -z "$( echo ${ans} | grep '^ *[yY]' )" ]; then return; fi
-        fi
-        rm -r ${PKGCACHE}
-    fi
+    rm -r ${INSTLDIR}/var/cache/pacman/pkg
 }
 
-cleancache
+if [ -n "${NOCACHE}" ]; then
+    if [ -n "${PKGCACHE}" ]; then
+        echo "Error: Deleting the host package cache is not supported"
+    else
+        cleancache
+    fi
+fi
 
 # Remove the custom db (location as of pacman-3.1):
 rm -rf ${INSTLDIR}/var/lib/pacman/sync/custom
