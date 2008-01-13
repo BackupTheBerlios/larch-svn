@@ -22,7 +22,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-#2007.12.03
+#2008.01.13
 
 import getopt, sys, os
 
@@ -88,7 +88,9 @@ def parseFile(path):
     fh.close()
     return areas
 
-
+"""
+Menu using 'dialog'
++++++++++++++++++++
 # geometry:
 WIDTH = '76'
 HEIGHT = '20'
@@ -117,11 +119,35 @@ def menu(title, text, entries, default=0, header=None):
         return 0
     else:
         assert False
+"""
+
+def menu(title, text, entries, default=0, header=None):
+    t = "***** %s *****" % title
+    print t
+    print "=" * len(t)
+    print text
+    i = 0
+    ilist = "123456789abcdefghijklmnopqrstuvwxyz"
+    for m in entries:
+        print "  %s - %-60s" % (ilist[i], m)
+        i += 1
+    print "-----------------------------------------"
+    print "  0 - Go back"
+    k = raw_input("Select: ")
+    if (k == "0"):
+        return 0
+    n = -1
+    if k in "123456789":
+        n = (ord(k) - ord("0"))
+    elif k in "abcdefghijklmnopqrstuvwxyz":
+        n = (ord(k) - ord("a") + 10)
+    assert ((n>0) and (n<=i))
+    return n
 
 import re
-re1 = re.compile("/core/os/.*")
-def repoDialog(coreServers):
-    serverList = parseFile(coreServers)
+re1 = re.compile(r"/\$repo/os/.*")
+def repoDialog(servers):
+    serverList = parseFile(servers)
     step = 0
     while True:
         if (step == 0):
@@ -163,16 +189,15 @@ def repoDialog(coreServers):
 
 def usage():
     print "Usage:"
-    print "  getPackageServer [-h] [-i <core repository list file>] [<pacman.conf>]"
+    print "  getPackageServer [-h] [-i <repository list file>] [<pacman.conf>]"
     print
     print "Select a server for Arch Linux packages. The given pacman.conf"
-    print "file will be updated to use the chosen server. Note that the pacman.conf"
-    print "passed here should be in its pristine form, containing only the"
-    print "entries like 'Include = /etc/pacman.d/core'."
+    print "file will be updated to use the chosen server first. Other entries"
+    print "will not be affected."
     print
     print "          -h       Print this message"
-    print "          -i       Supply an alternative list of core repositories."
-    print "                   The default is /etc/pacman.d/core"
+    print "          -i       Supply an alternative list of repositories."
+    print "                   The default is /etc/pacman.d/mirrorlist"
     print
     print "If no pacman.conf file is supplied, the chosen repository URL will"
     print "be output to stdout - mainly for test purposes."
@@ -181,7 +206,7 @@ if __name__ == '__main__':
     def report(text):
         print text
 
-    repolist = '/etc/pacman.d/core'
+    repolist = '/etc/pacman.d/mirrorlist'
     try:
         opts, args = getopt.getopt(sys.argv[1:], "i:h")
     except getopt.GetoptError:
@@ -215,13 +240,16 @@ if __name__ == '__main__':
     pcfh = open(pcfile, "r")
     pcf = pcfh.read()
     pcfh.close()
-    pcf = pcf.replace("Include = /etc/pacman.d/core", mirror)
-    pcf = pcf.replace("Include = /etc/pacman.d/extra",
-            mirror.replace("core", "extra"))
-    pcf = pcf.replace("Include = /etc/pacman.d/community",
-            mirror.replace("core", "community"))
     os.remove(pcfile)
     pcfh = open(pcfile, "w")
-    pcfh.write(pcf)
+    for line in pcf.splitlines(True):
+        pcfh.write(line)
+        if line.startswith("[core]"):
+            pcfh.write(mirror.replace("$repo", "core") + "\n")
+        elif line.startswith("[extra]"):
+            pcfh.write(mirror.replace("$repo", "extra") + "\n")
+        elif line.startswith("[community]"):
+            pcfh.write(mirror.replace("$repo", "community") + "\n")
+
     pcfh.close()
     print "++ Updated %s" % pcfile

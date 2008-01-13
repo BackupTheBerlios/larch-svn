@@ -21,7 +21,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-#2008.01.02
+#2008.01.13
 
 # Note that this has quite a few differences to 'pacin' (now deprecated).
 # Read the usage blurb carefully, for example the options -c, -a (changed
@@ -67,7 +67,7 @@ usage () {
     echo "                in this file from the list of base packages"
     echo "                before doing the first installation stage."
     echo
-    echo "          -y    Don't perform 'pacman -Syu' before installing,"
+    echo "          -y    Don't perform 'pacman -Sy' before installing,"
     echo "                but copy the pacman database directories from"
     echo "                the given parent directory."
     echo
@@ -90,9 +90,15 @@ usage () {
     exit
 }
 
-# Default package cache (this is not editable!)
+# Default package cache (this is a statement, not a configuration, so
+# do not change it!)
 CACHE="/var/cache/pacman/pkg"
+# Default pacman db path (this is a statement, not a configuration, so
+# do not change it!)
+DBPATH="/var/lib/pacman"
 
+# Default package cache, on the target
+TARGETCACHE="${CACHE}"
 # A host or remote package cache:
 HOSTCACHE=""
 # Absolute /path/to/file containing list of packages for 2nd install phase:
@@ -134,12 +140,12 @@ do
     a ) checkfile ${OPTARG}
         ADDEDPACKS=${f} ;;
     c ) if [ -z "${OPTARG}" ]; then
-            HOSTCACHE=${CACHE}
+            TARGETCACHE=""
         else
             HOSTCACHE=${OPTARG}
-        fi
-        checkdir ${HOSTCACHE}
-        HOSTCACHE=${f} ;;
+            checkdir ${HOSTCACHE}
+            HOSTCACHE=${f}
+        fi ;;
     b ) checkfile ${OPTARG}
         BASEPACKSFILE=${f} ;;
     x ) checkfile ${OPTARG}
@@ -157,6 +163,7 @@ INSTLDIR="$1"
 echo "INSTLDIR=${INSTLDIR}"
 echo "PACMANK=${PACMANK}"
 echo "ADDEDPACKS=${ADDEDPACKS}"
+echo "TARGETCACHE=${TARGETCACHE}"
 echo "HOSTCACHE=${HOSTCACHE}"
 echo "BASEPACKSFILE=${BASEPACKSFILE}"
 echo "VETOFILE=${VETOFILE}"
@@ -203,12 +210,13 @@ if [ -n "${BASEPACKSFILE}" ]; then
     echo "${BASEPACKSFILE}"
     BASEPKGS=$( cat ${BASEPACKSFILE} | grep -v "#" )
 else
-    # If no 'core' repository source found, get it from /etc/pacman.d/core
-    # (if using standard locations)
+    # If no 'core' repository source found, get it from
+    # /etc/pacman.d/mirrorlist (if using standard locations)
     if [ -z "${CORESERVER}" ]; then
-        CORESERVER=$( grep -m1 "^[ ]*Server.*/core/" /etc/pacman.d/core | \
-                sed "s|^[ ]*Server[= ]*||" )
-        xs="or '/etc/pacman.d/core' "
+        CORESERVER=$( grep -m1 '^[ ]*Server.*/$repo/' \
+                /etc/pacman.d/mirrorlist | \
+                sed -e 's|^[ ]*Server[= ]*||' -e 's|$repo|core|')
+        xs="or '/etc/pacman.d/mirrorlist' "
     else
         xs=""
     fi
@@ -271,21 +279,23 @@ doInstall() {
     fi
 }
 
-if [ -n "${HOSTCACHE}" ]; then
-    # This redirects the package cache, so that, for example,
-    # an existing one can be used.
-    mkdir -p ${INSTLDIR}/var/cache/pacman
-    ln -s ${HOSTCACHE} ${INSTLDIR}${CACHE}
+if [ -n "${TARGETCACHE}" ]; then
+    # This redirects the package cache to the install target
+    # (change in pacman-3.1)
+    PACMAN="${PACMAN} --cachedir ${INSTLDIR}${TARGETCACHE}"
+elif [ -n "${HOSTCACHE}" ]; then
+    # This redirects the package cache to an existing non-standard one
+    PACMAN="${PACMAN} --cachedir ${HOSTCACHE}"
 fi
 
 if [ -n "${DBDIR}" ]; then
     echo "//"
     echo "// Fetching package dbs from: ${DBDIR}"
-    mkdir -p ${INSTLDIR}/var/lib/pacman
+    mkdir -p ${INSTLDIR}${DBPATH}/sync
     for repo in $( grep "^\[.*\]" ${PACMANCONF} | sed "s|\[\(.*\)\]|\1|"); do
         if [ "${repo}" != "options" ]; then
             echo "      ... ${repo}"
-            cp -a ${DBDIR}/${repo} ${INSTLDIR}/var/lib/pacman
+            cp -a ${DBDIR}/sync/${repo} ${INSTLDIR}${DBPATH}/sync
         fi
     done
     echo "//"
@@ -312,12 +322,6 @@ echo "// ************** Installing selected packages **************"
 echo "//"
 doInstall ${basepacks}
 if [ $? -ne 0 ]; then exit 1; fi
-
-# Clean up package cache
-if [ -n "${HOSTCACHE}" ]; then
-    # Remove the package cache redirection
-    rm ${INSTLDIR}${CACHE}
-fi
 
 # Remove temporary files
 rm -rf ${TMPDIR}

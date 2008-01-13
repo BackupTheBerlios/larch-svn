@@ -1,3 +1,6 @@
+2008.01.13
+Adjustments for changes in pacman-3.1, version 5.0.8
+
 2008.01.02
 Fixes for merging when file paths contain spaces (merge_overlay), version 5.0.7
 
