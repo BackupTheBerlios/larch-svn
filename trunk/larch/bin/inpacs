@@ -139,9 +139,8 @@ do
         PACMANK=${f} ;;
     a ) checkfile ${OPTARG}
         ADDEDPACKS=${f} ;;
-    c ) if [ -z "${OPTARG}" ]; then
-            TARGETCACHE=""
-        else
+    c ) TARGETCACHE=""
+        if [ -n "${OPTARG}" ]; then
             HOSTCACHE=${OPTARG}
             checkdir ${HOSTCACHE}
             HOSTCACHE=${f}
@@ -288,10 +287,10 @@ elif [ -n "${HOSTCACHE}" ]; then
     PACMAN="${PACMAN} --cachedir ${HOSTCACHE}"
 fi
 
+mkdir -p ${INSTLDIR}${DBPATH}/sync
 if [ -n "${DBDIR}" ]; then
     echo "//"
     echo "// Fetching package dbs from: ${DBDIR}"
-    mkdir -p ${INSTLDIR}${DBPATH}/sync
     for repo in $( grep "^\[.*\]" ${PACMANCONF} | sed "s|\[\(.*\)\]|\1|"); do
         if [ "${repo}" != "options" ]; then
             echo "      ... ${repo}"
