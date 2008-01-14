@@ -22,9 +22,10 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-#2008.01.13
+#2008.01.14
 
 import getopt, sys, os
+from subprocess import Popen, PIPE, STDOUT
 
 # Build a list structure with areas, subareas and servers
 # [ [area1, [ [subarea1, [server1, server2, ...]],
@@ -88,15 +89,13 @@ def parseFile(path):
     fh.close()
     return areas
 
-"""
-Menu using 'dialog'
-+++++++++++++++++++
+#Menu using 'dialog'
+#+++++++++++++++++++
 # geometry:
 WIDTH = '76'
 HEIGHT = '20'
 LINES = '8'
-from subprocess import Popen, PIPE
-def menu(title, text, entries, default=0, header=None):
+def menu_d(title, text, entries, default=0, header=None):
     # Note that dialog indexing starts at 1, not 0!
     i = 1
     mlist = []
@@ -119,9 +118,10 @@ def menu(title, text, entries, default=0, header=None):
         return 0
     else:
         assert False
-"""
 
-def menu(title, text, entries, default=0, header=None):
+#Menu using plain console
+#++++++++++++++++++++++++
+def menu_c(title, text, entries):
     t = "***** %s *****" % title
     print t
     print "=" * len(t)
@@ -143,6 +143,14 @@ def menu(title, text, entries, default=0, header=None):
         n = (ord(k) - ord("a") + 10)
     assert ((n>0) and (n<=i))
     return n
+
+def menu(title, text, entries, default=0, header=None):
+    """General menu, uses 'dialog' if available, else plain console.
+    """
+    if console:
+        return menu_c(title, text, entries)
+    else:
+        return menu_d(title, text, entries, default=0, header=None)
 
 import re
 re1 = re.compile(r"/\$repo/os/.*")
@@ -198,6 +206,8 @@ def usage():
     print "          -h       Print this message"
     print "          -i       Supply an alternative list of repositories."
     print "                   The default is /etc/pacman.d/mirrorlist"
+    print "          -c       Use plain console for interaction even if"
+    print "                   'dialog' is available"
     print
     print "If no pacman.conf file is supplied, the chosen repository URL will"
     print "be output to stdout - mainly for test purposes."
@@ -207,8 +217,14 @@ if __name__ == '__main__':
         print text
 
     repolist = '/etc/pacman.d/mirrorlist'
+
+    # determine whether 'dialog' utility is available
+    p = Popen(["which", "dialog"], stdout=PIPE, stderr=STDOUT)
+    output = p.communicate()[1]
+    console = (p.returncode != 0)
+
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "i:h")
+        opts, args = getopt.getopt(sys.argv[1:], "i:hc")
     except getopt.GetoptError:
         # print help information and exit:
         usage()
@@ -219,6 +235,8 @@ if __name__ == '__main__':
             sys.exit()
         if (o == "-i"):
             repolist = a
+        if (o == "-c"):
+            console = True
 
     if (len(args) > 1):
         # print help information and exit:
