@@ -22,133 +22,71 @@
 # 2008.01.17
 
 class AutoPart(Stage, gtk.VBox):
-    def __init__(self):
-        assert False, "NYI"
-
-class Partitions(Stage, gtk.VBox):
     def stageTitle(self):
         return _("Select installation partitions")
 
     def getHelp(self):
-        return _("Here you can choose which part(s) of the disk(-like)"
-                " device to use for the Arch Linux installation.\n\n"
-                "WARNING: If you have an operating system already installed"
-                " on this drive which you wish to keep, you must choose"
-                " 'expert' partitioning, unless the existing operating"
-                " system is on the first partition ONLY, and uses the NTFS"
-                " file-system (Windows).")
-
+        return _("The available space will be divided into two or three"
+                " partitions. If there is sufficient space a separate home"
+                " partition will be created (optionally), to keep user"
+                " data separate from system data and programs. This can be"
+                " helpful when updating or changing the operating system.\n\n"
+                "Also, a 'swap' partition will be created as a"
+                " buffer area for situations in which more memory than the"
+                " computer actually has is needed - system crashes are thus"
+                " avoided, although processing speed will probably be"
+                " seriously impaired in such a situation.")
 
     def __init__(self):
         gtk.VBox.__init__(self)
 
+
+
+        self.reinit()
+
+
+
+
+    def reinit(self):
+        MINSPLITSIZE = 2e10     # 20 GB
+        SWAPSIZE = 1e9          #  1 GB
+        HOMESIZE = 50           # % of total
+
         dev = install.selectedDevice()
-        dsizestr = install.selectedDeviceSizeString()
-
-        label = gtk.Label(_("Total capacity of drive %s: %s") %
-                (dev, dsizestr))
-        self.pack_start(label)
-
-        # Offer manual partitioning
-        manual = gtk.RadioButton(None, _("Expert partitioning"))
-        self.pack_end(manual)
-
-        # Offer whole drive
-        self.whole = gtk.RadioButton(manual, _("Use whole drive"))
-        self.pack_end(self.whole)
-        self.whole.set_active(True)
-
-        # Conditional option, see below
-        self.part2 = None
-
         # Info on drive and partitions (dev="/dev/sda", etc.):
         install.getDeviceInfo(dev)
+        linuxspace = install.dsize - install.autoPartStart
 
-        # Only offer to use rest (after first partition) if:
-        #   (a) part1 is NTFS, and (b) disk > min size
-        min = 1e10
-        if install.p1size and (install.dsize > min):
-            val = float(install.dsize) / 2e9
-            valmax = float(install.p1size) / 1e9 - 0.5
-            if ( valmax < val):
-                val = valmax
-            self.ntfsinfo = install.getNTFSinfo(dev+"1")
-            valmin = self.ntfsinfo[3] / 1e9 + 0.1
+        self.addLabel(_("Total capacity of drive %s: %6.1f GB") %
+                (dev, install.dsize))
+        self.addLabel(_("Space available for Arch Linux: %6.1f GB") %
+                (float(linuxspace) / 1e9))
 
-            if (valmin >= valmax):
-                popupMessage(_("The option to reduce the size of the first"
-                        " partition is not available because it is too full."))
-                return
+        if (linuxspace >= MINSPLITSIZE):
+            # Offer option with /home, preactivated.
+            # Including slider for adjusting split.
 
-            # Offer to keep first partition and use rest of drive for Arch
-            self.part2 = gtk.RadioButton(manual,
-                     _("Keep existing operating system"
-                    " and use rest of drive for Arch Linux"))
-            self.pack_end(self.part2)
-            self.part2.connect("toggled", self.part2toggled)
+            pass
 
-            label1 = gtk.Label(_("If you wish to retain the operating system"
-                    " currently installed on the first partition, you have"
-                    " here the option of shrinking it,"
-                    " to create enough space for Arch Linux"))
-            label1.set_line_wrap(True)
-            self.pack_start(label1)
+#?
+# Should there be now just 0 or 1 partitions on the device?
+        endmark = install.dsize - 1
 
-            self.sframe = gtk.Frame()
-            adjlabel = gtk.Label(_("Set new size of NTFS partition (GB)"))
-            self.adj = gtk.Adjustment(val, valmin, valmax,
-                    step_incr=0.1, page_incr=1.0)
-            hscale = gtk.HScale(self.adj)
-            freelabel = gtk.Label(_("Free space (GB):"))
-            self.freesize = gtk.Entry(10)
-            self.freesize.set_editable(False)
-
-            vbox = gtk.VBox()
-            hbox = gtk.HBox()
-            hbox.pack_end(self.freesize, False)
-            hbox.pack_end(freelabel, False)
-            self.shrinkbox = gtk.VBox()
-            self.shrinkbox.pack_start(adjlabel)
-            self.shrinkbox.pack_start(hscale)
-            vbox.pack_start(self.shrinkbox)
-            vbox.pack_start(hbox)
-
-            self.adj.connect("value_changed", self.resize_value)
-
-            self.sframe.add(vbox)
-            self.pack_start(self.sframe)
-
-            self.shrink = gtk.CheckButton(_("Shrink NTFS partition"))
-            self.sframe.set_label_widget(self.shrink)
-            self.shrink.connect("toggled", self.shrink_check_cb)
-            self.shrink.set_active(True)
-            self.shrink.set_active(False)
-
-            self.part2.set_active(True)
-            if ( ( (install.dsize-install.p1size) <= (min/2) ) or
-                    ( install.p1size > (install.dsize/2) ) ):
-                # Activate shrinking by default
-                self.shrink.set_active(True)
-
-    def shrink_check_cb(self, widget, data=None):
-        on = widget.get_active()
-        self.shrinkbox.set_sensitive(on)
-        self.resize_value(self.adj)
-
-    def resize_value(self, widget, date=None):
-        ws = widget.get_value()
-        size = float(install.dsize)/1e9
-        if self.shrink.get_active():
-            size -= ws
+        if install.autoPartStart:
+            # keep 1st partition, allocate from 2nd
+            startmark = install.autoPartStart
         else:
-            size -= float(install.p1size)/1e9
-        self.freesize.set_text("%8.1f" % size)
 
-    def part2toggled(self, widget, date=None):
-        on = widget.get_active()
-        self.sframe.set_sensitive(on)
-        if on:
-            self.resize_value(self.adj)
+            pass
+#parted -s /dev/sda unit B  mkpart primary ext2/linux-swap start end
+
+        # Offer manual partitioning
+        self.addOption('custom', _("Custom partition selection"))
+
+
+
+
+
 
 
     def forward(self):

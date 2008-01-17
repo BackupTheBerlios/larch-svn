@@ -56,22 +56,23 @@ class Partitions(Stage, gtk.VBox):
         self.optionbox.pack_start(label)
 
         # Conditional option, see below
-        self.part2 = None
+        part2 = None
 
         # Info on drive and partitions (dev="/dev/sda", etc.):
         install.getDeviceInfo(dev)
 
         # Only offer to use rest (after first partition) if:
         #   (a) part1 is NTFS, and (b) disk > min size
-        min = 1e10
+        min = 10000
         if install.p1size and (install.dsize > min):
             # Offer to keep first partition and use rest of drive for Arch
-            val = float(install.dsize) / 2e9
-            valmax = float(install.p1size) / 1e9 - 0.5
+            val = float(install.dsize) / 2000
+            valmax = float(install.p1size) / 1000 - 0.5
             if ( valmax < val):
                 val = valmax
             self.ntfsinfo = install.getNTFSinfo(dev+"1")
-            valmin = self.ntfsinfo[3] / 1e9 + 0.1
+            # ntfsresize works in byte units
+            valmin = self.ntfsinfo[3] / 1e9 + 0.2
 
             if (valmin >= valmax):
                 popupMessage(_("The option to reduce the size of the first"
@@ -115,18 +116,17 @@ class Partitions(Stage, gtk.VBox):
             self.shrink.set_active(True)
             self.shrink.set_active(False)
 
-            self.part2 = self.addOption('part2',
+            part2 = self.addOption('part2',
                     _("Keep existing operating system"
-                    " and use rest of drive for Arch Linux"))
-            self.part2.connect("toggled", self.part2toggled, True)
+                    " and use rest of drive for Arch Linux"), True)
+            part2.connect("toggled", self.part2toggled, True)
             if ( ( (install.dsize-install.p1size) <= (min/2) ) or
                     ( install.p1size > (install.dsize/2) ) ):
                 # Activate shrinking by default
                 self.shrink.set_active(True)
 
         # Offer whole drive
-        self.whole = self.addOption('whole', _("Use whole drive"),
-                not self.part2)
+        self.addOption('whole', _("Use whole drive"), not part2)
 
         # Offer manual partitioning
         self.addOption('manual', _("Expert partitioning"))
@@ -138,11 +138,11 @@ class Partitions(Stage, gtk.VBox):
 
     def resize_value(self, widget, date=None):
         ws = widget.get_value()
-        size = float(install.dsize)/1e9
+        size = float(install.dsize)/1000
         if self.shrink.get_active():
             size -= ws
         else:
-            size -= float(install.p1size)/1e9
+            size -= float(install.p1size)/1000
         self.freesize.set_text("%8.1f" % size)
 
     def part2toggled(self, widget, date=None):
@@ -153,14 +153,14 @@ class Partitions(Stage, gtk.VBox):
 
 
     def forward(self):
-        if (self.part2 and self.part2.get_active()):
+        sel = self.getSelectedOption()
+        if (self == 'part2'):
             # Keep existing os on 1st partition
             if self.shrink.get_active():
                 # Shrink NTFS filesystem
                 csize = self.ntfsinfo[0]
                 clus = int(self.adj.get_value() * 1e9) / csize
-                part2start = clus * csize
-                newsize = part2start - install.p1start
+                newsize = clus * csize
                 if popupWarning(_("You are about to shrink an NTFS partition.\n"
                         "This is a risky business, so don't proceed if"
                         " you have not backed up your important data.\n\n"
@@ -177,13 +177,10 @@ class Partitions(Stage, gtk.VBox):
                     self.reinit()
                     return
 
-            else:
-                part2start = install.p1end + 1
-
-            install.setPart(part2start)
+            install.setPart(1)
             mainWindow.goto('autoPart')
 
-        elif self.whole.get_active():
+        elif (sel == 'whole'):
             # Use whole drive
             install.setPart(0)
             mainWindow.goto('autoPart')

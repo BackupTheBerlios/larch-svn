@@ -25,12 +25,6 @@
 #----------------------------------------------------------------------------
 # 2008.01.17
 
-#TODO
-# It seems to also handle (in part) movement between stages, which is a
-# mistake, I think. This should move to the main window class.
-# One problem is that blanking the back button works differently with
-# forward and backward steps.
-
 testing=True
 
 import gtk
@@ -39,8 +33,6 @@ from subprocess import Popen, PIPE
 import os
 
 import re
-
-
 
 class installClass:
     def __init__(self, host=None):
@@ -59,35 +51,13 @@ class installClass:
                 stdout=PIPE).communicate()[0].endswith("^OK^")), (
                     "Couldn't connect to %s" % self.host)
 
-        self.watchcursor = gtk.gdk.Cursor(gtk.gdk.WATCH)
-
-    def busy(self):
-#        gdk_win = gtk.gdk.Window(mainWindow.window,
-#                gtk.gdk.screen_width(),
-#                gtk.gdk.screen_height(),
-#                gtk.gdk.WINDOW_CHILD,
-#                0,
-#                gtk.gdk.INPUT_ONLY)
-#        gdk_win.set_cursor(self.watchcursor)
-#        gdk_win.show()
-        mainWindow.window.set_cursor(self.watchcursor)
-
-        mainWindow.set_sensitive(False)
-        gtk.main_iteration_do(False)
-
-    def busy_off(self):
-#        gdk_win.set_cursor(None)
-#        gdk_win.destroy()
-        mainWindow.window.set_cursor(None)
-
-        mainWindow.set_sensitive(True)
-
     def xcall_local(self, cmd):
         """Call a function on the same machine.
         """
-        self.busy()
-        op = Popen("syscalls/" + cmd, shell=True, stdout=PIPE).communicate()[0]
-        self.busy_off()
+        mainWindow.busy()
+        op = Popen("../share/syscalls/" + cmd, shell=True,
+                stdout=PIPE).communicate()[0]
+        mainWindow.busy_off()
         if op.endswith("^OK^"):
             return ""
         else:
@@ -98,11 +68,11 @@ class installClass:
         Public key authentication must be already set up so that no passsword
         is required.
         """
-        self.busy()
+        mainWindow.busy()
         op = Popen("ssh %s root@%s /opt/larch/share/syscalls/%s" %
                 (opt, self.host, cmd), shell=True,
                 stdout=PIPE).communicate()[0]   # run the command via ssh
-        self.busy_off()
+        mainWindow.busy_off()
         if op.endswith("^OK^"):
             return ""
         else:
@@ -126,9 +96,9 @@ class installClass:
             else:
                 term += " -e "
 
-            self.busy()
+            mainWindow.busy()
             os.system(term + cmd)
-            self.busy_off()
+            mainWindow.busy_off()
 
     def xcall(self, cmd, opt=""):
         if self.host:
@@ -173,12 +143,9 @@ class installClass:
         begins. The value can be:
                 None       - manual partitioning
                 0          - use whole drive
-                +ve number - start byte
+                1          - start after first partition
         """
         self.autoPartStart = start
-
-
-
 
     def getDeviceInfo(self, dev):
         # Info on drive and partitions (dev="/dev/sda", etc.):
@@ -187,31 +154,36 @@ class installClass:
 ####### Just for testing!
         if ((not self.dinfo.startswith("BYT")) and testing):
             self.dinfo = ( "BYT;\n"
-                    "/dev/sda:80026361856B:scsi:512:512:msdos:ATA WDC WD800JB-00JJ;\n"
-                    "1:32256B:20003880959B:20003848704B:ntfs::boot;\n"
-                    "2:20003880960B:40007761919B:20003880960B:ext3::;\n"
-                    "3:40007761920B:44005247999B:3997486080B:linux-swap::;\n"
-                    "4:44005248000B:80023749119B:36018501120B:::;\n"
-                    "5:44005280256B:54007188479B:10001908224B:ext3::;\n"
-                    "6:54007220736B:74011069439B:20003848704B:ext3::;\n"
-                    "7:74011101696B:80023749119B:6012647424B:ext3::;\n" )
+                    "/dev/sda:20491MB:scsi:512:512:msdos:ATA Maxtor 2B020H1;\n"
+                    "1:0.03MB:5001MB:5001MB:ext2::;\n"
+                    "2:5001MB:7000MB:1999MB:::;\n"
+                    "3:7000MB:12001MB:5001MB:::;\n"
+                    "1:12001MB:20489MB:8488MB:free;\n")
 
-        # get the drive size in bytes
-        dsm = re.search(r"^/dev.*:([0-9]+)B:.*;$", self.dinfo, re.M)
-        self.dsize = int(dsm.group(1))
+            self.dinfo = ( "BYT;\n"
+                    "/dev/sda:80026MB:scsi:512:512:msdos:ATA WDC WD800JB-00JJ;\n"
+                    "1:0.03MB:20004MB:20004MB:ntfs::boot;\n"
+                    "2:20004MB:40008MB:20004MB:ext3::;\n"
+                    "3:40008MB:44005MB:3997MB:linux-swap::;\n"
+                    "4:44005MB:80024MB:36019MB:::;\n"
+                    "5:44005MB:54007MB:10002MB:ext3::;\n"
+                    "6:54007MB:74011MB:20004MB:ext3::;\n"
+                    "7:74011MB:80024MB:6013MB:ext3::;\n")
+
+        # get the drive size in MB
+        dsm = re.search(r"^/dev.*:([0-9\.]+)MB:.*;$", self.dinfo, re.M)
+        self.dsize = int(dsm.group(1).split('.')[0])
         # get the info for the first partition, but only if it is NTFS
-        p1m = re.search(r"^1:([0-9]+)B:([0-9]+)B:([0-9]+)B:ntfs:.*;$",
-                self.dinfo, re.M)
+        p1m = re.search(r"^1:([0-9\.]+)MB:([0-9\.]+)MB:"
+                "([0-9\.]+)MB:ntfs:.*;$", self.dinfo, re.M)
         if p1m:
-            self.p1size = int(p1m.group(3))
-            self.p1start = int(p1m.group(1))
-            self.p1end = int(p1m.group(2))
+            self.p1size = int(p1m.group(3).split('.')[0])
+            self.p1start = int(p1m.group(1).split('.')[0])
+            self.p1end = int(p1m.group(2).split('.')[0])
         else:
             self.p1size = 0
             self.p1start = 0
             self.p1end = 0
-
-
 
     def getNTFSinfo(self, part):
         """Return information about the given partition as a tuple:

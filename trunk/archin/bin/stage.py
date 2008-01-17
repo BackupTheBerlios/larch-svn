@@ -67,6 +67,10 @@ class Stage:
             b.set_active(True)
         return b
 
+    def addLabel(self, text):
+        l = gtk.Label(text)
+        self.optionbox.pack_start(l)
+
     def getSelectedOption(self):
         for n, b in self.options.items():
             if b.get_active():

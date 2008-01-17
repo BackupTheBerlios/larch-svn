@@ -29,7 +29,6 @@ import gtk, gobject
 from stage import Stage
 from glob import glob
 from install import installClass
-from embterm import terminal
 import os
 
 stages = {}
@@ -37,7 +36,7 @@ stages = {}
 class ArchinGtk(gtk.Window):
     def __init__(self):
 
-        for m in glob("modules/*.py"):
+        for m in glob("../share/modules/*.py"):
             execfile(m)
 
         gtk.Window.__init__(self)
@@ -70,9 +69,36 @@ class ArchinGtk(gtk.Window):
         self.lButton.connect("clicked", self.back)
         self.rButton.connect("clicked", self.forward)
 
+        self.watchcursor = gtk.gdk.Cursor(gtk.gdk.WATCH)
+
     def mainLoop(self):
         self.show_all()
         gtk.main()
+
+    def busy(self):
+#        gdk_win = gtk.gdk.Window(mainWindow.window,
+#                gtk.gdk.screen_width(),
+#                gtk.gdk.screen_height(),
+#                gtk.gdk.WINDOW_CHILD,
+#                0,
+#                gtk.gdk.INPUT_ONLY)
+#        gdk_win.set_cursor(self.watchcursor)
+#        gdk_win.show()
+        self.window.set_cursor(self.watchcursor)
+
+# (*) I have commented out the sensitivity switch because it mucks up repeated
+# clicks on a single button (the mouse must leave and reenter the button
+# before clicking works again). gtk bug 56070
+#        mainWindow.set_sensitive(False)
+        gtk.main_iteration_do(False)
+
+    def busy_off(self):
+#        gdk_win.set_cursor(None)
+#        gdk_win.destroy()
+        self.window.set_cursor(None)
+
+# See above (*)
+#        mainWindow.set_sensitive(True)
 
     def goto(self, stagename):
         """This is the main function for entering a new stage.
