@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# part-replace
+
+# Replace the first, NTFS partition on the given (argument $1) device
+# in the partition table.
+# $2 - start position (bytes)
+# $3 - end position (bytes)
+
+if parted -s $1 mkpart primary NTFS $2 $3; then echo -n '^OK^'; fi
