@@ -42,49 +42,40 @@ class ManuPart(Stage, gtk.VBox):
 
     def __init__(self):
         gtk.VBox.__init__(self)
+        Stage.__init__(self)
+
 
         dev = install.selectedDevice()
 
         # Offer gparted - if available
         if (install.gparted_available() == ""):
-            self.gparted = gtk.RadioButton(None, _("Use gparted (recommended)"))
-            self.pack_start(self.gparted)
-            self.gparted.set_active(True)
+            gparted = self.addOption('gparted',
+                    _("Use gparted (recommended)"), True)
         else:
-            self.gparted = None
-        buttongroup = self.gparted
+            gparted = None
 
         # Offer cfdisk on each available disk device
-        self.cfdisklist = []
         for d, s, t in install.devices:
-            b = gtk.RadioButton(buttongroup, _("Use cfdisk on %s") % d)
-            self.pack_start(b)
-            buttongroup = b
-            if (d == dev) and not self.gparted:
+            b = self.addOption('cfdisk-%s' % d, _("Use cfdisk on %s") % d)
+            if (d == dev) and not gparted:
                 b.set_active(True)
-            self.cfdisklist.append(b)
 
         # Offer 'use existing partitions/finished'
-        self.done = gtk.RadioButton(buttongroup, _("Use existing partitions /"
-                " finished editing partitions"))
-        self.pack_end(self.done)
+        self.done = self.addOption('done',
+                _("Use existing partitions / finished editing partitions"))
 
 
     def forward(self):
-        if (self.gparted and self.gparted.get_active()):
+        sel = self.getSelectedOption()
+        if (sel == 'gparted'):
             install.gparted()
             self.reinit()
 
-        elif self.done.get_active():
+        elif (sel == 'done'):
             mainWindow.goto('partSelect')
 
         else:
-            i = 0
-            for b in self.cfdisklist:
-                if b.get_active():
-                    install.cfdisk(i)
-                    break
-                i += 1
+            install.cfdisk(sel.split('-')[1])
             self.reinit()
 
 

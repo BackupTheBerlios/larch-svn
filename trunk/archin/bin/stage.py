@@ -24,6 +24,14 @@
 import gtk
 
 class Stage:
+    def __init__(self, vbox=None):
+        if vbox:
+            self.optionbox = vbox
+        else:
+            self.optionbox = self
+        self.options = {}
+        self.option0 = None
+
     def labelL(self):
         return gtk.STOCK_GO_BACK
 
@@ -49,3 +57,18 @@ class Stage:
         dialog.set_title(_("archin Help"))
         dialog.run()
         dialog.destroy()
+
+    def addOption(self, name, label, default=False):
+        b = gtk.RadioButton(self.option0, label)
+        self.options[name] = b
+        self.optionbox.pack_start(b)
+        self.option0 = b
+        if default:
+            b.set_active(True)
+        return b
+
+    def getSelectedOption(self):
+        for n, b in self.options.items():
+            if b.get_active():
+                return n
+        return None

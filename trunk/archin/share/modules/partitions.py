@@ -34,36 +34,26 @@ class Partitions(Stage, gtk.VBox):
                 " system is on the first partition ONLY, and uses the NTFS"
                 " file-system (Windows).")
 
-
     def __init__(self):
         """Things could have changed if we return to this stage, so
         all the setting up is done in 'reinit'.
         """
         gtk.VBox.__init__(self)
-        self.box = None
         self.reinit()
 
     def reinit(self):
-        if self.box:
-            self.remove(self.box)
-        self.box = gtk.VBox()
-        self.pack_start(self.box)
+        for c in self.get_children():
+            self.remove(c)
+        vb = gtk.VBox()
+        self.pack_start(vb)
+        Stage.__init__(self, vb)
 
         dev = install.selectedDevice()
         dsizestr = install.selectedDeviceSizeString()
 
         label = gtk.Label(_("Total capacity of drive %s: %s") %
                 (dev, dsizestr))
-        self.box.pack_start(label)
-
-        # Offer manual partitioning
-        manual = gtk.RadioButton(None, _("Expert partitioning"))
-        self.box.pack_end(manual)
-
-        # Offer whole drive
-        self.whole = gtk.RadioButton(manual, _("Use whole drive"))
-        self.box.pack_end(self.whole)
-        self.whole.set_active(True)
+        self.optionbox.pack_start(label)
 
         # Conditional option, see below
         self.part2 = None
@@ -75,6 +65,7 @@ class Partitions(Stage, gtk.VBox):
         #   (a) part1 is NTFS, and (b) disk > min size
         min = 1e10
         if install.p1size and (install.dsize > min):
+            # Offer to keep first partition and use rest of drive for Arch
             val = float(install.dsize) / 2e9
             valmax = float(install.p1size) / 1e9 - 0.5
             if ( valmax < val):
@@ -87,19 +78,12 @@ class Partitions(Stage, gtk.VBox):
                         " partition is not available because it is too full."))
                 return
 
-            # Offer to keep first partition and use rest of drive for Arch
-            self.part2 = gtk.RadioButton(manual,
-                     _("Keep existing operating system"
-                    " and use rest of drive for Arch Linux"))
-            self.box.pack_end(self.part2)
-            self.part2.connect("toggled", self.part2toggled)
-
             label1 = gtk.Label(_("If you wish to retain the operating system"
                     " currently installed on the first partition, you have"
                     " here the option of shrinking it,"
                     " to create enough space for Arch Linux"))
             label1.set_line_wrap(True)
-            self.box.pack_start(label1)
+            self.optionbox.pack_start(label1)
 
             self.sframe = gtk.Frame()
             adjlabel = gtk.Label(_("Set new size of NTFS partition (GB)"))
@@ -123,7 +107,7 @@ class Partitions(Stage, gtk.VBox):
             self.adj.connect("value_changed", self.resize_value)
 
             self.sframe.add(vbox)
-            self.box.pack_start(self.sframe)
+            self.optionbox.pack_start(self.sframe)
 
             self.shrink = gtk.CheckButton(_("Shrink NTFS partition"))
             self.sframe.set_label_widget(self.shrink)
@@ -131,11 +115,21 @@ class Partitions(Stage, gtk.VBox):
             self.shrink.set_active(True)
             self.shrink.set_active(False)
 
-            self.part2.set_active(True)
+            self.part2 = self.addOption('part2',
+                    _("Keep existing operating system"
+                    " and use rest of drive for Arch Linux"))
+            self.part2.connect("toggled", self.part2toggled, True)
             if ( ( (install.dsize-install.p1size) <= (min/2) ) or
                     ( install.p1size > (install.dsize/2) ) ):
                 # Activate shrinking by default
                 self.shrink.set_active(True)
+
+        # Offer whole drive
+        self.whole = self.addOption('whole', _("Use whole drive"),
+                not self.part2)
+
+        # Offer manual partitioning
+        self.addOption('manual', _("Expert partitioning"))
 
     def shrink_check_cb(self, widget, data=None):
         on = widget.get_active()

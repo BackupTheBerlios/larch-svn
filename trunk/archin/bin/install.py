@@ -270,8 +270,7 @@ class installClass:
     def gparted(self):
         return self.xcall("gparted-run", "-Y")
 
-    def cfdisk(self, index):
-        dev = self.devices[index][0]
+    def cfdisk(self, dev):
         if self.host:
             cmd = "ssh -t root@%s cfdisk %s" % (self.host, dev)
         else:
