@@ -192,18 +192,15 @@ class installClass:
                  current device size,
                  suggested resize point (minimum))
         All sizes are in bytes.
-        When resizing, a new partition should start on a cluster boundary?
-        (i.e. its 'start' address should be a multiple of the cluster size).
-        The first partition is an exception, it seems to start at 32256.
-        gparted doesn't do this. It calculates in sectors(?), 512 byte units,
-        and it is not clear whether the size should be in full clusters.
+        When resizing, I suppose it makes sense to select a multiple of
+        the cluster size - but this doesn't seem to be necessary.
         If the call fails for some reason, None is returned.
         """
         op = self.xcall("get-ntfsinfo %s" % part)
         rx = re.compile(r"^[^0-9]* ([0-9]+) ")
         lines = op.splitlines()
         try:
-            cs = int(rx.search(lines[0]).group(1))
+            self.ntfs_cluster_size = int(rx.search(lines[0]).group(1))
             cvs = int(rx.search(lines[0]).group(1))
             cds = int(rx.search(lines[0]).group(1))
             srp = int(rx.search(lines[0]).group(1))
@@ -213,12 +210,15 @@ class installClass:
             print "get-ntfsinfo failed"
             return (4096, 20003848704, 20003848704, 2310758400)
             return None
-        return (cs, cvs, cds, srp)
+        return (self.ntfs_cluster_size, cvs, cds, srp)
 
-    def doNTFSshrink(self, newsize):
+    def doNTFSshrink(self, s):
         """Shrink selected NTFS partition. First the file-system is shrunk,
-        then the partition containing it.
+        then the partition containing it. The given size is in MB.
         """
+        clus = int(s * 1e6) / self.ntfs_cluster_size
+        newsize = clus * self.ntfs_cluster_size
+
         dev = self.selectedDevice()
         # First a test run
         op = self.xcall("ntfs-testrun %s1 %s" % (dev, newsize))
@@ -229,10 +229,12 @@ class installClass:
         if not op:
             return op
         # Now resize the actual partition
-        op = self.xcall("part-remove %s" % dev)
+        op = self.xcall("getinfo-ntfs1 %s" % dev)
         if not op:
-            return op
-        return self.xcall("part-replace %s" % dev)
+            return _("Couldn't get start of first (NTFS) partition")
+        startbyte = int(re.search(r"^1:([0-9]+)B:", op).group(1))
+        endbyte = startbyte + newsize - 1
+        return self.xcall("part1-resize %s %d %d" % (dev, startbyte, endbyte))
 
     def gparted_available(self):
         """Return '' if gparted is available.

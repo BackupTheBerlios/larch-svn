@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.17
+# 2008.01.18
 
 class Partitions(Stage, gtk.VBox):
     def stageTitle(self):
@@ -77,53 +77,53 @@ class Partitions(Stage, gtk.VBox):
             if (valmin >= valmax):
                 popupMessage(_("The option to reduce the size of the first"
                         " partition is not available because it is too full."))
-                return
 
-            label1 = gtk.Label(_("If you wish to retain the operating system"
-                    " currently installed on the first partition, you have"
-                    " here the option of shrinking it,"
-                    " to create enough space for Arch Linux"))
-            label1.set_line_wrap(True)
-            self.optionbox.pack_start(label1)
+            else:
+                label1 = gtk.Label(_("If you wish to retain the operating"
+                        " system currently installed on the first partition,"
+                        " you have here the option of shrinking it,"
+                        " to create enough space for Arch Linux"))
+                label1.set_line_wrap(True)
+                self.optionbox.pack_start(label1)
 
-            self.sframe = gtk.Frame()
-            adjlabel = gtk.Label(_("Set new size of NTFS partition (GB)"))
-            self.adj = gtk.Adjustment(val, valmin, valmax,
-                    step_incr=0.1, page_incr=1.0)
-            hscale = gtk.HScale(self.adj)
-            freelabel = gtk.Label(_("Free space (GB):"))
-            self.freesize = gtk.Entry(10)
-            self.freesize.set_editable(False)
+                self.sframe = gtk.Frame()
+                adjlabel = gtk.Label(_("Set new size of NTFS partition (GB)"))
+                self.adj = gtk.Adjustment(val, valmin, valmax,
+                        step_incr=0.1, page_incr=1.0)
+                hscale = gtk.HScale(self.adj)
+                freelabel = gtk.Label(_("Free space (GB):"))
+                self.freesize = gtk.Entry(10)
+                self.freesize.set_editable(False)
 
-            vbox = gtk.VBox()
-            hbox = gtk.HBox()
-            hbox.pack_end(self.freesize, False)
-            hbox.pack_end(freelabel, False)
-            self.shrinkbox = gtk.VBox()
-            self.shrinkbox.pack_start(adjlabel)
-            self.shrinkbox.pack_start(hscale)
-            vbox.pack_start(self.shrinkbox)
-            vbox.pack_start(hbox)
+                vbox = gtk.VBox()
+                hbox = gtk.HBox()
+                hbox.pack_end(self.freesize, False)
+                hbox.pack_end(freelabel, False)
+                self.shrinkbox = gtk.VBox()
+                self.shrinkbox.pack_start(adjlabel)
+                self.shrinkbox.pack_start(hscale)
+                vbox.pack_start(self.shrinkbox)
+                vbox.pack_start(hbox)
 
-            self.adj.connect("value_changed", self.resize_value)
+                self.adj.connect("value_changed", self.resize_value)
 
-            self.sframe.add(vbox)
-            self.optionbox.pack_start(self.sframe)
+                self.sframe.add(vbox)
+                self.optionbox.pack_start(self.sframe)
 
-            self.shrink = gtk.CheckButton(_("Shrink NTFS partition"))
-            self.sframe.set_label_widget(self.shrink)
-            self.shrink.connect("toggled", self.shrink_check_cb)
-            self.shrink.set_active(True)
-            self.shrink.set_active(False)
-
-            part2 = self.addOption('part2',
-                    _("Keep existing operating system"
-                    " and use rest of drive for Arch Linux"), True)
-            part2.connect("toggled", self.part2toggled, True)
-            if ( ( (install.dsize-install.p1size) <= (min/2) ) or
-                    ( install.p1size > (install.dsize/2) ) ):
-                # Activate shrinking by default
+                self.shrink = gtk.CheckButton(_("Shrink NTFS partition"))
+                self.sframe.set_label_widget(self.shrink)
+                self.shrink.connect("toggled", self.shrink_check_cb)
                 self.shrink.set_active(True)
+                self.shrink.set_active(False)
+
+                part2 = self.addOption('part2',
+                        _("Keep existing operating system"
+                        " and use rest of drive for Arch Linux"), True)
+                part2.connect("toggled", self.part2toggled, True)
+                if ( ( (install.dsize-install.p1size) <= (min/2) ) or
+                        ( install.p1size > (install.dsize/2) ) ):
+                    # Activate shrinking by default
+                    self.shrink.set_active(True)
 
         # Offer whole drive
         self.addOption('whole', _("Use whole drive"), not part2)
@@ -157,10 +157,8 @@ class Partitions(Stage, gtk.VBox):
         if (self == 'part2'):
             # Keep existing os on 1st partition
             if self.shrink.get_active():
-                # Shrink NTFS filesystem
-                csize = self.ntfsinfo[0]
-                clus = int(self.adj.get_value() * 1e9) / csize
-                newsize = clus * csize
+                # Shrink NTFS filesystem, convert size to MB
+                newsize = int(self.adj.get_value() * 1000)
                 if popupWarning(_("You are about to shrink an NTFS partition.\n"
                         "This is a risky business, so don't proceed if"
                         " you have not backed up your important data.\n\n"

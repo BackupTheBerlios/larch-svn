@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.17
+# 2008.01.18
 
 class AutoPart(Stage, gtk.VBox):
     def stageTitle(self):
@@ -48,8 +48,8 @@ class AutoPart(Stage, gtk.VBox):
 
 
     def reinit(self):
-        MINSPLITSIZE = 2e10     # 20 GB
-        SWAPSIZE = 1e9          #  1 GB
+        MINSPLITSIZE = 20000    # MB
+        SWAPSIZE = 1000         # MB
         HOMESIZE = 50           # % of total
 
         dev = install.selectedDevice()
