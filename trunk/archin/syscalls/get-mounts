@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# get-mounts
+
+# Get the contents of /proc/mounts
+
+cat /proc/mounts
