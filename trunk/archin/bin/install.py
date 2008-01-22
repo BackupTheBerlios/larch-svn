@@ -23,7 +23,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.17
+# 2008.01.22
 
 testing=True
 
@@ -33,6 +33,8 @@ from subprocess import Popen, PIPE
 import os
 
 import re
+
+EXT3DEFAULTS = "NYI"
 
 class installClass:
     def __init__(self, host=None):
@@ -106,14 +108,14 @@ class installClass:
         else:
             return self.xcall_local(cmd)
 
-    def getDevices(self):
-        """self.devices is set to a list of device descriptions.
+    def listDevices(self):
+        """Return a list of device descriptions.
         Each device description is a list of strings:
             [device (/dev/sda, etc.),
              size (including unit),
              device type/name]
         """
-        self.devices = []
+        devices = []
         op = self.xcall("get-devices")
 
 ####### Just for testing!
@@ -122,18 +124,32 @@ class installClass:
                     "/dev/sdb:514MB:JetFlash TS512MJF2A/120;\n")
 
         for line in op.splitlines():
-            self.devices.append(line.rstrip(';').split(':'))
+            devices.append(line.rstrip(';').split(':'))
+        return devices
 
-    def setDevice(self, index):
-        """Set device selection for automatic partitioning.
-        The value is the index of the device in the 'devices' list.
+    def getmounts(self):
+        return self.xcall("get-mounts")
+
+    def setDevices(self, devs):
+        """Set the self.devices list.
         """
-        self.autodevice = index
+        self.devices = devs
+
+    def larchdev(self):
+        """If the running system is larch, return the device from which
+        it booted. Otherwise ''.
+        """
+        return self.xcall("larchbootdev").strip()
+
+    def setDevice(self, device):
+        """Set device selection for automatic partitioning.
+        The value is the name of the drive ('/dev/sda', etc.).
+        None is also a possibility ...
+        """
+        self.autodevice = device
 
     def selectedDevice(self):
-        if (self.autodevice < 0):
-            return None
-        return self.devices[self.autodevice][0]
+        return self.autodevice
 
     def selectedDeviceSizeString(self):
         return self.devices[self.autodevice][1]
@@ -155,12 +171,12 @@ class installClass:
         if ((not self.dinfo.startswith("BYT")) and testing):
             self.dinfo = ( "BYT;\n"
                     "/dev/sda:20491MB:scsi:512:512:msdos:ATA Maxtor 2B020H1;\n"
-                    "1:0.03MB:5001MB:5001MB:ext2::;\n"
+                    "1:0.03MB:15001MB:15001MB:ntfs::;\n"
                     "2:5001MB:7000MB:1999MB:::;\n"
                     "3:7000MB:12001MB:5001MB:::;\n"
                     "1:12001MB:20489MB:8488MB:free;\n")
 
-            self.dinfo = ( "BYT;\n"
+            self.dinfo2 = ( "BYT;\n"
                     "/dev/sda:80026MB:scsi:512:512:msdos:ATA WDC WD800JB-00JJ;\n"
                     "1:0.03MB:20004MB:20004MB:ntfs::boot;\n"
                     "2:20004MB:40008MB:20004MB:ext3::;\n"
@@ -212,6 +228,12 @@ class installClass:
             return None
         return (self.ntfs_cluster_size, cvs, cds, srp)
 
+    def getNTFSmin(self, part):
+        """Get the minimum size in MB for shrinking the given NTFS partition.
+        """
+        cs, cvs, cds, srp = self.getNTFSinfo(part)
+        return srp / 1000000
+
     def doNTFSshrink(self, s):
         """Shrink selected NTFS partition. First the file-system is shrunk,
         then the partition containing it. The given size is in MB.
@@ -250,3 +272,38 @@ class installClass:
         else:
             cmd = "cfdisk %s" % dev
         self.terminal(cmd)
+
+
+    def rmparts(self, dev, partno):
+        """Remove all partitions on the given device starting from the
+        given partition number.
+        """
+        parts = self.xcall("listparts %s" % dev).splitlines()
+        i = len(parts)
+        while (i > 0):
+            i -= 1
+            p = int(parts[i])
+            if (p >= partno):
+                op = self.xcall("rmpart %s %d" % (dev, p))
+                if op: return op
+        return ""
+
+    def mkpart(self, dev, startMB, endMB, ptype='ext2', pl='primary'):
+        """Make a partition on the given device with the given start and
+        end points. The default type is linux (called 'ext2' but no
+        formatting is done). pl can be 'primary' or 'logical'.
+        """
+        return self.xcall("newpart %s %d %d %s %s" % (dev,
+                startMB, endMB, ptype, pl))
+
+    def clearParts(self):
+        """Keep a record of partitions which have been marked for use,
+        initially empty.
+        """
+        self.parts = {}
+
+    def defpart(self, dev, partno, mount, fstype='ext3', format=True,
+            flags=EXT3DEFAULTS):
+        """Add a partition to the list of those marked for use.
+        """
+        self.parts["%s%d" % (dev, partno)] = [mount, fstpye, format, flags]

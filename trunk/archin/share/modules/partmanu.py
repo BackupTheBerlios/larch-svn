@@ -19,11 +19,11 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.17
+# 2008.01.22
 
 
 
-class ManuPart(Stage, gtk.VBox):
+class ManuPart(Stage):
     def stageTitle(self):
         return _("Edit disk partitions manually")
 
@@ -39,11 +39,8 @@ class ManuPart(Stage, gtk.VBox):
                 " be available. The device to be edited can be selected"
                 " from within the program.")
 
-
-    def __init__(self):
-        gtk.VBox.__init__(self)
+    def __init__(self, localdic):
         Stage.__init__(self)
-
 
         dev = install.selectedDevice()
 
@@ -55,10 +52,25 @@ class ManuPart(Stage, gtk.VBox):
             gparted = None
 
         # Offer cfdisk on each available disk device
+        mounteds = 0
         for d, s, t in install.devices:
-            b = self.addOption('cfdisk-%s' % d, _("Use cfdisk on %s") % d)
+            if d.endswith('-'):
+                d = d.rstrip('-')
+                wrap = '<span foreground="red">%s</span>'
+                mounteds += 1
+            else:
+                wrap = '%s'
+            text = _("Use cfdisk on %s") % d
+            b = self.addOption('cfdisk-%s' % d, wrap % text)
             if (d == dev) and not gparted:
                 b.set_active(True)
+
+        if mounteds:
+            self.addLabel('<span foreground="red">%s</span>' %
+                    _('WARNING: Editing partitions on a device with mounted'
+                    ' partitions (those marked in red) is likely to cause'
+                    ' a lot of trouble!\n'
+                    'If possible, unmount them and then restart this program.'))
 
         # Offer 'use existing partitions/finished'
         self.done = self.addOption('done',
@@ -79,4 +91,4 @@ class ManuPart(Stage, gtk.VBox):
             self.reinit()
 
 
-stages['manualPart'] = ManuPart
+stages['manualPart'] = (ManuPart, locals())

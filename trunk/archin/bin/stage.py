@@ -19,16 +19,13 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.17
+# 2008.01.22
 
-import gtk
+import gtk, gobject
 
-class Stage:
-    def __init__(self, vbox=None):
-        if vbox:
-            self.optionbox = vbox
-        else:
-            self.optionbox = self
+class Stage(gtk.VBox):
+    def __init__(self):
+        gtk.VBox.__init__(self)
         self.options = {}
         self.option0 = None
 
@@ -59,20 +56,64 @@ class Stage:
         dialog.destroy()
 
     def addOption(self, name, label, default=False):
-        b = gtk.RadioButton(self.option0, label)
+        b = gtk.RadioButton(self.option0)
+
+        l = gtk.Label()
+        l.set_markup(label)
+        b.add(l)
+
         self.options[name] = b
-        self.optionbox.pack_start(b)
+        self.pack_start(b)
         self.option0 = b
         if default:
             b.set_active(True)
         return b
 
-    def addLabel(self, text):
-        l = gtk.Label(text)
-        self.optionbox.pack_start(l)
+    def addCheckButton(self, label, callback):
+        b = gtk.CheckButton(label)
+        self.pack_start(b)
+        b.connect("toggled", self.toggled_cb, callback)
+        return b
+
+    def setCheck(self, b, on):
+        b.set_active(on)
+
+    def getCheck(self, b):
+        return b.get_active()
+
+    def addLabel(self, text, align=None):
+        l = gtk.Label()
+        l.set_markup(text)
+        l.set_line_wrap(True)
+        self.pack_start(l)
+        if (align == 'right'):
+            l.set_alignment(1.0, 0.5)
+        elif  (align == 'left'):
+            l.set_alignment(0.0, 0.5)
+        return l
+
+    def setLabel(self, l, text):
+        l.set_markup(text)
+
+    def addWidget(self, w):
+        self.pack_start(w)
+        return w
 
     def getSelectedOption(self):
         for n, b in self.options.items():
             if b.get_active():
                 return n
         return None
+
+    def toggled_cb(self, widget, callback):
+        callback(widget.get_active())
+
+    # Idle callback handling
+    def request_update(self, callback):
+        gobject.idle_add(callback)
+
+    def stop_callback(self):
+        """Do 'return self.stop_callback()' at the end of a callback
+        so that it is not called again in the next idle loop.
+        """
+        return False

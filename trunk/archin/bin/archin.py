@@ -21,7 +21,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.17
+# 2008.01.22
 
 # Add a Quit button?
 
@@ -36,8 +36,8 @@ stages = {}
 class ArchinGtk(gtk.Window):
     def __init__(self):
 
-        for m in glob("../share/modules/*.py"):
-            execfile(m)
+        for m in glob("%s/*.py" % modulePath):
+            execfile(m, globals(), {})
 
         gtk.Window.__init__(self)
         self.set_default_size(600,400)
@@ -105,7 +105,8 @@ class ArchinGtk(gtk.Window):
         It stacks the widget (using a gtk.Notebook) so that it can be
         returned to later.
         """
-        sw = stages[stagename]()
+        sclass, localdic = stages[stagename]
+        sw = sclass(localdic)
         self.mainWidget.append_page(sw)
         self.setStage(sw)
 
@@ -193,6 +194,7 @@ if (__name__ == "__main__"):
         print "          archin.py [target-address]"
         sys.exit(1)
 
+    __builtin__.modulePath = "../share/modules"
     __builtin__.mainWindow = ArchinGtk()
     __builtin__.install = installClass(target)
     mainWindow.goto('welcome')

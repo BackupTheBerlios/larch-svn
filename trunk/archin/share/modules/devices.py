@@ -19,10 +19,10 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.17
+# 2008.01.22
 
 
-class Devices(Stage, gtk.TreeView):
+class Devices(Stage):
     def stageTitle(self):
         return _("Select installation device")
 
@@ -31,44 +31,33 @@ class Devices(Stage, gtk.TreeView):
                 " you want to install Arch Linux.\n\n"
                 "Select one of the devices"
                 " and click on the 'Forward' button.\n\n"
-                "To use partitions from more than one device you must"
-                " select 'multiple' and click on the 'Forward' button."
+                "To use partitions from more than one device, or to use a"
+                " device on which partitions are currently mounted (such "
+                " partitions are not shown here), you must select"
+                " 'manual partitioning' and click on the 'Forward' button."
                 " You will be taken to the manual partitioning menu.")
 
+    def __init__(self, localdic):
+        Stage.__init__(self)
 
-    def __init__(self):
-        gtk.TreeView.__init__(self)
-        self.set_grid_lines(gtk.TREE_VIEW_GRID_LINES_VERTICAL)
-        renderer = gtk.CellRendererText()
-        column = gtk.TreeViewColumn(_("Device"), renderer, text=0)
-        self.append_column(column)
-        column = gtk.TreeViewColumn(_("Size"), renderer, text=1)
-        self.append_column(column)
-        column = gtk.TreeViewColumn(_("Description"), renderer, text=2)
-        self.append_column(column)
-        self.liststore = gtk.ListStore(str, str, str)
+        i = 0
         for d, s, n in install.devices:
-            self.liststore.append((d, s, n))
-        self.liststore.append((_("multiple"), "-", "-"))
-        self.set_model(self.liststore)
+            if d.endswith('-'):
+                continue
+            i += 1
+            self.addOption(d, "%16s  (%10s : %s)" % (d, s, n), (i == 1))
 
-        treeselection = self.get_selection()
-        treeselection.select_path(0)
+        self.addOption('manual', _("Manual partitioning"))
+
 
     def forward(self):
-        selec = self.get_selection()
-        m, r = selec.get_selected_rows()
-        try:
-            row = r[0][0]
-        except:
-            popupMessage(_("Please select an entry in the list."))
-            return
-        if (row == self.get_visible_range()[1][0]):
-            install.setDevice(-1)
+        sel = self.getSelectedOption()
+        if (sel == 'manual'):
+            install.setDevice(None)
             mainWindow.goto('manualPart')
         else:
-            install.setDevice(row)
+            install.setDevice(sel)
             mainWindow.goto('partitions')
 
 
-stages['devices'] = Devices
+stages['devices'] = (Devices, locals())

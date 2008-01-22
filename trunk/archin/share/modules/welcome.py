@@ -19,18 +19,15 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.17
+# 2008.01.22
 
-class Welcome(Stage, gtk.Label):
+class Welcome(Stage):
     def stageTitle(self):
         return ('<i>archin</i>: %s' % _("Install Arch Linux"))
 
-    def __init__(self):
-        gtk.Label.__init__(self)
-        self.set_justify(gtk.JUSTIFY_FILL)
-        self.set_line_wrap(True)
-        self.set_use_markup(True)
-        self.set_label(_('Welcome to <i>archin</i>. This will install'
+    def __init__(self, localdic):
+        Stage.__init__(self)
+        self.addLabel(_('Welcome to <i>archin</i>. This will install'
                 ' Arch Linux on your computer. This program was written'
                 ' for the <i>larch</i> project:\n'
                 '       http://larch.berlios.de\n'
@@ -42,17 +39,47 @@ class Welcome(Stage, gtk.Label):
         return _("Click on the 'Forward' button to start.")
 
     def forward(self):
-        install.getDevices()
-        devs = install.devices
+        larchdev = install.larchdev()
+        devs = []
+        ld = install.listDevices()
+        # Note that if one of these has mounted partitions it will not be
+        # available for automatic partitioning, and should thus not be
+        # included in the list used for automatic installation
+        mounts = install.getmounts().splitlines()
+        count = 0
+        if ld:
+            for d, s, n in ld:
+                count += 1
+                # Mark devices which have mounted partitions
+                for m in mounts:
+                    if m.startswith(d):
+                        d += "-"
+                        count -= 1
+                        break
+                devs.append([d, s, n])
+            install.setDevices(devs)
+
         if not devs:
-            popupError("No disk(-like) devices were found,"
-                    " so Arch Linux can not be installed on this machine")
+            popupError(_("No disk(-like) devices were found,"
+                    " so Arch Linux can not be installed on this machine"))
             end()
-        if (len(devs) == 1):
-            install.setDevice(0)
+        nds = len(devs)         # Total number of devices
+        mds = nds - count       # Number of devices with mounted partitions
+        if mds:
+            popupMessage(_("%d devices were found with mounted partitions."
+                    " These devices are not available for automatic"
+                    " partitioning, you must partition them manually.")
+                    % mds)
+        if (count == 1):
+            for d, s, n in devs:
+                if not d.endswith('-'):
+                    install.setDevice(d)
+                    break
             mainWindow.goto('partitions')
+        elif (count == 0):
+            mainWindow.goto('manualPart')
         else:
             mainWindow.goto('devices')
 
 
-stages['welcome'] = Welcome
+stages['welcome'] = (Welcome, locals())
