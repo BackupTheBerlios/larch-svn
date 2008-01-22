@@ -1,3 +1,5 @@
+import gtk
+
 class NtfsWidget(gtk.Frame):
     """This widget allows an existing operating system (Windows/NTFS)
     to be retained (optionally). It also provides for shrinking the
