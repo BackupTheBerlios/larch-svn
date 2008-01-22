@@ -25,18 +25,23 @@
 
 # Add a Quit button?
 
-import gtk, gobject
-from stage import Stage
 from glob import glob
+import os, sys
+import gtk, gobject
+
+basedir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+sys.path.append("%s/modules" % basedir)
+sys.path.append("%s/modules/gtk" % basedir)
+
+from stage import Stage
 from install import installClass
-import os
 
 stages = {}
 
 class ArchinGtk(gtk.Window):
     def __init__(self):
 
-        for m in glob("%s/*.py" % modulePath):
+        for m in glob("%s/stages/*.py" % basePath):
             execfile(m, globals(), {})
 
         gtk.Window.__init__(self)
@@ -194,7 +199,7 @@ if (__name__ == "__main__"):
         print "          archin.py [target-address]"
         sys.exit(1)
 
-    __builtin__.modulePath = "../share/modules"
+    __builtin__.basePath = basedir
     __builtin__.mainWindow = ArchinGtk()
     __builtin__.install = installClass(target)
     mainWindow.goto('welcome')
