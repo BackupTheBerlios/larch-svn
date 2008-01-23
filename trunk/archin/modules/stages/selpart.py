@@ -19,9 +19,9 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.20
+# 2008.01.23
 
-class SelPart(Stage, gtk.Table):
+class SelPart(Stage):
     def stageTitle(self):
         return _("Select installation partitions")
 
@@ -40,20 +40,51 @@ class SelPart(Stage, gtk.Table):
                 " considering these.")
 
     def __init__(self):
-        gtk.Table.__init__(self)
+        Stage.__init__(self)
+        from selpart_gui import SelTable
+        self.table_widget = SelTable
+        self.table = None
         self.reinit()
 
     def reinit(self):
-        assert False, "NYI"
+        self.mounts = install.getmounts()
+        self.setDevice(install.selectedDevice())
+
+
+
+
+    def setDevice(self, dev):
+        self.device = dev
+        install.getDeviceInfo(self.device)
+
+        # Create a new partition list/table
+        if self.table:
+            self.remove(self.table)
+        self.table = self.table_widget(self)
+        self.addWidget(self.table)
+
+        for p in install.getlinuxparts(self.device):
+            if not self.ismounted(p):
+
+
+                self.table.addPart(p, .....)
+
+
+
+    def ismounted(self, part):
+        return re.search(r'^%s ' % part, self.mounts, re.M)
 
 
     def forward(self):
         sel = self.getSelectedOption()
-        if (sel == 'custom'):
-            mainWindow.goto('manualPart')
+        if (sel == 'done'):
+            # prepare and process info
+            #...
+            # ... install.defPart("%s%d" % (dev, partno), '/home')
+
+            mainWindow.goto('install')
             return
 
-            install.defpart(dev, partno, '/home')
 
 
 stages['partSelect'] = SelPart

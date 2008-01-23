@@ -285,9 +285,9 @@ class Partitions(Stage):
             em = endmark
         else:
             em = startmark + int(self.rootsize * 1000)
-        install.mkpart(partno, startmark, em)
+        install.mkpart(dev, startmark, em)
         startmark = em
-        install.defpart(dev, partno, '/')
+        install.defPart("%s%d" % (dev, partno), '/')
 
         if (swapsize != 0):
             partno += 1
@@ -295,13 +295,13 @@ class Partitions(Stage):
                 em = endmark
             else:
                 em = startmark + int(swapsize * 1000)
-            install.mkpart(dev, partno, startmark, em, 'linux-swap')
+            install.mkpart(dev, startmark, em, 'linux-swap')
             startmark = em
 
         if self.homesize:
             partno += 1
-            install.mkpart(partno, startmark, endmark)
-            install.defpart(dev, partno, '/home')
+            install.mkpart(dev, startmark, endmark)
+            install.defPart("%s%d" % (dev, partno), '/home')
 
         mainWindow.goto('install')
 

@@ -146,10 +146,7 @@ class installClass:
         self.autodevice = device
 
     def selectedDevice(self):
-        return self.autodevice
-
-    def selectedDeviceSizeString(self):
-        return self.devices[self.autodevice][1]
+        return self.autodevice | self.devices[0][0]
 
     def setPart(self, start):
         """Used by the autopartitioner to determine where the free space
@@ -288,7 +285,7 @@ class installClass:
     def mkpart(self, dev, startMB, endMB, ptype='ext2', pl='primary'):
         """Make a partition on the given device with the given start and
         end points. The default type is linux (called 'ext2' but no
-        formatting is done). pl can be 'primary' or 'logical'.
+        formatting is done). pl can be 'primary', 'extended' or 'logical'.
         """
         return self.xcall("newpart %s %d %d %s %s" % (dev,
                 startMB, endMB, ptype, pl))
@@ -299,8 +296,18 @@ class installClass:
         """
         self.parts = {}
 
-    def defpart(self, dev, partno, mount, fstype='ext3', format=True,
-            flags=EXT3DEFAULTS):
+    def defPart(self, part, mount, fstype='ext3', format=True,
+            flags=None):
         """Add a partition to the list of those marked for use.
         """
-        self.parts["%s%d" % (dev, partno)] = [mount, fstpye, format, flags]
+        if (fstype == 'ext3') and (flags==None)):
+            flags = EXT3DEFAULTS
+        self.parts[part] = [mount, fstpye, format, flags]
+
+    def getlinuxparts(self, dev):
+        """Return a list of partitions on the given device with linux
+        partition code (83).
+        """
+        return self.xcall("linuxparts %s" % dev).split()
+
+

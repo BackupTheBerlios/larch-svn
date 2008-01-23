@@ -70,6 +70,8 @@ class Welcome(Stage):
                     " These devices are not available for automatic"
                     " partitioning, you must partition them manually.")
                     % mds)
+
+        install.setDevice(None)
         if (count == 1):
             for d, s, n in devs:
                 if not d.endswith('-'):

@@ -53,7 +53,6 @@ class Devices(Stage):
     def forward(self):
         sel = self.getSelectedOption()
         if (sel == 'manual'):
-            install.setDevice(None)
             mainWindow.goto('manualPart')
         else:
             install.setDevice(sel)

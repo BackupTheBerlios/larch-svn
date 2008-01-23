@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.22
+# 2008.01.23
 
 import gtk, gobject
 
@@ -98,6 +98,9 @@ class Stage(gtk.VBox):
     def addWidget(self, w):
         self.pack_start(w)
         return w
+
+    def removeWidget(self, w):
+        self.remove(w)
 
     def getSelectedOption(self):
         for n, b in self.options.items():
