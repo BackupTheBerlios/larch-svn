@@ -27,8 +27,6 @@
 
 testing=True
 
-import gtk
-
 from subprocess import Popen, PIPE
 import os
 import re

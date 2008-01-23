@@ -1,3 +1,26 @@
+# partitions_gui.py - extra widgets for the partitions stage
+#
+# (c) Copyright 2008 Michael Towers <gradgrind[at]online[dot]de>
+#
+# This file is part of the larch project.
+#
+#    larch is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 2 of the License, or
+#    (at your option) any later version.
+#
+#    larch is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with larch; if not, write to the Free Software Foundation, Inc.,
+#    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+#
+#----------------------------------------------------------------------------
+# 2008.01.23
+
 import gtk
 
 class NtfsWidget(gtk.Frame):
@@ -16,6 +39,7 @@ class NtfsWidget(gtk.Frame):
         self.shrink = gtk.CheckButton(_("Shrink NTFS partition"))
 
         self.ntfsframe = gtk.Frame()
+        self.ntfsframe.set_border_width(10)
         self.ntfsframe.set_label_widget(self.shrink)
         self.ntfsbox = gtk.VBox()
         self.ntfsbox.pack_start(adjlabel)
