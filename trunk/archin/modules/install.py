@@ -31,7 +31,7 @@ from subprocess import Popen, PIPE
 import os
 import re
 
-EXT3DEFAULTS = "NYI"
+EXT3DEFAULTS = "T#di"   # See stage module 'selpart.py'
 
 class installClass:
     def __init__(self, host=None):
@@ -319,11 +319,14 @@ class installClass:
             flags = EXT3DEFAULTS
         self.parts[part] = [mount, fstype, format, flags]
 
-    def getPart(self, part):
+    def getPartEntry(self, part):
         return self.parts.get(part)
 
-    def setPart(self, part, vals):
-        self.parts[part] = vals
+    def setPartEntry(self, part, vals):
+        if vals:
+            self.parts[part] = vals
+        else:
+            del(self.parts[part])
 
     def getlinuxparts(self, dev):
         """Return a list of partitions on the given device with linux

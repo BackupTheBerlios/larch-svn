@@ -66,7 +66,7 @@ class SelPart(Stage):
             if not self.ismounted(p):
                 partno = int(re.sub("/dev/[a-z]+", "", p))
                 size, fstype = install.getPartInfo(partno)
-                pinfo = install.getPart(p)
+                pinfo = install.getPartEntry(p)
                 # pinfo has the form: [mount, newfstype, format, flags]
                 if not pinfo:
                     pinfo = [None, None, False, "#"]
@@ -152,19 +152,15 @@ class SelPart(Stage):
         self.save_settings()
         self.setDevice(dev)
 
-
-
-
-
     def save_settings(self):
         # Any partitions with format and/or mount-point need to be entered
         # into the (install) partitions set. All the others should be
         # removed if they are already in that set.
-        assert False, "NYI"
-
-
-
-
+        for p, v in self.parts.items():
+            if (v[2] or v[4]):
+                install.setPartEntry(p, v[2:])
+            elif install.getPartEntry(p):
+                install.setPartEntry(p, None)
 
     def format_flags(self, fstype):
         """Return a list of available format flags for the given
