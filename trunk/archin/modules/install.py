@@ -195,6 +195,21 @@ class installClass:
             self.p1start = 0
             self.p1end = 0
 
+    def getPartInfo(self, partno):
+        """Get size and fstype for the given partition number using the
+        data from the last call of getDeviceInfo.
+        """
+        rc = re.compile((r"^%d:([0-9\.]+)MB:([0-9\.]+)MB:"
+                "([0-9\.]+)MB:([^:]*):.*;$" % partno)
+        for l in self.dinfo.splitlines():
+            rm = rc.search(l)
+            if (rm and (rm.group(4) != 'free')):
+                size = int(rm.group(3))
+                fstype = rm.group(4)
+                return (size, fstype)
+        # This shouldn't happen
+        assert False, "I wasn't expecting the Spanish Inquisition"
+
     def getNTFSinfo(self, part):
         """Return information about the given partition as a tuple:
                 (cluster size (unit for resizing),
@@ -302,7 +317,13 @@ class installClass:
         """
         if (fstype == 'ext3') and (flags==None)):
             flags = EXT3DEFAULTS
-        self.parts[part] = [mount, fstpye, format, flags]
+        self.parts[part] = [mount, fstype, format, flags]
+
+    def getPart(self, part):
+        return self.parts.get(part)
+
+    def setPart(self, part, vals):
+        self.parts[part] = vals
 
     def getlinuxparts(self, dev):
         """Return a list of partitions on the given device with linux

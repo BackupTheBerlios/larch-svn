@@ -50,9 +50,6 @@ class SelPart(Stage):
         self.mounts = install.getmounts()
         self.setDevice(install.selectedDevice())
 
-
-
-
     def setDevice(self, dev):
         self.device = dev
         install.getDeviceInfo(self.device)
@@ -63,16 +60,57 @@ class SelPart(Stage):
         self.table = self.table_widget(self)
         self.addWidget(self.table)
 
+        self.parts = {}
         for p in install.getlinuxparts(self.device):
             if not self.ismounted(p):
-
-
-                self.table.addPart(p, .....)
-
-
+                partno = int(re.sub("/dev/[a-z]+", "", p))
+                size, fstype = install.getPartInfo(partno)
+                pinfo = install.getPart(p)
+                # pinfo has the form: [mount, newfstype, format, flags]
+                if not pinfo:
+                    pinfo = [None, None, False, None]
+                # pxinfo has the form: [size (MB), existing fstype,
+                #       mount-point, new fstype, format, flags]
+                pxinfo = [size, fstype] + pinfo
+                self.parts[p] = pxinfo
+                self.table.addPart(p, pxinfo)
 
     def ismounted(self, part):
         return re.search(r'^%s ' % part, self.mounts, re.M)
+
+
+    def format_cb(self, p, on):
+        self.parts[p][4]= on
+        if on:
+            newfs = self.parts[p][3]
+            if not newfs:
+                newfs = 'ext3'
+                # set flags???
+
+
+            self.table.set_fstype(p, newfs)
+
+        else:
+            self.table.set_fstype(p, self.parts[p][1])
+            self.table.enable_fstype(p, False)
+
+    def fstype_cb(self, p, fstype):
+        if self.parts[p][4]:
+            self.parts[p][3] = fstype
+        else:
+            self.parts[p][3] = None
+
+    def device_cb(self, dev):
+        self.save_settings()
+        self.setDevice(dev)
+
+    def save_settings(self):
+        # Any partitions with format and/or mount-point need to be entered
+        # into the (install) partitions set. All the others should be
+        # removed if they are already in that set.
+        assert False, "NYI"
+
+
 
 
     def forward(self):
