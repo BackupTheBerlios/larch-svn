@@ -21,7 +21,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.22
+# 2008.01.23
 
 # Add a Quit button?
 
@@ -41,7 +41,7 @@ stages = {}
 class ArchinGtk(gtk.Window):
     def __init__(self):
 
-        for m in glob("%s/stages/*.py" % basePath):
+        for m in glob("%s/modules/stages/*.py" % basePath):
             execfile(m, globals(), {})
 
         gtk.Window.__init__(self)

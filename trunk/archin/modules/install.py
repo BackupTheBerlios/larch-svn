@@ -23,7 +23,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.22
+# 2008.01.23
 
 testing=True
 
@@ -71,7 +71,7 @@ class installClass:
         is required.
         """
         mainWindow.busy()
-        op = Popen("ssh %s root@%s /opt/larch/share/syscalls/%s" %
+        op = Popen("ssh %s root@%s /opt/larch/archin/syscalls/%s" %
                 (opt, self.host, cmd), shell=True,
                 stdout=PIPE).communicate()[0]   # run the command via ssh
         mainWindow.busy_off()
