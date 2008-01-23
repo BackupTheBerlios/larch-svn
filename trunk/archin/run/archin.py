@@ -110,8 +110,8 @@ class ArchinGtk(gtk.Window):
         It stacks the widget (using a gtk.Notebook) so that it can be
         returned to later.
         """
-        sclass, localdic = stages[stagename]
-        sw = sclass(localdic)
+        sclass = stages[stagename]
+        sw = sclass()
         self.mainWidget.append_page(sw)
         self.setStage(sw)
 

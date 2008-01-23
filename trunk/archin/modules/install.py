@@ -31,7 +31,6 @@ import gtk
 
 from subprocess import Popen, PIPE
 import os
-
 import re
 
 EXT3DEFAULTS = "NYI"
@@ -41,14 +40,14 @@ class installClass:
         self.host = host
         if self.host:
             if testing:
-                op = Popen("ssh root@%s rm -rf /opt/larch/share/syscalls" %
+                op = Popen("ssh root@%s rm -rf /opt/larch/archin" %
                     self.host, shell=True,
-                    stdout=PIPE).communicate()[0]   # delete the (old) commands
-                op = Popen("scp -rpq syscalls root@%s:/opt/larch/share/" %
-                    self.host, shell=True,
-                    stdout=PIPE).communicate()[0]   # copy the commands
+                    stdout=PIPE).communicate()[0]   # delete (old) archin
+                op = Popen("scp -rpq %s root@%s:/opt/larch/" %
+                    (basePath, self.host), shell=True,
+                    stdout=PIPE).communicate()[0]   # copy archin over
 
-            assert (Popen("ssh root@%s /opt/larch/share/syscalls/test" %
+            assert (Popen("ssh root@%s /opt/larch/archin/syscalls/test" %
                 self.host, shell=True,
                 stdout=PIPE).communicate()[0].endswith("^OK^")), (
                     "Couldn't connect to %s" % self.host)

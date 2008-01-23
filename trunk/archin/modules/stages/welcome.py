@@ -19,13 +19,13 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.22
+# 2008.01.23
 
 class Welcome(Stage):
     def stageTitle(self):
         return ('<i>archin</i>: %s' % _("Install Arch Linux"))
 
-    def __init__(self, localdic):
+    def __init__(self):
         Stage.__init__(self)
         self.addLabel(_('Welcome to <i>archin</i>. This will install'
                 ' Arch Linux on your computer. This program was written'
@@ -82,4 +82,6 @@ class Welcome(Stage):
             mainWindow.goto('devices')
 
 
-stages['welcome'] = (Welcome, locals())
+#################################################################
+
+stages['welcome'] = Welcome

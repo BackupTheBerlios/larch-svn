@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.22
+# 2008.01.23
 
 
 
@@ -39,7 +39,7 @@ class ManuPart(Stage):
                 " be available. The device to be edited can be selected"
                 " from within the program.")
 
-    def __init__(self, localdic):
+    def __init__(self):
         Stage.__init__(self)
 
         dev = install.selectedDevice()
@@ -91,4 +91,6 @@ class ManuPart(Stage):
             self.reinit()
 
 
-stages['manualPart'] = (ManuPart, locals())
+#################################################################
+
+stages['manualPart'] = ManuPart

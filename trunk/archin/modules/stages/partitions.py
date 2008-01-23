@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.22
+# 2008.01.23
 
 class Partitions(Stage):
     def stageTitle(self):
@@ -37,26 +37,27 @@ class Partitions(Stage):
                 " operating system, you have here the option of shrinking it"
                 " to create enough space for Arch Linux.")
 
-    def __init__(self, localdic):
+    def __init__(self):
         """Things could have changed if we return to this stage, so
         all the setting up of the data is done in 'reinit'.
         """
         Stage.__init__(self)
+        from partitions_gui import NtfsWidget, SwapWidget, HomeWidget, RootWidget
 
         # Info: total drive size
         self.totalsize = self.addLabel("", 'right')
 
         # NTFS resizing
-        self.ntfs = self.addWidget(localdic['NtfsWidget'](self))
+        self.ntfs = self.addWidget(NtfsWidget(self))
 
         # swap size
-        self.swap = self.addWidget(localdic['SwapWidget'](self))
+        self.swap = self.addWidget(SwapWidget(self))
 
         # home size
-        self.home = self.addWidget(localdic['HomeWidget'](self))
+        self.home = self.addWidget(HomeWidget(self))
 
         # root size
-        self.root = self.addWidget(localdic['RootWidget'](self))
+        self.root = self.addWidget(RootWidget(self))
 
         # Manual partitioning
         self.expert = self.addCheckButton(_("'Expert' (manual) partitioning"),
@@ -343,6 +344,5 @@ class Partitions(Stage):
 
 #################################################################
 
-from partitions_gui import *
-stages['partitions'] = (Partitions, locals())
+stages['partitions'] = Partitions
 

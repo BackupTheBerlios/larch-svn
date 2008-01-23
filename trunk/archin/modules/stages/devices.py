@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.22
+# 2008.01.23
 
 
 class Devices(Stage):
@@ -37,7 +37,7 @@ class Devices(Stage):
                 " 'manual partitioning' and click on the 'Forward' button."
                 " You will be taken to the manual partitioning menu.")
 
-    def __init__(self, localdic):
+    def __init__(self):
         Stage.__init__(self)
 
         i = 0
@@ -60,4 +60,6 @@ class Devices(Stage):
             mainWindow.goto('partitions')
 
 
-stages['devices'] = (Devices, locals())
+#################################################################
+
+stages['devices'] = Devices
