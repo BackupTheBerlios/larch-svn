@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.23
+# 2008.01.24
 
 class SelPart(Stage):
     def stageTitle(self):
@@ -41,10 +41,14 @@ class SelPart(Stage):
 
     def __init__(self):
         Stage.__init__(self)
-        from selpart_gui import SelTable, SelOptionDialog
-        self.table_widget = SelTable
-        self.option_dialog = SelOptionDialog
-        self.table = None
+        from selpart_gui import SelTable, SelDevice
+
+        self.addWidget(SelDevice(self, install.devices))
+
+        mountpoints = ('/', '/home', '/boot', '/var', '/opt', '/usr', '/mnt/%')
+        filesystems = ('ext3', 'reiserfs', 'ext2', 'jfs', 'xfs')
+        self.table = SelTable(self, mountpoints, filesystems)
+        self.addWidget(self.table)
         self.reinit()
 
     def reinit(self):
@@ -55,98 +59,29 @@ class SelPart(Stage):
         self.device = dev
         install.getDeviceInfo(self.device)
 
-        # Create a new partition list/table
-        if self.table:
-            self.remove(self.table)
-        self.table = self.table_widget(self)
-        self.addWidget(self.table)
-
-        self.parts = {}
+        self.parts = []
         for p in install.getlinuxparts(self.device):
             if not self.ismounted(p):
-                partno = int(re.sub("/dev/[a-z]+", "", p))
-                size, fstype = install.getPartInfo(partno)
-                pinfo = install.getPartEntry(p)
-                # pinfo has the form: [mount, newfstype, format, flags]
-                if not pinfo:
-                    pinfo = [None, None, False, "#"]
-                # pxinfo has the form: [size (MB), existing fstype,
-                #       mount-point, new fstype, format, flags]
-                pxinfo = [size, fstype] + pinfo
-                self.parts[p] = pxinfo
-                self.table.addPart(p, pxinfo)
+                pa = install.getPartition(p)
+                if not pa:
+                    partno = int(re.sub("/dev/[a-z]+", "", p))
+                    size, fstype = install.getPartInfo(partno)
+                    pa = install.newPartition(p, size, fstype)
+                self.parts.append(pa)
+
+        self.table.renew(self.parts)
 
     def ismounted(self, part):
         return re.search(r'^%s ' % part, self.mounts, re.M)
 
-    def set_default_format_flags(self, p, fs):
-        flags = '#'
-        flist = self.format_flags(fs)
-        if flist:
-            for text, flag, on in flist:
-                if on:
-                    flags += flag
-        mflags = self.parts[p][5].split('#')[0]
-        self.parts[p][5] = mflags + flags
 
 
-    def format_cb(self, p, on):
-        self.parts[p][4]= on
-        self.table.enable_fstype(p, on)
-        if on:
-            newfs = self.parts[p][1]
-            if not newfs:
-                newfs = 'ext3'
-            self.parts[p][3] = newfs
-            self.set_default_format_flags(p, newfs)
-            self.table.set_fstype(p, newfs)
 
-        else:
-            self.table.set_fstype(p, self.parts[p][1])
-            self.parts[p][3] = None
 
-    def fstype_cb(self, p, fstype):
-        # set default mount options
-        flags = ''
-        mlist = self.mount_flags(fs)
-        if mlist:
-            for text, flag, on in mlist:
-                if on:
-                    flags += flag
-        self.parts[p][5] = flags + '#'
 
-        if self.parts[p][4]:
-            # if formatting
-            self.parts[p][3] = fstype
-            self.set_default_format_flags(p, fstype)
-#        else:
-#            self.parts[p][3] = None
-
-    def options_cb(self, p):
-        """Build a popup dialog containing the available options.
-        """
-        fopts = []
-        flags = self.parts[p][5]
-        if self.parts[p][4]:
-            # Options only available if format box is checked
-            fl = self.format_flags(self.parts[p][3])
-            if fl:
-                for desc, flag, on in fl:
-                    fopts += (desc, flag, flag in flags)
-
-        mopts = []
-        if self.parts[p][2]:
-            # Options only available if mount-point is set
-            fl = self.mount_flags(self.parts[p][3])
-            if fl:
-                for desc, flag, on in fl:
-                    mopts += (desc, flag, flag in flags)
-
-        newopts = self.option_dialog(fopts,
-                _("The following formatting options are available"),
-                mopts,
-                _("The following mount options are available"))
-        self.parts[p][5] = newopts
+# Not so sure any more about 'saving' the settings, as I am now working
+# directly on the objects. When it actually comes to the formatting, etc.,
+# I would then need to filter the set, though.
 
     def device_cb(self, dev):
         self.save_settings()
@@ -162,26 +97,6 @@ class SelPart(Stage):
             elif install.getPartEntry(p):
                 install.setPartEntry(p, None)
 
-    def format_flags(self, fstype):
-        """Return a list of available format flags for the given
-        file-system type.
-        """
-        # At the moment there is only an entry for 'ext3'
-        return { 'ext3' : [ (_("disable boot-time checks"), 'd', True),
-                            (_("directory indexing"), 'i', True),
-                            (_("full journal"), 'f', False) ],
-                }.get(fstype)
-
-    def mount_flags(self, fstype):
-        """Return a list of available mount (/etc/fstab) flags for the
-        given file-system type.
-        """
-        # At the moment there are just these two flags
-        flg = [ (_("noatime"), 'T', True),
-                (_("noauto"), 'A', False) ]
-
-        # And nothing file-system specific
-        return flg
 
 
 
@@ -190,7 +105,7 @@ class SelPart(Stage):
         if (sel == 'done'):
             # prepare and process info
             #...
-            # ... install.defPart("%s%d" % (dev, partno), '/home')
+            # ... install.newPartition("%s%d" % (dev, partno), m='/home')
 
             mainWindow.goto('install')
             return

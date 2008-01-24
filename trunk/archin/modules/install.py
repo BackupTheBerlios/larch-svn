@@ -23,15 +23,13 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.23
+# 2008.01.24
 
 testing=True
 
 from subprocess import Popen, PIPE
 import os
 import re
-
-EXT3DEFAULTS = "T#di"   # See stage module 'selpart.py'
 
 class installClass:
     def __init__(self, host=None):
@@ -305,33 +303,186 @@ class installClass:
         return self.xcall("newpart %s %d %d %s %s" % (dev,
                 startMB, endMB, ptype, pl))
 
+    def getlinuxparts(self, dev):
+        """Return a list of partitions on the given device with linux
+        partition code (83).
+        """
+        return self.xcall("linuxparts %s" % dev).split()
+
     def clearParts(self):
         """Keep a record of partitions which have been marked for use,
         initially empty.
         """
         self.parts = {}
 
-    def defPart(self, part, mount, fstype='ext3', format=True,
-            flags=None):
+    def newPartition(self, p, s="?", fpre=None, m=None, f=False, fnew=None,
+            mo=None, fo=None):
         """Add a partition to the list of those marked for use.
         """
-        if (fstype == 'ext3') and (flags==None)):
-            flags = EXT3DEFAULTS
-        self.parts[part] = [mount, fstype, format, flags]
+        pa = Partition(p, s, fpre, m, f, fnew, mo, fo)
+        self.parts[p] = pa
 
-    def getPartEntry(self, part):
+    def getPartition(self, part):
         return self.parts.get(part)
 
-    def setPartEntry(self, part, vals):
-        if vals:
-            self.parts[part] = vals
-        else:
-            del(self.parts[part])
 
-    def getlinuxparts(self, dev):
-        """Return a list of partitions on the given device with linux
-        partition code (83).
+
+class Partition:
+    """The instances of this class manage the formatting/mount
+    information for a single partition.
+    """
+    def __init__(self, p, s, fpre, m, f, fnew, mo, fo):
+        self.partition = p
+        self.size = s
+        self.existing_format = fpre
+        self.mountpoint = m
+        self.newformat = fnew
+        self.format = f
+        if self.format:
+            if not self.newformat:
+                self.newformat = 'ext3'
+            if (fo != None):
+                self.format_options = fo
+            else:
+                self.format_options = self.default_flags(
+                        self.format_flags(self.newformat))
+        else:
+            self.newformat = None
+            self.format_options = None
+        if (mo != None):
+            self.mount_options = mo
+        else:
+            self.mount_options = self.default_flags(
+                    self.mount_flags(self.newformat or self.existing_format))
+
+
+    def format_flags(self, fstype):
+        """Return a list of available format flags for the given
+        file-system type.
         """
-        return self.xcall("linuxparts %s" % dev).split()
+        # At the moment there is only an entry for 'ext3'
+        return { 'ext3' : [
+                (_("disable boot-time checks"), 'd', True,
+                    _("Normally an ext3 file-system will be checked every"
+                      " 30 mounts or so. With a large partition this can"
+                      " take quite a while, and is, strictly speaking,"
+                      " unnecessary - because of the journalling.")),
+
+                (_("directory indexing"), 'i', True,
+                    _("This is supposed to speed up access.")),
+
+                (_("full journal"), 'f', False,
+                    _("This is supposed to increase data safety, at some"
+                      " small cost in speed (and disk space?)"))
+                ],
+            }.get(fstype)
+
+    def mount_flags(self, fstype):
+        """Return a list of available mount (/etc/fstab) flags for the
+        given file-system type.
+        """
+        # At the moment there are just these two flags
+        if fstype:
+            flg = [ (_("noatime"), 'T', True,
+                    _("Disables recording atime (access time) to disk, thus"
+                      " speeding up disk access. This is unlikely to cause"
+                      " problems (famous last words ...).")),
+
+                    (_("noauto"), 'A', False,
+                    _("Don't mount this partition during system"
+                      " initialization."))
+                ]
+
+            # And nothing file-system specific
+            return flg
+        else:
+            return None
+
+    def default_flags(self, flist):
+        """Return the default set of flags for the given list of flags
+        (output of mount_flags or format_flags).
+        """
+        flags = ''
+        flist = self.format_flags(fs)
+        if flist:
+            for f in flist:
+                if f[2]:
+                    flags += f[1]
+        return flags
+
+    def format_cb(self, table, on):
+        self.format = on
+        table.enable_fstype(self, on)
+        # Ensure changed signal emitted when real setting passed (later)
+        table.set_fstype(self, '?')
+        if on:
+            newfs = self.existing_format
+            if not newfs:
+                newfs = 'ext3'
+            table.set_fstype(self, newfs)
+
+        else:
+            self.newformat = None
+            table.set_fstype(self, self.existing_format)
+
+    def fstype_cb(self, table, fstype):
+        if self.format:
+            # if formatting
+            self.newformat = fstype
+        self.format_options = self.default_flags(
+                self.format_flags(self.newformat))
+        # set default mount options
+        self.mount_options = self.default_flags(
+                self.mount_flags(self.newformat or self.existing_format))
+
+        return (self.get_format_options(), self.get_mount_options())
+
+    def get_format_options(self):
+        fopts = []
+        if self.format:
+            # Options only available if format box is checked
+            fl = self.format_flags(self.newformat)
+            if fl:
+                for desc, flag, on, desc in fl:
+                    fopts += (desc, flag, flag in self.format_options, desc)
+        return fopts
+
+    def get_mount_options(self):
+        mopts = []
+        if self.mountpoint:
+            # Options only available if mount-point is set and partition
+            # has (or will have) a file-system
+            fl = self.mount_flags(self.newformat or self.existing_format)
+            if fl:
+                for desc, flag, on, desc in fl:
+                    mopts += (desc, flag, flag in self.mount_options, desc)
+            elif (fl == None):
+                return None
+            return mopts
+        return None
+
+    def mountpoint_cb(self, m):
+        self.mountpoint = m
+        # set default mount options
+        self.mount_options = self.default_flags(
+                self.mount_flags(self.newformat or self.existing_format))
+        mo = self.get_mount_options()
+        if (m0 == None):
+            self.mountpoint = None
+        return mo
+
+    def format_options_cb(self, opt, on):
+        if on:
+            if not opt in self.format_options:
+                self.format_options += opt
+        else:
+            self.format_options = self.format_options.replace(opt, '')
+
+    def mount_options_cb(self, opt, on):
+        if on:
+            if not opt in self.mount_options:
+                self.mount_options += opt
+        else:
+            self.mount_options = self.mount_options.replace(opt, '')
 
 
