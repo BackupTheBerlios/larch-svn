@@ -23,7 +23,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.24
+# 2008.01.25
 
 testing=True
 
@@ -403,7 +403,6 @@ class Partition:
         (output of mount_flags or format_flags).
         """
         flags = ''
-        flist = self.format_flags(fs)
         if flist:
             for f in flist:
                 if f[2]:
@@ -414,7 +413,7 @@ class Partition:
         self.format = on
         table.enable_fstype(self, on)
         # Ensure changed signal emitted when real setting passed (later)
-        table.set_fstype(self, '?')
+        table.set_fstype(self, None)
         if on:
             newfs = self.existing_format
             if not newfs:
@@ -435,16 +434,14 @@ class Partition:
         self.mount_options = self.default_flags(
                 self.mount_flags(self.newformat or self.existing_format))
 
-        return (self.get_format_options(), self.get_mount_options())
-
     def get_format_options(self):
         fopts = []
         if self.format:
             # Options only available if format box is checked
             fl = self.format_flags(self.newformat)
             if fl:
-                for desc, flag, on, desc in fl:
-                    fopts += (desc, flag, flag in self.format_options, desc)
+                for name, flag, on, desc in fl:
+                    fopts += (name, flag, flag in self.format_options, desc)
         return fopts
 
     def get_mount_options(self):
@@ -454,8 +451,8 @@ class Partition:
             # has (or will have) a file-system
             fl = self.mount_flags(self.newformat or self.existing_format)
             if fl:
-                for desc, flag, on, desc in fl:
-                    mopts += (desc, flag, flag in self.mount_options, desc)
+                for name, flag, on, desc in fl:
+                    mopts += (name, flag, flag in self.mount_options, desc)
             elif (fl == None):
                 return None
             return mopts

@@ -45,8 +45,8 @@ class SelPart(Stage):
 
         self.addWidget(SelDevice(self, install.devices))
 
-        mountpoints = ('/', '/home', '/boot', '/var', '/opt', '/usr', '/mnt/%')
-        filesystems = ('ext3', 'reiserfs', 'ext2', 'jfs', 'xfs')
+        mountpoints = ['/', '/home', '/boot', '/var', '/opt', '/usr', '/mnt/%']
+        filesystems = ['ext3', 'reiserfs', 'ext2', 'jfs', 'xfs']
         self.table = SelTable(self, mountpoints, filesystems)
         self.addWidget(self.table)
         self.reinit()

@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.24
+# 2008.01.25
 
 class Partitions(Stage):
     def stageTitle(self):
@@ -287,7 +287,7 @@ class Partitions(Stage):
             em = startmark + int(self.rootsize * 1000)
         install.mkpart(dev, startmark, em)
         startmark = em
-        install.newPartition("%s%d" % (dev, partno), m='/')
+        install.newPartition("%s%d" % (dev, partno), m='/', f=True)
 
         if (swapsize != 0):
             partno += 1
@@ -301,7 +301,7 @@ class Partitions(Stage):
         if self.homesize:
             partno += 1
             install.mkpart(dev, startmark, endmark)
-            install.newPartition("%s%d" % (dev, partno), m='/home')
+            install.newPartition("%s%d" % (dev, partno), m='/home', f=True)
 
         mainWindow.goto('install')
 
