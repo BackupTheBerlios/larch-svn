@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.25
+# 2008.01.26
 
 import gtk
 
@@ -27,7 +27,7 @@ class SelTable(gtk.Table):
     """This widget presents a list of available partitions for
     allocation in the new system.
     """
-    def __init__(self, master, mountpoints, filesystems):
+    def __init__(self, master, filesystems):
         gtk.Table.__init__(self, 1, 6)
         self.set_row_spacings(3)
         self.set_col_spacings(3)
@@ -40,9 +40,9 @@ class SelTable(gtk.Table):
             self.attach(lw, i, i+1, 0, 1)
             i += 1
 
-        self.mp_liststore = gtk.ListStore(str)
-        for mp in mountpoints:
-            self.mp_liststore.append([mp])
+        #self.mp_liststore = gtk.ListStore(str)
+        #for mp in mountpoints:
+        #    self.mp_liststore.append([mp])
         # Note: it might be better to have an individual list for each
         # partition, so that (a) /mnt/% can be substituted, and (b) the
         # already allocated mount points can be left out.
@@ -66,8 +66,10 @@ class SelTable(gtk.Table):
         ri = 0
         for p in partlist:
             devw = gtk.Label(p.partition)
-            mpw = gtk.combo_box_entry_new_text()
 
+
+            #mpw = gtk.combo_box_entry_new_text()
+            mpw = SelMountPoint(p)
 
 
             #set to p.mountpoint)
@@ -190,4 +192,48 @@ class SelDevice(gtk.HBox):
         self.master.setDevice(widget.get_active_text())
 
 
+class SelMountPoint(gtk.HBox):
+    def __init__(self, part):
+        gtk.HBox.__init__(self)
+        self.en = gtk.Entry()
+        self.en.connect("changed", self.entry_cb, part)
+        pb = gtk.Button()
+        pb.add(gtk.Arrow(gtk.ARROW_DOWN, gtk.SHADOW_NONE))
+        pb.connect("clicked", self.pb_cb, part)
+        pb.connect("button_press_event", self.pb_cb, part)
+        self.pack_start(self.en)
+        self.pack_start(pb)
+        self.show_all()
+
+    def pb_cb(self, widget, event, part):
+        if (event.type != gtk.gdk.BUTTON_PRESS):
+            # We have not handled this event, pass it on
+            return False
+
+        menu = gtk.Menu()
+        mplist = []
+        for p in install.parts.values():
+            if p.mountpoint:
+                mplist.append(p.mountpoint)
+
+        for i in install.mountpoints:
+            if (i in mplist):
+                continue
+
+            # Create a new menu-item
+            menu_item = gtk.MenuItem(i)
+            # ...and add it to the menu
+            menu.append(menu_item)
+            menu_item.connect("activate", self.menuitem_cb, i)
+            menu_item.show()
+        menu.popup(None, None, None, event.button, event.time)
+
+        # We have handled this event, don't pass it on
+        return True
+
+    def menuitem_cb(self, widget, item):
+        self.en.set_text(item)
+
+    def entry_cb(self, widget, part):
+        mountopts = part.mountpoint_cb(widget.get_text())
 
