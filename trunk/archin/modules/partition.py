@@ -140,6 +140,7 @@ class Partition:
             on = False
             self.format_options = None
             table.set_mountpoint(self, None)
+
         table.enable_mountpoint(self, on)
 
     def get_format_options(self):

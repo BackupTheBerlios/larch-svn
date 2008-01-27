@@ -117,7 +117,8 @@ class SelTable(gtk.Table):
             self.attach(optw, 5, 6, ri, ri+1)
             self.rows.append([p, devw, mpw, sizew, fmtw, fstw, optw])
 
-            self.update_options(p)
+            self.fstw_cb(fstw, p)
+            #self.update_options(p)
 
     def popupOptions(self, widget, partition):
         self.popup_part = partition
@@ -126,7 +127,8 @@ class SelTable(gtk.Table):
         rows = []
         if fo:
             rows.append(gtk.HSeparator())
-            fl =gtk.Label(_("Formatting options"))
+            fl = gtk.Label()
+            fl.set_markup("<b>%s</b>" % _("Formatting options"))
             fl.set_alignment(0.0, 0.5)
             rows.append(fl)
             rows.append(gtk.HSeparator())
@@ -137,7 +139,8 @@ class SelTable(gtk.Table):
 
         if mo:
             rows.append(gtk.HSeparator())
-            ml = gtk.Label(_("Mount options"))
+            ml = gtk.Label()
+            ml.set_markup("<b>%s</b>" % _("Mount options"))
             ml.set_alignment(0.0, 0.5)
             rows.append(ml)
             rows.append(gtk.HSeparator())
@@ -150,7 +153,7 @@ class SelTable(gtk.Table):
             gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
             (gtk.STOCK_OK, gtk.RESPONSE_OK))
 
-        table = gtk.Table(len(rows), 3)
+        table = gtk.Table(len(rows), 2)
         table.set_row_spacings(10)
         table.set_col_spacings(10)
         dlg.vbox.pack_start(table)
@@ -184,10 +187,12 @@ class SelTable(gtk.Table):
         cb = gtk.CheckButton(opt[0])
         cb.set_active(opt[2])
         cb.connect("toggled", self.opt_cb, opt[1])
+        hf = gtk.Frame()
         hl = gtk.Label(opt[3])
         hl.set_line_wrap(True)
-        hl.set_alignment(0.0, 0.5)
-        return (cb, hl)
+        hl.set_size_request(400, -1)
+        hf.add(hl)
+        return (cb, hf)
 
     def opt_cb(self, widget, flag):
         if flag.isupper():
