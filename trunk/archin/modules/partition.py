@@ -22,7 +22,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.26
+# 2008.01.27
 
 class Partition:
     """The instances of this class manage the formatting/mount
@@ -125,11 +125,22 @@ class Partition:
         if self.format:
             # if formatting
             self.newformat = fstype
-        self.format_options = self.default_flags(
-                self.format_flags(self.newformat))
-        # set default mount options
-        self.mount_options = self.default_flags(
-                self.mount_flags(self.newformat or self.existing_format))
+        else:
+            self.newformat = None
+
+        if fstype:
+            on = True
+            self.format_options = self.default_flags(
+                    self.format_flags(self.newformat))
+            if self.mountpoint:
+                # set default mount options
+                self.mount_options = self.default_flags(self.mount_flags(
+                        self.newformat or self.existing_format))
+        else:
+            on = False
+            self.format_options = None
+            table.set_mountpoint(self, None)
+        table.enable_mountpoint(self, on)
 
     def get_format_options(self):
         fopts = []
@@ -138,7 +149,8 @@ class Partition:
             fl = self.format_flags(self.newformat)
             if fl:
                 for name, flag, on, desc in fl:
-                    fopts += (name, flag, flag in self.format_options, desc)
+                    fopts.append((name, flag, flag in self.format_options,
+                            desc))
         return fopts
 
     def get_mount_options(self):
@@ -149,25 +161,22 @@ class Partition:
             fl = self.mount_flags(self.newformat or self.existing_format)
             if fl:
                 for name, flag, on, desc in fl:
-                    mopts += (name, flag, flag in self.mount_options, desc)
+                    mopts.append((name, flag, flag in self.mount_options,
+                            desc))
             elif (fl == None):
                 return None
             return mopts
         return None
 
     def mountpoint_cb(self, m):
-        if not m:
+        if m.startswith('/'):
+            # set default mount options
+            self.mount_options = self.default_flags(self.mount_flags(
+                    self.newformat or self.existing_format))
+            self.mountpoint = m
+        else:
             self.mountpoint = None
             self.mount_options = None
-            return None
-        self.mountpoint = m
-        # set default mount options
-        self.mount_options = self.default_flags(
-                self.mount_flags(self.newformat or self.existing_format))
-        mo = self.get_mount_options()
-        if (mo == None):
-            self.mountpoint = None
-        return mo
 
     def format_options_cb(self, opt, on):
         if on:

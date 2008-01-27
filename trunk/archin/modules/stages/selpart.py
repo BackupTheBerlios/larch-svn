@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.26
+# 2008.01.27
 
 class SelPart(Stage):
     def stageTitle(self):
@@ -46,7 +46,11 @@ class SelPart(Stage):
         self.addWidget(SelDevice(self, install.devices))
 
         filesystems = ['ext3', 'reiserfs', 'ext2', 'jfs', 'xfs']
-        self.table = SelTable(self, filesystems)
+        # List of mount-point suggestions
+        mountpoints = ['/', '/home', '/boot', '/var', '/opt',
+                 '/usr', '/mnt/%']
+
+        self.table = SelTable(self, filesystems. mountpoints)
         self.addWidget(self.table)
         self.reinit()
 

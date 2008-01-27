@@ -23,7 +23,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.26
+# 2008.01.27
 
 testing=True
 
@@ -49,10 +49,6 @@ class installClass:
                 self.host, shell=True,
                 stdout=PIPE).communicate()[0].endswith("^OK^")), (
                     "Couldn't connect to %s" % self.host)
-
-        # List of mount-point suggestions
-        self.mountpoints = ['/', '/home', '/boot', '/var', '/opt',
-                 '/usr', '/mnt/%']
 
     def xcall_local(self, cmd):
         """Call a function on the same machine.

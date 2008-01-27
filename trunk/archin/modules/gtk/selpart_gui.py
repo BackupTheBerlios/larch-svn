@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.26
+# 2008.01.27
 
 import gtk
 
@@ -27,18 +27,23 @@ class SelTable(gtk.Table):
     """This widget presents a list of available partitions for
     allocation in the new system.
     """
-    def __init__(self, master, filesystems):
-        gtk.Table.__init__(self, 1, 6)
-        self.set_row_spacings(3)
-        self.set_col_spacings(3)
+    def __init__(self, master, filesystems, mountpoints):
+        self.master = master
+        self.mountpoints = mountpoints
+        gtk.Table.__init__(self, 2, 6)
+        self.set_row_spacings(10)
+        self.set_col_spacings(10)
         self.rows = []
         # column headers
         i = 0
-        for l in (_("Partition"), _("Mount Point"), _("Size"),
+        for l in (_(" Partition "), _("Mount Point"), _("   Size   "),
                 _("Format"), _("File-system"), _("Options")):
             lw = gtk.Button(l)
             self.attach(lw, i, i+1, 0, 1)
             i += 1
+
+        line = gtk.HSeparator()
+        self.attach(line, 0, 6, 1, 2)
 
         #self.mp_liststore = gtk.ListStore(str)
         #for mp in mountpoints:
@@ -62,14 +67,14 @@ class SelTable(gtk.Table):
                 self.remove(w)
         self.rows = []
 
-        self.resize(len(partlist) + 1, 6)
-        ri = 0
+        self.resize(len(partlist) + 2, 6)
+        ri = 1
         for p in partlist:
             devw = gtk.Label(p.partition)
 
 
             #mpw = gtk.combo_box_entry_new_text()
-            mpw = SelMountPoint(p)
+            mpw = SelMountPoint(self, p, self.mountpoints)
 
 
             #set to p.mountpoint)
@@ -100,49 +105,89 @@ class SelTable(gtk.Table):
             fstw.connect("changed", self.fstw_cb, p)
 
 
-            optw = gtk.Button("%s - %s" % (p.format_options, p.mount_options))
+            optw = gtk.Button()
             optw.connect("clicked", self.popupOptions, p)
 
             ri += 1
             self.attach(devw, 0, 1, ri, ri+1)
             self.attach(mpw, 1, 2, ri, ri+1)
             self.attach(sizew, 2, 3, ri, ri+1)
-            self.attach(fmtw, 3, 4, ri, ri+1)
+            self.attach(fmtw, 3, 4, ri, ri+1, xoptions=0)
             self.attach(fstw, 4, 5, ri, ri+1)
             self.attach(optw, 5, 6, ri, ri+1)
             self.rows.append([p, devw, mpw, sizew, fmtw, fstw, optw])
 
+            self.update_options(p)
+
     def popupOptions(self, widget, partition):
         self.popup_part = partition
+        fo = partition.get_format_options()
+        mo = partition.get_mount_options()
+        rows = []
+        if fo:
+            rows.append(gtk.HSeparator())
+            fl =gtk.Label(_("Formatting options"))
+            fl.set_alignment(0.0, 0.5)
+            rows.append(fl)
+            rows.append(gtk.HSeparator())
+            for opt in fo:
+                rows.append(self.newOption(opt))
+            if mo:
+                rows.append(gtk.HSeparator())
+
+        if mo:
+            rows.append(gtk.HSeparator())
+            ml = gtk.Label(_("Mount options"))
+            ml.set_alignment(0.0, 0.5)
+            rows.append(ml)
+            rows.append(gtk.HSeparator())
+            for opt in mo:
+                rows.append(self.newOption(opt))
+
+        if not rows:
+            return
         dlg = gtk.Dialog(_("Options for %s") % partition.partition, None,
             gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
             (gtk.STOCK_OK, gtk.RESPONSE_OK))
-        fo = partition.get_format_options()
-        if fo:
-            dlg.vbox.pack_start(gtk.Label(_("Formatting options")))
-            for opt in fo:
-                dlg.vbox.pack_start(self.newOption(opt))
 
-        mo = partition.get_mount_options()
-        if mo:
-            dlg.vbox.pack_start(gtk.Label(_("Mount options")))
-            for opt in mo:
-                dlg.vbox.pack_start(self.newOption(opt))
+        table = gtk.Table(len(rows), 3)
+        table.set_row_spacings(10)
+        table.set_col_spacings(10)
+        dlg.vbox.pack_start(table)
+        i = 0
+        for r in rows:
+            if isinstance(r, tuple):
+                table.attach(r[0], 0, 1, i, i+1, xoptions=gtk.FILL)
+                table.attach(r[1], 1, 2, i, i+1, xoptions=gtk.EXPAND|gtk.FILL)
+            else:
+                table.attach(r, 0, 2, i, i+1)
+            i += 1
 
         dlg.vbox.show_all()
         dlg.run()
         dlg.destroy()
+        self.update_options(partition)
+
+    def update_options(self, p):
+        for r in self.rows:
+            if (p == r[0]):
+                break
+        fo = p.format_options
+        if not fo:
+            fo = ''
+        mo = p.mount_options
+        if not mo:
+            mo = ''
+        r[6].set_label("%s - %s" % (fo, mo))
 
     def newOption(self, opt):
-        hb = gtk.HBox()
         cb = gtk.CheckButton(opt[0])
         cb.set_active(opt[2])
         cb.connect("toggled", self.opt_cb, opt[1])
-        hb.pack_start(cb)
         hl = gtk.Label(opt[3])
         hl.set_line_wrap(True)
-        hb.pack_start(hl)
-        return hb
+        hl.set_alignment(0.0, 0.5)
+        return (cb, hl)
 
     def opt_cb(self, widget, flag):
         if flag.isupper():
@@ -151,7 +196,8 @@ class SelTable(gtk.Table):
             self.popup_part.format_options_cb(flag, widget.get_active())
 
     def fstw_cb(self, widget, part):
-        print widget.get_active(), part.partition
+        part.fstype_cb(self, widget.get_active_text())
+        self.update_options(part)
 
     def fmtw_cb(self, widget, part):
         part.format_cb(self, widget.get_active())
@@ -160,6 +206,22 @@ class SelTable(gtk.Table):
         for r in self.rows:
             if (part == r[0]):
                 r[5].set_sensitive(on)
+
+    def enable_mountpoint(self, part, on):
+        for r in self.rows:
+            if (part == r[0]):
+                r[2].set_sensitive(on)
+
+    def set_mountpoint(self, part, mp):
+        if not mp:
+            mp = ''
+        for r in self.rows:
+            if (part == r[0]):
+                r[2].set_text(mp)
+
+    def mountpoint_text_cb(self, widget, part):
+        part.mountpoint_cb(widget.get_text())
+        self.update_options(part)
 
     def set_fstype(self, part, fst):
         for r in self.rows:
@@ -193,10 +255,12 @@ class SelDevice(gtk.HBox):
 
 
 class SelMountPoint(gtk.HBox):
-    def __init__(self, part):
+    def __init__(self, table, part, mountpoints):
+        self.mountpoints = mountpoints
         gtk.HBox.__init__(self)
         self.en = gtk.Entry()
-        self.en.connect("changed", self.entry_cb, part)
+        self.en.set_width_chars(10)
+        self.en.connect("changed", table.mountpoint_text_cb, part)
         pb = gtk.Button()
         pb.add(gtk.Arrow(gtk.ARROW_DOWN, gtk.SHADOW_NONE))
         pb.connect("clicked", self.pb_cb, part)
@@ -216,7 +280,7 @@ class SelMountPoint(gtk.HBox):
             if p.mountpoint:
                 mplist.append(p.mountpoint)
 
-        for i in install.mountpoints:
+        for i in self.mountpoints:
             if (i in mplist):
                 continue
 
@@ -234,6 +298,5 @@ class SelMountPoint(gtk.HBox):
     def menuitem_cb(self, widget, item):
         self.en.set_text(item)
 
-    def entry_cb(self, widget, part):
-        mountopts = part.mountpoint_cb(widget.get_text())
-
+    def set_text(self, text):
+        self.en.set_text(text)
