@@ -9,7 +9,7 @@
 # $3 - end position (bytes)
 
 if parted -s $1 rm 1; then
-    if parted -s $1 mkpart primary NTFS $2 $3; then
+    if parted -s $1 unit B mkpart primary NTFS $2 $3; then
         echo -n '^OK^'
     fi
 fi

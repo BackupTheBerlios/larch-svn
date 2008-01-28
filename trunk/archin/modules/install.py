@@ -25,6 +25,8 @@
 #----------------------------------------------------------------------------
 # 2008.01.28
 
+testing = True
+
 from subprocess import Popen, PIPE
 import os
 import re
@@ -222,11 +224,11 @@ class installClass:
         dev = self.selectedDevice()
         # First a test run
         op = self.xcall("ntfs-testrun %s1 %s" % (dev, newsize))
-        if not op:
+        if op:
             return op
         # Now the real thing, resize the file-system
         op = self.xcall("ntfs-resize %s1 %s" % (dev, newsize))
-        if not op:
+        if op:
             return op
         # Now resize the actual partition
         op = self.xcall("getinfo-ntfs1 %s" % dev)

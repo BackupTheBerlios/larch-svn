@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.25
+# 2008.01.28
 
 class Partitions(Stage):
     def stageTitle(self):
@@ -233,85 +233,14 @@ class Partitions(Stage):
             mainWindow.goto('manualPart')
             return
 
-        assert False, "NYI"
         # Set up the installation partitions automatically.
         # If NTFS resizing is to be done, do it now.
-
-        # This is not clean enough ...
-
-        # Keep existing os on 1st partition
-        if self.shrink.get_active():
-            # Shrink NTFS filesystem, convert size to MB
-            newsize = int(self.adj.get_value() * 1000)
-            if popupWarning(_("You are about to shrink an NTFS partition.\n"
-                    "This is a risky business, so don't proceed if"
-                    " you have not backed up your important data.\n\n"
-                    "Resize partition?")):
-                message = install.doNTFSshrink(newsize)
-                if message:
-                    # resize failed
-                    popupMessage(_("Sorry, resizing failed. Here is the"
-                            " error report:\n\n") + message)
-                    self.reinit()
-                    return
-
-            else:
-                self.reinit()
-                return
-
-        install.setPart(1)
-        mainWindow.goto('autoPart')
-
-        endmark = install.dsize #-1?
-        if install.autoPartStart:
-            # keep 1st partition, allocate from 2nd
-            startmark = install.p1end
-            partno = 2
-        else:
-            startmark = 0
-            partno = 1
-
-        # Tricky logic here! The first partition should be root, then swap then
-        # home, but swap and/or home may be absent. The last partition should take
-        # its endpoint from 'endmark', root's start from startmark. The actual
-        # partitioning should be done, but the formatting can be handled - given
-        # the appropriate information - by the installation stage.
-
-        # Remove all existing partitions (except optionally the first)
-        install.rmparts(dev, partno)
-
-        swapsize = self.swapsizew.get_value()
-        if (self.homesize == 0) and (swapsize == 0):
-            em = endmark
-        else:
-            em = startmark + int(self.rootsize * 1000)
-        install.mkpart(dev, startmark, em)
-        startmark = em
-        install.newPartition("%s%d" % (dev, partno), m='/', f=True)
-
-        if (swapsize != 0):
-            partno += 1
-            if (self.homesize == 0):
-                em = endmark
-            else:
-                em = startmark + int(swapsize * 1000)
-            install.mkpart(dev, startmark, em, 'linux-swap')
-            startmark = em
-
-        if self.homesize:
-            partno += 1
-            install.mkpart(dev, startmark, endmark)
-            install.newPartition("%s%d" % (dev, partno), m='/home', f=True)
-
-        mainWindow.goto('install')
-
-
-        sel = self.getSelectedOption()
-        if (self == 'part2'):
+        if self.ntfs.get_keep1_on():
             # Keep existing os on 1st partition
-            if self.shrink.get_active():
-                # Shrink NTFS filesystem, convert size to MB
-                newsize = int(self.adj.get_value() * 1000)
+
+            if self.ntfs.get_shrink_on():
+            # Shrink NTFS filesystem, convert size to MB
+                newsize = int(self.ntfssize * 1000)
                 if popupWarning(_("You are about to shrink an NTFS partition.\n"
                         "This is a risky business, so don't proceed if"
                         " you have not backed up your important data.\n\n"
@@ -328,18 +257,49 @@ class Partitions(Stage):
                     self.reinit()
                     return
 
-            install.setPart(1)
-            mainWindow.goto('autoPart')
-
-        elif (sel == 'whole'):
-            # Use whole drive
-            install.setPart(0)
-            mainWindow.goto('autoPart')
+            # keep 1st partition, allocate from 2nd
+            startmark = install.p1end # valid?
+            partno = 2
 
         else:
-            # Manual partitioning
-            install.setPart(None)
-            mainWindow.goto('manualPart')
+            startmark = 0
+            partno = 1
+
+        endmark = install.dsize #-1?
+
+        # Tricky logic here! The first partition should be root, then swap then
+        # home, but swap and/or home may be absent. The last partition should take
+        # its endpoint from 'endmark', root's start from startmark. The actual
+        # partitioning should be done, but the formatting can be handled - given
+        # the appropriate information - by the installation stage.
+
+        # Remove all existing partitions (except optionally the first)
+        dev = install.selectedDevice()
+        install.rmparts(dev, partno)
+
+        if (self.homesize == 0) and (self.swapsize == 0):
+            em = endmark
+        else:
+            em = startmark + int(self.rootsize * 1000)
+        install.mkpart(dev, startmark, em)
+        startmark = em
+        install.newPartition("%s%d" % (dev, partno), m='/', f=True)
+
+        if (self.swapsize != 0):
+            partno += 1
+            if (self.homesize == 0):
+                em = endmark
+            else:
+                em = startmark + int(self.swapsize * 1000)
+            install.mkpart(dev, startmark, em, 'linux-swap')
+            startmark = em
+
+        if self.homesize:
+            partno += 1
+            install.mkpart(dev, startmark, endmark)
+            install.newPartition("%s%d" % (dev, partno), m='/home', f=True)
+
+        mainWindow.goto('install')
 
 
 #################################################################
