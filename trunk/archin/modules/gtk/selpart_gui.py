@@ -19,31 +19,34 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.27
+# 2008.01.28
 
 import gtk
 
-class SelTable(gtk.Table):
+class SelTable(gtk.ScrolledWindow):
     """This widget presents a list of available partitions for
     allocation in the new system.
     """
     def __init__(self, master, filesystems, mountpoints):
         self.master = master
         self.mountpoints = mountpoints
-        gtk.Table.__init__(self, 2, 6)
-        self.set_row_spacings(10)
-        self.set_col_spacings(10)
+        gtk.ScrolledWindow.__init__(self)
+        self.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        self.table = gtk.Table(2, 6)
+        self.table.set_row_spacings(10)
+        self.table.set_col_spacings(10)
+        self.add_with_viewport(self.table)
         self.rows = []
         # column headers
         i = 0
         for l in (_(" Partition "), _("Mount Point"), _("   Size   "),
                 _("Format"), _("File-system"), _("Options")):
             lw = gtk.Button(l)
-            self.attach(lw, i, i+1, 0, 1)
+            self.table.attach(lw, i, i+1, 0, 1, yoptions=0)
             i += 1
 
         line = gtk.HSeparator()
-        self.attach(line, 0, 6, 1, 2)
+        self.table.attach(line, 0, 6, 1, 2, yoptions=0)
 
         #self.mp_liststore = gtk.ListStore(str)
         #for mp in mountpoints:
@@ -64,10 +67,10 @@ class SelTable(gtk.Table):
             # The first item in each row list is the Partition instance,
             # the remaining items are the widgets
             for w in r[1:]:
-                self.remove(w)
+                self.table.remove(w)
         self.rows = []
 
-        self.resize(len(partlist) + 2, 6)
+        self.table.resize(len(partlist) + 2, 6)
         ri = 1
         for p in partlist:
             devw = gtk.Label(p.partition)
@@ -109,12 +112,12 @@ class SelTable(gtk.Table):
             optw.connect("clicked", self.popupOptions, p)
 
             ri += 1
-            self.attach(devw, 0, 1, ri, ri+1)
-            self.attach(mpw, 1, 2, ri, ri+1)
-            self.attach(sizew, 2, 3, ri, ri+1)
-            self.attach(fmtw, 3, 4, ri, ri+1, xoptions=0)
-            self.attach(fstw, 4, 5, ri, ri+1)
-            self.attach(optw, 5, 6, ri, ri+1)
+            self.table.attach(devw, 0, 1, ri, ri+1, yoptions=0)
+            self.table.attach(mpw, 1, 2, ri, ri+1, yoptions=0)
+            self.table.attach(sizew, 2, 3, ri, ri+1, yoptions=0)
+            self.table.attach(fmtw, 3, 4, ri, ri+1, xoptions=0, yoptions=0)
+            self.table.attach(fstw, 4, 5, ri, ri+1, yoptions=0)
+            self.table.attach(optw, 5, 6, ri, ri+1, yoptions=0)
             self.rows.append([p, devw, mpw, sizew, fmtw, fstw, optw])
 
             self.fstw_cb(fstw, p)
@@ -247,8 +250,8 @@ class SelDevice(gtk.HBox):
     to be allocated to mountpoints, formatted, etc.
     """
     def __init__(self, master, devices):
+        gtk.HBox.__init__(self)
         self.master = master
-        assert False, 'NYI'
         label = gtk.Label(_("Configuring partitions on drive "))
         combo = gtk.combo_box_new_text()
         for d in devices:

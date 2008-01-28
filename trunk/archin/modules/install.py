@@ -23,9 +23,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.27
-
-testing=True
+# 2008.01.28
 
 from subprocess import Popen, PIPE
 import os
@@ -114,12 +112,6 @@ class installClass:
         """
         devices = []
         op = self.xcall("get-devices")
-
-####### Just for testing!
-        if ((not op) and testing):
-            op = ("/dev/sda:80.0GB:ATA WDC WD800JB-00JJ;\n"
-                    "/dev/sdb:514MB:JetFlash TS512MJF2A/120;\n")
-
         for line in op.splitlines():
             devices.append(line.rstrip(';').split(':'))
         return devices
@@ -146,7 +138,7 @@ class installClass:
         self.autodevice = device
 
     def selectedDevice(self):
-        return self.autodevice | self.devices[0][0]
+        return self.autodevice or self.devices[0][0]
 
     def setPart(self, start):
         """Used by the autopartitioner to determine where the free space
@@ -160,26 +152,6 @@ class installClass:
     def getDeviceInfo(self, dev):
         # Info on drive and partitions (dev="/dev/sda", etc.):
         self.dinfo = self.xcall("get-partitions %s" % dev)
-
-####### Just for testing!
-        if ((not self.dinfo.startswith("BYT")) and testing):
-            self.dinfo = ( "BYT;\n"
-                    "/dev/sda:20491MB:scsi:512:512:msdos:ATA Maxtor 2B020H1;\n"
-                    "1:0.03MB:15001MB:15001MB:ntfs::;\n"
-                    "2:5001MB:7000MB:1999MB:::;\n"
-                    "3:7000MB:12001MB:5001MB:::;\n"
-                    "1:12001MB:20489MB:8488MB:free;\n")
-
-            self.dinfo2 = ( "BYT;\n"
-                    "/dev/sda:80026MB:scsi:512:512:msdos:ATA WDC WD800JB-00JJ;\n"
-                    "1:0.03MB:20004MB:20004MB:ntfs::boot;\n"
-                    "2:20004MB:40008MB:20004MB:ext3::;\n"
-                    "3:40008MB:44005MB:3997MB:linux-swap::;\n"
-                    "4:44005MB:80024MB:36019MB:::;\n"
-                    "5:44005MB:54007MB:10002MB:ext3::;\n"
-                    "6:54007MB:74011MB:20004MB:ext3::;\n"
-                    "7:74011MB:80024MB:6013MB:ext3::;\n")
-
         # get the drive size in MB
         dsm = re.search(r"^/dev.*:([0-9\.]+)MB:.*;$", self.dinfo, re.M)
         self.dsize = int(dsm.group(1).split('.')[0])
@@ -199,7 +171,7 @@ class installClass:
         """Get size and fstype for the given partition number using the
         data from the last call of getDeviceInfo.
         """
-        rc = re.compile((r"^%d:([0-9\.]+)MB:([0-9\.]+)MB:"
+        rc = re.compile(r"^%d:([0-9\.]+)MB:([0-9\.]+)MB:"
                 "([0-9\.]+)MB:([^:]*):.*;$" % partno)
         for l in self.dinfo.splitlines():
             rm = rc.search(l)
@@ -230,10 +202,7 @@ class installClass:
             cds = int(rx.search(lines[0]).group(1))
             srp = int(rx.search(lines[0]).group(1))
         except:
-
-####### Just for testing!
             print "get-ntfsinfo failed"
-            return (4096, 20003848704, 20003848704, 2310758400)
             return None
         return (self.ntfs_cluster_size, cvs, cds, srp)
 

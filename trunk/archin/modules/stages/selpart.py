@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.27
+# 2008.01.28
 
 class SelPart(Stage):
     def stageTitle(self):
@@ -43,14 +43,14 @@ class SelPart(Stage):
         Stage.__init__(self)
         from selpart_gui import SelTable, SelDevice
 
-        self.addWidget(SelDevice(self, install.devices))
+        self.addWidget(SelDevice(self, [d[0] for d in install.devices]), False)
 
         filesystems = ['ext3', 'reiserfs', 'ext2', 'jfs', 'xfs']
         # List of mount-point suggestions
         mountpoints = ['/', '/home', '/boot', '/var', '/opt',
                  '/usr', '/mnt/%']
 
-        self.table = SelTable(self, filesystems. mountpoints)
+        self.table = SelTable(self, filesystems, mountpoints)
         self.addWidget(self.table)
         self.reinit()
 

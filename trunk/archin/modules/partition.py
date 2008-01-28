@@ -22,7 +22,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.27
+# 2008.01.28
 
 class Partition:
     """The instances of this class manage the formatting/mount
@@ -46,12 +46,15 @@ class Partition:
         else:
             self.newformat = None
             self.format_options = None
-        if (mo != None):
-            self.mount_options = mo
+        if self.mountpoint:
+            if (mo != None):
+                self.mount_options = mo
+            else:
+                self.mount_options = self.default_flags(
+                        self.mount_flags(self.newformat or
+                                self.existing_format))
         else:
-            self.mount_options = self.default_flags(
-                    self.mount_flags(self.newformat or self.existing_format))
-
+            self.mount_options = None
 
     def format_flags(self, fstype):
         """Return a list of available format flags for the given
@@ -119,6 +122,8 @@ class Partition:
 
         else:
             self.newformat = None
+            if not self.mountpoint:
+                self.mount_options = None
             table.set_fstype(self, self.existing_format)
 
     def fstype_cb(self, table, fstype):

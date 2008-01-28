@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.23
+# 2008.01.28
 
 import gtk, gobject
 
@@ -95,8 +95,8 @@ class Stage(gtk.VBox):
     def setLabel(self, l, text):
         l.set_markup(text)
 
-    def addWidget(self, w):
-        self.pack_start(w)
+    def addWidget(self, w, expand=True):
+        self.pack_start(w, expand)
         return w
 
     def removeWidget(self, w):
