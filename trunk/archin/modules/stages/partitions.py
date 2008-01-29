@@ -302,6 +302,12 @@ class Partitions(Stage):
                 em = startmark + self.swap_mb
             install.mkpart(dev, startmark, em, 'linux-swap')
             startmark = em
+            part = "%s%d" % (dev, partno)
+            install.swaps = [part]
+            install.format_swaps = [part]
+        else:
+            install.swaps = []
+            install.format_swaps = []
 
         if self.home_mb:
             partno += 1

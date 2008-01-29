@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.28
+# 2008.01.29
 
 import gtk, gobject
 
@@ -69,10 +69,11 @@ class Stage(gtk.VBox):
             b.set_active(True)
         return b
 
-    def addCheckButton(self, label, callback):
+    def addCheckButton(self, label, callback=None):
         b = gtk.CheckButton(label)
         self.pack_start(b)
-        b.connect("toggled", self.toggled_cb, callback)
+        if callback:
+            b.connect("toggled", self.toggled_cb, callback)
         return b
 
     def setCheck(self, b, on):
@@ -101,6 +102,12 @@ class Stage(gtk.VBox):
 
     def removeWidget(self, w):
         self.remove(w)
+
+    def clear(self):
+        for c in self.get_children():
+            self.removeWidget(c)
+        self.options = {}
+        self.option0 = None
 
     def getSelectedOption(self):
         for n, b in self.options.items():

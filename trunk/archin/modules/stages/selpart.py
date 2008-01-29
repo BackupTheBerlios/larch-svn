@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.28
+# 2008.01.29
 
 class SelPart(Stage):
     def stageTitle(self):
@@ -110,7 +110,7 @@ class SelPart(Stage):
             #...
             # ... install.newPartition("%s%d" % (dev, partno), m='/home')
 
-            mainWindow.goto('install')
+            mainWindow.goto('swaps')
             return
 
 

@@ -294,3 +294,28 @@ class installClass:
     def getPartition(self, part):
         return self.parts.get(part)
 
+
+
+#new
+    def getActiveSwaps(self):
+        """Discover active swap partitions. Return list
+        of pairs: (device, size(GB)).
+        """
+        output = self.xcall("get-active-swaps")
+        swaps = []
+        for l in output.splitlines():
+            ls = l.split()
+            swaps.append((ls[0], float(ls[1]) * 1024 / 1e9)))
+        return swaps
+
+    def getAllSwaps(self):
+        """Discover swap partitions, whether active or not. Return list
+        of pairs: (device, size(GB)).
+        """
+        # I might want to add support for LVM/RAID?
+        output = self.xcall("get-all-swaps")
+        swaps = []
+        for l in output.splitlines():
+            ls = l.split()
+            swaps.append((ls[0], float(ls[1]) * 1024 / 1e9)))
+        return swaps
