@@ -46,6 +46,8 @@ class Partitions(Stage):
 
         # Info: total drive size
         self.totalsize = self.addLabel("", 'right')
+        self.homesize = 0.0
+        self.home_on = False
 
         # NTFS resizing
         self.ntfs = self.addWidget(NtfsWidget(self))
@@ -80,6 +82,7 @@ class Partitions(Stage):
 
         self.swap.set_on(True)
         self.home.set_on(True)
+        self.setCheck(self.expert, True)
         self.setCheck(self.expert, False)
 
     def keep1init(self, dev):
@@ -184,7 +187,7 @@ class Partitions(Stage):
         self.adjustroot()
 
     def expert_cb(self, on):
-        self.home.enable(not on)
+        self.home.enable((not on) and self.home_on)
         self.swap.enable(not on)
 
     def adjustroot(self):
@@ -192,9 +195,15 @@ class Partitions(Stage):
         if self.ntfs.isenabled():
             self.rootsize -= self.ntfssize
         if (self.swap.isenabled() and self.swap.get_on()):
+            self.swap_mb = int(self.swapsize * 1000)
             self.rootsize -= self.swapsize
+        else:
+            self.swap_mb = 0
         if (self.home.isenabled() and self.home.get_on()):
+            self.home_mb = int(self.homesize * 1000)
             self.rootsize -= self.homesize
+        else:
+            self.home_mb = 0
         self.root.set_value(self.rootsize)
 
     def recalculate(self):
@@ -211,12 +220,12 @@ class Partitions(Stage):
         SWAPDEF = 1.0          # GB
         freesize = self.dsize - self.ntfssize
 
-        home_on = (freesize >= MINSPLITSIZE)
+        self.home_on = (freesize >= MINSPLITSIZE)
         home_upper = freesize - SWAPMAX - 5.0
         home_value = freesize * HOMESIZE / 100
         self.home.set_adjust(upper=home_upper, value=home_value)
         if not self.getCheck(self.expert):
-            self.home.enable(home_on)
+            self.home.enable(self.home_on)
 
         swap_upper = freesize * SWAPMAXSIZE / 100
         if (swap_upper > SWAPMAX):
@@ -277,7 +286,7 @@ class Partitions(Stage):
         dev = install.selectedDevice()
         install.rmparts(dev, partno)
 
-        if (self.homesize == 0) and (self.swapsize == 0):
+        if (self.home_mb == 0) and (self.swap_mb == 0):
             em = endmark
         else:
             em = startmark + int(self.rootsize * 1000)
@@ -285,16 +294,16 @@ class Partitions(Stage):
         startmark = em
         install.newPartition("%s%d" % (dev, partno), m='/', f=True)
 
-        if (self.swapsize != 0):
+        if (self.swap_mb != 0):
             partno += 1
-            if (self.homesize == 0):
+            if (self.home_mb == 0):
                 em = endmark
             else:
-                em = startmark + int(self.swapsize * 1000)
+                em = startmark + self.swap_mb
             install.mkpart(dev, startmark, em, 'linux-swap')
             startmark = em
 
-        if self.homesize:
+        if self.home_mb:
             partno += 1
             install.mkpart(dev, startmark, endmark)
             install.newPartition("%s%d" % (dev, partno), m='/home', f=True)
