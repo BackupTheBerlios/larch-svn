@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.28
+# 2008.01.29
 
 class Partitions(Stage):
     def stageTitle(self):
@@ -206,7 +206,7 @@ class Partitions(Stage):
         MINSPLITSIZE = 20.0    # GB
         HOMESIZE = 50          # % of total
         SWAPSIZE = 5           # % of total
-        SWAPMAX  = 4.0         # GB
+        SWAPMAX  = 2.0         # GB
         SWAPMAXSIZE = 10       # % of total
         SWAPDEF = 1.0          # GB
         freesize = self.dsize - self.ntfssize

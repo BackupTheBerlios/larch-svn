@@ -23,21 +23,20 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.28
-
-testing = True
+# 2008.01.29
 
 from subprocess import Popen, PIPE
 import os
 import re
 
 from partition import Partition
+from dialogs import PopupInfo
 
 class installClass:
-    def __init__(self, host=None):
+    def __init__(self, host=None, transfer=False):
         self.host = host
         if self.host:
-            if testing:
+            if transfer:
                 op = Popen("ssh root@%s rm -rf /opt/larch/archin" %
                     self.host, shell=True,
                     stdout=PIPE).communicate()[0]   # delete (old) archin
@@ -53,29 +52,17 @@ class installClass:
     def xcall_local(self, cmd):
         """Call a function on the same machine.
         """
-        mainWindow.busy()
-        op = Popen("%s/syscalls/%s" % (basePath, cmd), shell=True,
+        return Popen("%s/syscalls/%s" % (basePath, cmd), shell=True,
                 stdout=PIPE).communicate()[0]
-        mainWindow.busy_off()
-        if op.endswith("^OK^"):
-            return ""
-        else:
-            return op
 
     def xcall_net(self, cmd, opt=""):
         """Call a function on another machine.
         Public key authentication must be already set up so that no passsword
         is required.
         """
-        mainWindow.busy()
-        op = Popen("ssh %s root@%s /opt/larch/archin/syscalls/%s" %
+        return Popen("ssh %s root@%s /opt/larch/archin/syscalls/%s" %
                 (opt, self.host, cmd), shell=True,
                 stdout=PIPE).communicate()[0]   # run the command via ssh
-        mainWindow.busy_off()
-        if op.endswith("^OK^"):
-            return ""
-        else:
-            return op
 
     def terminal(self, cmd):
         """Run a command in a terminal. The environment variable 'XTERM' is
@@ -100,10 +87,17 @@ class installClass:
             mainWindow.busy_off()
 
     def xcall(self, cmd, opt=""):
+        mainWindow.busy()
         if self.host:
-            return self.xcall_net(cmd, opt)
+            op = self.xcall_net(cmd, opt)
         else:
-            return self.xcall_local(cmd)
+            op = self.xcall_local(cmd)
+        mainWindow.busy_off()
+        if op.endswith("^OK^"):
+            self.okop = op
+            return ""
+        else:
+            return op
 
     def listDevices(self):
         """Return a list of device descriptions.
@@ -223,13 +217,15 @@ class installClass:
 
         dev = self.selectedDevice()
         # First a test run
-        op = self.xcall("ntfs-testrun %s1 %s" % (dev, newsize))
-        if op:
-            return op
+        info = PopupInfo(self.xcall, "ntfs-testrun %s1 %s" % (dev, newsize),
+                _("Shrink NTFS partition"), _("Test run ..."))
+        if info.result:
+            return info.result
         # Now the real thing, resize the file-system
-        op = self.xcall("ntfs-resize %s1 %s" % (dev, newsize))
-        if op:
-            return op
+        info = PopupInfo(self.xcall, "ntfs-resize %s1 %s" % (dev, newsize),
+                _("Shrink NTFS partition"), _("This is for real ..."))
+        if info.result:
+            return info.result
         # Now resize the actual partition
         op = self.xcall("getinfo-ntfs1 %s" % dev)
         if not op:

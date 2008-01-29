@@ -21,7 +21,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.28
+# 2008.01.29
 
 # Add a Quit button?
 
@@ -45,18 +45,25 @@ if (__name__ == "__main__"):
     __builtin__._ = tr
 
     import sys
+    transfer = False
     if (len(sys.argv) == 1):
         target = None
     elif (len(sys.argv) == 2):
         target = sys.argv[1]
+    elif ((len(sys.argv) == 3) and (sys.argv[1] == '-t')):
+        target = sys.argv[2]
+        transfer = True
     else:
         print "ERROR: too many arguments. Usage:"
-        print "          archin.py [target-address]"
+        print "          archin.py                       # local installation"
+        print "          archin.py [-t] target-address   # remote installation"
+        print "              The '-t' option causes the installation scripts"
+        print "              to be copied to the remote machine."
         sys.exit(1)
 
     __builtin__.basePath = basedir
     __builtin__.stages = {}
     __builtin__.mainWindow = Archin()
-    __builtin__.install = installClass(target)
+    __builtin__.install = installClass(target, transfer)
     mainWindow.goto('welcome')
     mainWindow.mainLoop()
