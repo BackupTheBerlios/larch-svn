@@ -294,9 +294,6 @@ class installClass:
     def getPartition(self, part):
         return self.parts.get(part)
 
-
-
-#new
     def getActiveSwaps(self):
         """Discover active swap partitions. Return list
         of pairs: (device, size(GB)).
@@ -319,3 +316,9 @@ class installClass:
             ls = l.split()
             swaps.append((ls[0], float(ls[1]) * 1024 / 1e9)))
         return swaps
+
+    def swapFormat(self, p):
+        output = self.xcall("swap-format %s" % p)
+
+    def partFormat(self, p, fs):
+        output = self.xcall("part-format %s %s" % (p, fs))

@@ -33,12 +33,12 @@ class DoInstall(Stage):
         """
         """
         Stage.__init__(self)
-        from doinstall_gui import InstallBox
-        self.box = InstallBox()
-        # The partitions are in the dict install.parts
-        # At first only those for formatting are interesting
+        from doinstall_gui import Report
+        self.output = Report()
 
-        self.box.run(self.format)
+        self.format()
+
+        self.mount()
 
         assert False, "NYI"
 
@@ -48,8 +48,19 @@ class DoInstall(Stage):
 
 
     def format(self):
+        # Swaps
+        for p in install.format_swaps:
+            self.output.report(_("Formatting partition %s as swap ...") % p)
+            self.output.report(install.swapFormat(p))
 
+        # Installation partitions
+        for p in install.parts:
+            if p.format:
+                self.output.report(_("Formatting partition %s as %s ...")
+                        % (p, p.newformat))
+                self.output.report(install.partFormat(p, p.newformat))
 
+    def mount(self):
 
 
 
