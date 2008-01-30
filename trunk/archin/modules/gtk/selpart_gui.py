@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.28
+# 2008.01.30
 
 import gtk
 
@@ -74,14 +74,7 @@ class SelTable(gtk.ScrolledWindow):
         ri = 1
         for p in partlist:
             devw = gtk.Label(p.partition)
-
-
-            #mpw = gtk.combo_box_entry_new_text()
             mpw = SelMountPoint(self, p, self.mountpoints)
-
-
-            #set to p.mountpoint)
-
 
             try: s = "%8.1f GB" % float(p.size) / 1000
             except: s = '?'
@@ -268,6 +261,8 @@ class SelMountPoint(gtk.HBox):
         gtk.HBox.__init__(self)
         self.en = gtk.Entry()
         self.en.set_width_chars(10)
+        if part.mountpoint:
+            self.en.set_text(part.mountpoint)
         self.en.connect("changed", table.mountpoint_text_cb, part)
         pb = gtk.Button()
         pb.add(gtk.Arrow(gtk.ARROW_DOWN, gtk.SHADOW_NONE))

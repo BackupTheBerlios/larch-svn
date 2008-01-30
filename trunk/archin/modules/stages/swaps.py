@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.29
+# 2008.01.30
 
 class Swaps(Stage):
     def stageTitle(self):
@@ -49,8 +49,8 @@ class Swaps(Stage):
         if inuse:
             self.addLabel(_("The following swap partitions are currently"
                     " in use and will not be formatted (they shouldn't"
-                    " need it!).")
-        for p, s, in inuse:
+                    " need it!)."))
+        for p, s in inuse:
             b = self.addCheckButton("%12s - %s %4.1f GB" % (p, _("size"), s))
             self.setCheck(b, True)
             self.done.append(p)
@@ -63,8 +63,8 @@ class Swaps(Stage):
                 fmt.append((p, s))
         if fmt:
             self.addLabel(_("The following swap partitions will be formatted"
-                    " if you select them for inclusion.")
-        for p, s, in fmt:
+                    " if you select them for inclusion."))
+        for p, s in fmt:
             b = self.addCheckButton("%12s - %s %4.1f GB" % (p, _("size"), s))
             self.setCheck(b, True)
             swaps[p] = b

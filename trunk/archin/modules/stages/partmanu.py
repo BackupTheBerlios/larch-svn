@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.23
+# 2008.01.30
 
 
 
@@ -56,21 +56,21 @@ class ManuPart(Stage):
         for d, s, t in install.devices:
             if d.endswith('-'):
                 d = d.rstrip('-')
-                wrap = '<span foreground="red">%s</span>'
+                style = 'red'
                 mounteds += 1
             else:
-                wrap = '%s'
+                style = None
             text = _("Use cfdisk on %s") % d
-            b = self.addOption('cfdisk-%s' % d, wrap % text)
+            b = self.addOption('cfdisk-%s' % d, text, style=style)
             if (d == dev) and not gparted:
                 b.set_active(True)
 
         if mounteds:
-            self.addLabel('<span foreground="red">%s</span>' %
-                    _('WARNING: Editing partitions on a device with mounted'
-                    ' partitions (those marked in red) is likely to cause'
-                    ' a lot of trouble!\n'
-                    'If possible, unmount them and then restart this program.'))
+            self.addLabel(_('WARNING: Editing partitions on a device with'
+                    ' mounted partitions (those marked in red) is likely'
+                    ' to cause a lot of trouble!\n'
+                    'If possible, unmount them and then restart this'
+                    ' program.'), style='red')
 
         # Offer 'use existing partitions/finished'
         self.done = self.addOption('done',

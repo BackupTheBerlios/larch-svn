@@ -23,7 +23,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.29
+# 2008.01.30
 
 from subprocess import Popen, PIPE
 import os
@@ -302,7 +302,7 @@ class installClass:
         swaps = []
         for l in output.splitlines():
             ls = l.split()
-            swaps.append((ls[0], float(ls[1]) * 1024 / 1e9)))
+            swaps.append((ls[0], float(ls[1]) * 1024 / 1e9))
         return swaps
 
     def getAllSwaps(self):
@@ -314,7 +314,7 @@ class installClass:
         swaps = []
         for l in output.splitlines():
             ls = l.split()
-            swaps.append((ls[0], float(ls[1]) * 1024 / 1e9)))
+            swaps.append((ls[0], float(ls[1]) * 1024 / 1e9))
         return swaps
 
     def swapFormat(self, p):

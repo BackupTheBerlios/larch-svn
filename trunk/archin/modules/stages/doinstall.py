@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.29
+# 2008.01.30
 
 class DoInstall(Stage):
     def stageTitle(self):
@@ -61,6 +61,7 @@ class DoInstall(Stage):
                 self.output.report(install.partFormat(p, p.newformat))
 
     def mount(self):
+        assert False, "NYI"
 
 
 

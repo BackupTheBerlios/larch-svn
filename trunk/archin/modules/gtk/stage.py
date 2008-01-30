@@ -19,9 +19,12 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.29
+# 2008.01.30
 
 import gtk, gobject
+
+styles = {  'red' : '<span foreground="red">%s</span>'
+    }
 
 class Stage(gtk.VBox):
     def __init__(self):
@@ -55,10 +58,12 @@ class Stage(gtk.VBox):
         dialog.run()
         dialog.destroy()
 
-    def addOption(self, name, label, default=False):
+    def addOption(self, name, label, default=False, style=None):
         b = gtk.RadioButton(self.option0)
 
         l = gtk.Label()
+        if style:
+            label = styles[style] % label
         l.set_markup(label)
         b.add(l)
 
@@ -82,8 +87,10 @@ class Stage(gtk.VBox):
     def getCheck(self, b):
         return b.get_active()
 
-    def addLabel(self, text, align=None):
+    def addLabel(self, text, align=None, style=None):
         l = gtk.Label()
+        if style:
+            text = styles[style] % text
         l.set_markup(text)
         l.set_line_wrap(True)
         self.pack_start(l)
