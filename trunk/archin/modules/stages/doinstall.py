@@ -86,6 +86,10 @@ class DoInstall(Stage):
             if result:
                 self.output.report(result)
                 return False
+            # Check that there are no files on this partition. The warning
+            # can be ignored however.
+            if not install.checkEmpty(m):
+                return False
         return True
 
     def unmount(self):

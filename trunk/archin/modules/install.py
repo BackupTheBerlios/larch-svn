@@ -30,7 +30,7 @@ import os
 import re
 
 from partition import Partition
-from dialogs import PopupInfo
+from dialogs import PopupInfo, popupWarning
 
 class installClass:
     def __init__(self, host=None, transfer=False):
@@ -337,6 +337,14 @@ class installClass:
 
     def mount(self, part, mp):
         return self.xcall("do-mount %s %s" % (part, mp))
+
+    def checkEmpty(self, mp):
+        if not self.xcall("check-mount %s" % mp):
+            return popupWarning(_("The partition mounted at %s is not"
+                    " empty. This could have bad consequences if you"
+                    " attempt to install to it. Please reconsider.\n\n"
+                    " Do you still want to install to it?"))
+        return True
 
     def unmount(self, mp):
         return self.xcall("do-unmount %s" % mp)
