@@ -44,10 +44,8 @@ class installClass:
                     (basePath, self.host), shell=True,
                     stdout=PIPE).communicate()[0]   # copy archin over
 
-            assert (Popen("ssh root@%s /opt/larch/archin/syscalls/test" %
-                self.host, shell=True,
-                stdout=PIPE).communicate()[0].endswith("^OK^")), (
-                    "Couldn't connect to %s" % self.host)
+        assert (self.xcall("init") == ""), (
+                "Couldn't initialize installation system")
 
     def xcall_local(self, cmd):
         """Call a function on the same machine.

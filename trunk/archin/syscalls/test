@@ -1,5 +1,0 @@
-#!/bin/sh
-
-# test (for ssh link)
-
-echo -n '^OK^'
