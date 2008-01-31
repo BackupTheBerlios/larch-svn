@@ -47,6 +47,8 @@ class installClass:
         assert (self.xcall("init") == ""), (
                 "Couldn't initialize installation system")
 
+        self.block_gui(False)
+
     def xcall_local(self, cmd):
         """Call a function on the same machine.
         """
@@ -348,3 +350,30 @@ class installClass:
 
     def unmount(self, mp):
         return self.xcall("do-unmount %s" % mp)
+
+    def guess_size(self):
+        """Get some estimate of the size of the system to be installed.
+        Returns a value in MiB.
+        """
+        return int(self.xcall("guess-size"))
+
+    def block_gui(self, on):
+        gui_blocked = on
+
+    def start_install(self):
+        self.xcall("larch-install &")
+
+    def install_running(self):
+        """If 'larch-install' is running return its PID, else ''.
+        """
+        return self.xcall("install-running")
+
+    def get_size(self):
+        """Get some estimate of the current size of the system being
+        installed.
+        Returns a value in MiB.
+        """
+        return int(self.xcall("installed-size"))
+
+    def mkinitcpio(self):
+        self.xcall("do-mkinitcpio")

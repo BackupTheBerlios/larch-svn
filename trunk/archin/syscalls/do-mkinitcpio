@@ -8,6 +8,8 @@
 # preset to use - though maybe there would only be one preset,
 # which could also be found by grep.
 
+INSTALL=/tmp/install
+
 idir=${INSTALL}/etc/mkinitcpio.d
 presets=$( ls ${idir} | grep "kernel.*\.preset" )
 

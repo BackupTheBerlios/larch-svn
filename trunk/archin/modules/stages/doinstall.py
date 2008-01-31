@@ -33,13 +33,20 @@ class DoInstall(Stage):
         """
         """
         Stage.__init__(self)
-        from doinstall_gui import Report
+        from doinstall_gui import Report, Progress
         self.output = Report()
+        self.addWidget()
 
+        self.progress = Progress()
+        self.addWidget()
+
+        install.block_gui(True)
         self.ok = (self.format() and self.mount() and self.install() and
                 self.unmount())
         if self.ok:
             self.output.report(_("Installation completed successfully."))
+        install.block_gui(False)
+        self.output.report(_("Press 'Forward' to continue"))
 
     def reinit(self):
         self.output.report(_("The installation has already been completed."
@@ -107,7 +114,28 @@ class DoInstall(Stage):
         return True
 
     def install(self):
-        self.output.report("Actual installation NYI")
+        from time import sleep
+        self.output.report(_("Starting actual installation ..."))
+        self.progress.start()
+        install.start_install()     # Returns immediately, doesn't wait
+        system_size = install.guess_size()
+        self.output.report("%s: %d MiB" % (_("Estimated install size"),
+                system_size))
+
+        while install.install_running():
+            # wait a little...
+            sleep(2)
+            # get installed size
+            installed_size = install.get_size()
+            frac = float(installed_size) / system_size
+            if (frac > 1.0):
+                frac = 1.0
+            self.progress.set(frac)
+
+        self.output.report(_("Copying of system completed."))
+        self.output.report(_("Generating initramfs"))
+        install.mkinitcpio()
+
         return True
 
 

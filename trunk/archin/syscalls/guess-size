@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# guess-size
+
+# Guess the size of the system to be installed, in MiB
+
+du -s -m --exclude=.livesys / | cut -f1

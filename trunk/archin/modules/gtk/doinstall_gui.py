@@ -42,3 +42,18 @@ class Report(gtk.ScrolledWindow):
         self.reportbuf.insert(self.reportbuf.get_end_iter(), text+'\n')
         while gtk.events_pending():
             gtk.main_iteration(False)
+
+class Progress(gtk.ProgressBar):
+        gtk.ProgressBar.__init__(self)
+        self.set_sensitive(False)
+        self.set(0.0)
+
+    def start(self):
+        self.set_sensitive(True)
+        self.set(0.0)
+
+    def set(self, fraction):
+        self.set_fraction(fraction)
+        while gtk.events_pending():
+            gtk.main_iteration(False)
+

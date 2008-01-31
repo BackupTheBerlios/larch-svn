@@ -21,7 +21,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.23
+# 2008.01.31
 
 # Add a Quit button?
 
@@ -132,6 +132,8 @@ class Archin(gtk.Window):
         """This goes back to the stage previous to the current one in the
         actually executed call sequence.
         """
+        if install.gui_blocked:
+            return
         n = self.mainWidget.get_n_pages()
         stage = self.mainWidget.get_nth_page(n-2)
         self.mainWidget.remove_page(n-1)
@@ -139,4 +141,6 @@ class Archin(gtk.Window):
         self.setStage(stage)
 
     def forward(self, widget, data=None):
+        if install.gui_blocked:
+            return
         self.stage.forward()
