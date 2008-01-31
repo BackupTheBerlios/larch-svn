@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.30
+# 2008.01.31
 
 class Swaps(Stage):
     def stageTitle(self):
@@ -43,7 +43,7 @@ class Swaps(Stage):
         # remove all widgets
         self.clear()
 
-        swaps = {}
+        self.swaps = {}
         inuse = install.getActiveSwaps()
         self.done = []
         if inuse:
@@ -54,7 +54,7 @@ class Swaps(Stage):
             b = self.addCheckButton("%12s - %s %4.1f GB" % (p, _("size"), s))
             self.setCheck(b, True)
             self.done.append(p)
-            swaps[p] = b
+            self.swaps[p] = b
 
         all = install.getAllSwaps()
         fmt = []
@@ -67,22 +67,25 @@ class Swaps(Stage):
         for p, s in fmt:
             b = self.addCheckButton("%12s - %s %4.1f GB" % (p, _("size"), s))
             self.setCheck(b, True)
-            swaps[p] = b
+            self.swaps[p] = b
 
         if not all:
             self.addLabel(_("There are no swap partitions available."))
 
+   def clearSwaps(self)
+        self.swaps = []
+        self.format_swaps = []
+
+    def addSwap(self, p, format):
+        self.swaps.append(p)
+        if format:
+            self.format_swaps.append(p)
 
     def forward(self):
-        install.swaps = []
-        install.format_swaps = []
-        for p, b in swaps.items():
+        install.clearSwaps()
+        for p, b in self.swaps.items():
             if b.getCheck():
-                # include in /etc/fstab
-                install.swaps.append(p)
-                if not (p in self.done):
-                    # format
-                    install.format_swaps.append(p)
+                install.addSwap(p, (p not in self.done))
         mainWindow.goto('install')
 
 

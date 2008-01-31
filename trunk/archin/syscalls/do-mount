@@ -1,0 +1,15 @@
+#!/bin/sh
+
+# do-mount
+
+# Mount a partition (argument $1) at mount point $2
+
+if [ "$1" = "/" ]; then
+    ops="-o dev,exec"
+else
+    ops=""
+fi
+
+if mount ${ops} $1 $2; then
+    echo -n '^OK^'
+fi

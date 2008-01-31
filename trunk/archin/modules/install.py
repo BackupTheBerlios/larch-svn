@@ -23,7 +23,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.30
+# 2008.01.31
 
 from subprocess import Popen, PIPE
 import os
@@ -317,8 +317,28 @@ class installClass:
             swaps.append((ls[0], float(ls[1]) * 1024 / 1e9))
         return swaps
 
-    def swapFormat(self, p):
-        output = self.xcall("swap-format %s" % p)
+    def clearSwaps(self)
+        self.swaps = []
+        self.format_swaps = []
 
-    def partFormat(self, p, fs):
-        output = self.xcall("part-format %s %s" % (p, fs))
+    def addSwap(self, p, format):
+        # include in /etc/fstab
+        self.swaps.append(p)
+        if format:
+            self.format_swaps.append(p)
+
+    def swapFormat(self, p):
+        return self.xcall("swap-format %s" % p)
+
+    def partFormat(self, p):
+        fo = p.format_options
+        if (fo == None):
+            fo = ""
+        return self.xcall("part-format %s %s %s" % (p.partition,
+                p.newformat, fo))
+
+    def mount(self, part, mp):
+        return self.xcall("do-mount %s %s" % (part, mp))
+
+    def unmount(self, mp):
+        return self.xcall("do-unmount %s" % mp)

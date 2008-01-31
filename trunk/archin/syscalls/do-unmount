@@ -1,0 +1,9 @@
+#!/bin/sh
+
+# do-mount
+
+# Unmount a partition mounted at $1
+
+if umount $1; then
+    echo -n '^OK^'
+fi

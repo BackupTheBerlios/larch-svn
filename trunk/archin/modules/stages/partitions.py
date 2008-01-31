@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.29
+# 2008.01.31
 
 class Partitions(Stage):
     def stageTitle(self):
@@ -294,6 +294,7 @@ class Partitions(Stage):
         startmark = em
         install.newPartition("%s%d" % (dev, partno), m='/', f=True)
 
+        install.clearSwaps()
         if (self.swap_mb != 0):
             partno += 1
             if (self.home_mb == 0):
@@ -303,11 +304,7 @@ class Partitions(Stage):
             install.mkpart(dev, startmark, em, 'linux-swap')
             startmark = em
             part = "%s%d" % (dev, partno)
-            install.swaps = [part]
-            install.format_swaps = [part]
-        else:
-            install.swaps = []
-            install.format_swaps = []
+            install.addSwap(part, True)
 
         if self.home_mb:
             partno += 1

@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.30
+# 2008.01.31
 
 class DoInstall(Stage):
     def stageTitle(self):
@@ -36,108 +36,83 @@ class DoInstall(Stage):
         from doinstall_gui import Report
         self.output = Report()
 
-        self.format()
+        self.ok = (self.format() and self.mount() and self.install() and
+                self.unmount())
+        if self.ok:
+            self.output.report(_("Installation completed successfully."))
 
-        self.mount()
-
-        assert False, "NYI"
-
-# reinit? Some message saying that the system has already been installed,
-# so no possible action?
-
-
+    def reinit(self):
+        self.output.report(_("The installation has already been completed."
+                " No further action is possible."))
 
     def format(self):
         # Swaps
         for p in install.format_swaps:
             self.output.report(_("Formatting partition %s as swap ...") % p)
-            self.output.report(install.swapFormat(p))
+            result = install.swapFormat(p)
+            if result:
+                self.output.report(result)
+                return False
 
         # Installation partitions
         for p in install.parts:
             if p.format:
                 self.output.report(_("Formatting partition %s as %s ...")
-                        % (p, p.newformat))
-                self.output.report(install.partFormat(p, p.newformat))
+                        % (p.partition, p.newformat))
+                result = install.partFormat(p)
+                if result:
+                    self.output.report(result)
+                    return False
+
+        return True
 
     def mount(self):
-        assert False, "NYI"
+        """The order is important in some cases, so when building the list
+        care must be taken that inner mounts (e.g. '/home') are placed
+        after their containing mounts (e.g. '/') in the list.
+        """
+        self.mplist = []
+        for p in install.parts:
+            if p.mountpoint:
+                i = 0
+                for p0 in self.mplist:
+                    if (p.mountpoint < p0):
+                        break
+                    i += 1
+                self.mplist[i:i] = (p.mountpoint, p.partition)
+        for m, d in self.mplist:
+            self.output.report(_("Mounting partition %s at %s") % (d, m))
+            result = install.mount(d, m)
+            if result:
+                self.output.report(result)
+                return False
+        return True
+
+    def unmount(self):
+        """To unmount the partitions mounted by the installer.
+        """
+        mlist = list(self.mplist)
+        mlist.reverse()
+        for m in mlist:
+            # the 'list()' is needed because of the 'remove' below
+            self.output.report(_("Unmounting partition %s from %s") % (d, m))
+            result = install.unmount(m)
+            if result:
+                self.output.report(result)
+                return False
+        return True
+
+    def install(self):
+        self.output.report("Actual installation NYI")
+        return True
 
 
 
     def forward(self):
-        assert False, "NYI"
-        if self.expert.get_active():
-            mainWindow.goto('manualPart')
-            return
-
-        # Set up the installation partitions automatically.
-        # If NTFS resizing is to be done, do it now.
-        if self.ntfs.get_keep1_on():
-            # Keep existing os on 1st partition
-
-            if self.ntfs.get_shrink_on():
-            # Shrink NTFS filesystem, convert size to MB
-                newsize = int(self.ntfssize * 1000)
-                if popupWarning(_("You are about to shrink an NTFS partition.\n"
-                        "This is a risky business, so don't proceed if"
-                        " you have not backed up your important data.\n\n"
-                        "Resize partition?")):
-                    message = install.doNTFSshrink(newsize)
-                    if message:
-                        # resize failed
-                        popupMessage(_("Sorry, resizing failed. Here is the"
-                                " error report:\n\n") + message)
-                        self.reinit()
-                        return
-
-                else:
-                    self.reinit()
-                    return
-
-            # keep 1st partition, allocate from 2nd
-            startmark = install.p1end # valid?
-            partno = 2
-
+        if self.ok:
+            mainWindow.goto('grub')
         else:
-            startmark = 0
-            partno = 1
-
-        endmark = install.dsize #-1?
-
-        # Tricky logic here! The first partition should be root, then swap then
-        # home, but swap and/or home may be absent. The last partition should take
-        # its endpoint from 'endmark', root's start from startmark. The actual
-        # partitioning should be done, but the formatting can be handled - given
-        # the appropriate information - by the installation stage.
-
-        # Remove all existing partitions (except optionally the first)
-        dev = install.selectedDevice()
-        install.rmparts(dev, partno)
-
-        if (self.home_mb == 0) and (self.swap_mb == 0):
-            em = endmark
-        else:
-            em = startmark + int(self.rootsize * 1000)
-        install.mkpart(dev, startmark, em)
-        startmark = em
-        install.newPartition("%s%d" % (dev, partno), m='/', f=True)
-
-        if (self.swap_mb != 0):
-            partno += 1
-            if (self.home_mb == 0):
-                em = endmark
-            else:
-                em = startmark + self.swap_mb
-            install.mkpart(dev, startmark, em, 'linux-swap')
-            startmark = em
-
-        if self.home_mb:
-            partno += 1
-            install.mkpart(dev, startmark, endmark)
-            install.newPartition("%s%d" % (dev, partno), m='/home', f=True)
-
-        mainWindow.goto('install')
+            mainWindow.goto('error')
 
 
 #################################################################

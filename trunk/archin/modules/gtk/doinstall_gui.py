@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.29
+# 2008.01.31
 
 import gtk
 
@@ -28,17 +28,17 @@ class Report(gtk.ScrolledWindow):
     """
     def __init__(self):
         gtk.ScrolledWindow.__init__(self)
-        sw = gtk.ScrolledWindow()
-        sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        self.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
         view = gtk.TextView()
         view.set_editable(False)
         #view.set_wrap_mode(gtk.WRAP_WORD)
-        sw.add(view)
-        sw.show()
+        self.add(view)
+        self.show()
         view.show()
 
         self.reportbuf = view.get_buffer()
 
     def report(self, text):
-        self.reportbuf.insert(self.reportbuf.get_end_iter(), text)
-        gtk.main_iteration(block=True)
+        self.reportbuf.insert(self.reportbuf.get_end_iter(), text+'\n')
+        while gtk.events_pending():
+            gtk.main_iteration(False)

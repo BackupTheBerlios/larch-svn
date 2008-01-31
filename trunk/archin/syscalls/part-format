@@ -26,6 +26,8 @@ fmtext3 ()
                 if ! tune2fs -O has_journal -o journal_data $1; then
                     echo -n "Full journalling failed"
                     return 1
+            * ) echo -n "Unknown ext3 option: ${o}"
+                    return 1
         esac
     done
     return 0
