@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# init - prepare system for installer
+
+rm -rf /tmp/install
+mkdir /tmp/install
+echo -n '^OK^'
