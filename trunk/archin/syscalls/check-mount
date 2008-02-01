@@ -6,7 +6,7 @@
 # files - as that would normally be a mistake when installing
 
 cd /tmp/install$2
-if [ -z "$( find -type f )" ]; then
+if [ -z "$( find -type f -print -quit)" ]; then
     echo -n '^OK^'
 else
     echo -n 'Not empty'

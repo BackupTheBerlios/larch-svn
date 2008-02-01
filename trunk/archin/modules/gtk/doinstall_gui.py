@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.31
+# 2008.02.01
 
 import gtk
 
@@ -44,6 +44,7 @@ class Report(gtk.ScrolledWindow):
             gtk.main_iteration(False)
 
 class Progress(gtk.ProgressBar):
+    def __init__(self):
         gtk.ProgressBar.__init__(self)
         self.set_sensitive(False)
         self.set(0.0)

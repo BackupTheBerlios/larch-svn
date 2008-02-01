@@ -21,12 +21,12 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.31
+# 2008.02.01
 
 # Add a Quit button?
 
 from glob import glob
-import gtk, gobject
+import gtk
 
 from stage import Stage
 from dialogs import popupError, popupMessage, popupWarning
@@ -74,6 +74,8 @@ class Archin(gtk.Window):
         gtk.main()
 
     def busy(self):
+        if not self.window:
+            return
 #        gdk_win = gtk.gdk.Window(mainWindow.window,
 #                gtk.gdk.screen_width(),
 #                gtk.gdk.screen_height(),
@@ -88,9 +90,12 @@ class Archin(gtk.Window):
 # clicks on a single button (the mouse must leave and reenter the button
 # before clicking works again). gtk bug 56070
 #        mainWindow.set_sensitive(False)
-        gtk.main_iteration_do(False)
+        while gtk.events_pending():
+            gtk.main_iteration_do(False)
 
     def busy_off(self):
+        if not self.window:
+            return
 #        gdk_win.set_cursor(None)
 #        gdk_win.destroy()
         self.window.set_cursor(None)
@@ -114,16 +119,12 @@ class Archin(gtk.Window):
         self.rButton.set_label(sw.labelR())
         n = self.mainWidget.get_n_pages()
         self.lButton.set_sensitive(n > 1)
-
-        gobject.idle_add(self.setpage)
-
         self.header.set_label('<span foreground="blue" size="20000">%s</span>'
                 % self.stage.stageTitle())
         self.stage.show_all()
-
-    def setpage(self):
         self.mainWidget.set_current_page(-1)
-        return False
+        while gtk.events_pending():
+            gtk.main_iteration(False)
 
     def help(self, widget, data=None):
         self.stage.help()

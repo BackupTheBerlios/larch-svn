@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.31
+# 2008.02.01
 
 class DoInstall(Stage):
     def stageTitle(self):
@@ -35,11 +35,13 @@ class DoInstall(Stage):
         Stage.__init__(self)
         from doinstall_gui import Report, Progress
         self.output = Report()
-        self.addWidget()
+        self.addWidget(self.output)
 
         self.progress = Progress()
-        self.addWidget()
+        self.addWidget(self.progress)
+        self.request_update(self.run)
 
+    def run(self):
         install.block_gui(True)
         self.ok = (self.format() and self.mount() and self.install() and
                 self.unmount())
@@ -47,6 +49,7 @@ class DoInstall(Stage):
             self.output.report(_("Installation completed successfully."))
         install.block_gui(False)
         self.output.report(_("Press 'Forward' to continue"))
+        self.stop_callback()
 
     def reinit(self):
         self.output.report(_("The installation has already been completed."
@@ -62,7 +65,7 @@ class DoInstall(Stage):
                 return False
 
         # Installation partitions
-        for p in install.parts:
+        for p in install.parts.values():
             if p.format:
                 self.output.report(_("Formatting partition %s as %s ...")
                         % (p.partition, p.newformat))
@@ -79,14 +82,14 @@ class DoInstall(Stage):
         after their containing mounts (e.g. '/') in the list.
         """
         self.mplist = []
-        for p in install.parts:
+        for p in install.parts.values():
             if p.mountpoint:
                 i = 0
                 for p0 in self.mplist:
                     if (p.mountpoint < p0):
                         break
                     i += 1
-                self.mplist[i:i] = (p.mountpoint, p.partition)
+                self.mplist.insert(i, (p.mountpoint, p.partition))
         for m, d in self.mplist:
             self.output.report(_("Mounting partition %s at %s") % (d, m))
             result = install.mount(d, m)
@@ -104,7 +107,7 @@ class DoInstall(Stage):
         """
         mlist = list(self.mplist)
         mlist.reverse()
-        for m in mlist:
+        for m, d in mlist:
             # the 'list()' is needed because of the 'remove' below
             self.output.report(_("Unmounting partition %s from %s") % (d, m))
             result = install.unmount(m)
@@ -118,6 +121,7 @@ class DoInstall(Stage):
         self.output.report(_("Starting actual installation ..."))
         self.progress.start()
         install.start_install()     # Returns immediately, doesn't wait
+        print "INSTALLING"
         system_size = install.guess_size()
         self.output.report("%s: %d MiB" % (_("Estimated install size"),
                 system_size))

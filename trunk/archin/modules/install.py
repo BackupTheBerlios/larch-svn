@@ -23,7 +23,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.31
+# 2008.02.01
 
 from subprocess import Popen, PIPE
 import os
@@ -60,8 +60,10 @@ class installClass:
         Public key authentication must be already set up so that no passsword
         is required.
         """
-        return Popen("ssh %s root@%s /opt/larch/archin/syscalls/%s" %
-                (opt, self.host, cmd), shell=True,
+        xcmd = ("ssh %s root@%s /opt/larch/archin/syscalls/%s" %
+                (opt, self.host, cmd))
+        print "xcmd", xcmd
+        return Popen(xcmd, shell=True,
                 stdout=PIPE).communicate()[0]   # run the command via ssh
 
     def terminal(self, cmd):
@@ -217,15 +219,17 @@ class installClass:
 
         dev = self.selectedDevice()
         # First a test run
-        info = PopupInfo(self.xcall, "ntfs-testrun %s1 %s" % (dev, newsize),
-                _("Shrink NTFS partition"), _("Test run ..."))
-        if info.result:
-            return info.result
+        info = PopupInfo(_("Test run ..."), _("Shrink NTFS partition"))
+        res = self.xcall("ntfs-testrun %s1 %s" % (dev, newsize))
+        info.drop()
+        if res:
+            return res
         # Now the real thing, resize the file-system
-        info = PopupInfo(self.xcall, "ntfs-resize %s1 %s" % (dev, newsize),
-                _("Shrink NTFS partition"), _("This is for real ..."))
-        if info.result:
-            return info.result
+        info = PopupInfo(_("This is for real ..."), _("Shrink NTFS partition"))
+        res = self.xcall("ntfs-resize %s1 %s" % (dev, newsize))
+        info.drop()
+        if res:
+            return res
         # Now resize the actual partition
         op = self.xcall("getinfo-ntfs1 %s" % dev)
         if not op:
@@ -317,7 +321,7 @@ class installClass:
             swaps.append((ls[0], float(ls[1]) * 1024 / 1e9))
         return swaps
 
-    def clearSwaps(self)
+    def clearSwaps(self):
         self.swaps = []
         self.format_swaps = []
 
@@ -341,11 +345,11 @@ class installClass:
         return self.xcall("do-mount %s %s" % (part, mp))
 
     def checkEmpty(self, mp):
-        if not self.xcall("check-mount %s" % mp):
+        if self.xcall("check-mount %s" % mp):
             return popupWarning(_("The partition mounted at %s is not"
                     " empty. This could have bad consequences if you"
                     " attempt to install to it. Please reconsider.\n\n"
-                    " Do you still want to install to it?"))
+                    " Do you still want to install to it?") % mp)
         return True
 
     def unmount(self, mp):
@@ -358,7 +362,7 @@ class installClass:
         return int(self.xcall("guess-size"))
 
     def block_gui(self, on):
-        gui_blocked = on
+        self.gui_blocked = on
 
     def start_install(self):
         self.xcall("larch-install &")

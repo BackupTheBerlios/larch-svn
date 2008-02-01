@@ -2,6 +2,10 @@
 
 # init - prepare system for installer
 
+if df | grep /tmp/install; then
+    umount /tmp/install
+fi
 rm -rf /tmp/install
-mkdir /tmp/install
-echo -n '^OK^'
+if mkdir /tmp/install; then
+    echo -n '^OK^'
+fi

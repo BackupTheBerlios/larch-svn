@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.31
+# 2008.02.01
 
 class Swaps(Stage):
     def stageTitle(self):
@@ -72,7 +72,7 @@ class Swaps(Stage):
         if not all:
             self.addLabel(_("There are no swap partitions available."))
 
-   def clearSwaps(self)
+    def clearSwaps(self):
         self.swaps = []
         self.format_swaps = []
 

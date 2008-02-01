@@ -21,9 +21,9 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.29
+# 2008.02.01
 
-import gtk, gobject
+import gtk
 
 def popupError(text, title=""):
     dialog = gtk.MessageDialog(None,
@@ -57,17 +57,16 @@ def popupWarning(text, title=""):
     return res
 
 class PopupInfo:
-    def __init__(self, func, arg, text, title=""):
+    def __init__(self, text, title=""):
         self.popup = gtk.MessageDialog(None,
                 gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
                 gtk.MESSAGE_INFO, gtk.BUTTONS_NONE,
                 title)
         self.popup.format_secondary_markup(text)
         self.popup.set_title(_("archin"))
-        gobject.idle_add(self.cb, func, arg)
-        self.popup.run()
+        self.popup.show()
+        while gtk.events_pending():
+            gtk.main_iteration(False)
 
-    def cb(self, func, arg):
-        self.result = func(arg)
+    def drop(self):
         self.popup.destroy()
-        return False

@@ -18,16 +18,19 @@ fmtext3 ()
                 if ! tune2fs -O dir_index $1; then
                     echo -n "Directory indexing failed"
                     return 1
+                fi ;;
             d ) # disable boot-time checks
                 if ! tune2fs -c 0 -i 0 $1; then
                     echo -n "Disabling boot-time checks failed"
                     return 1
+                fi ;;
             f ) # full journalling
                 if ! tune2fs -O has_journal -o journal_data $1; then
                     echo -n "Full journalling failed"
                     return 1
+                fi ;;
             * ) echo -n "Unknown ext3 option: ${o}"
-                    return 1
+                return 1 ;;
         esac
     done
     return 0
@@ -46,6 +49,6 @@ case ${f} in
         false ;;
 esac
 
-if $?; then
+if [ $? -eq 0 ]; then
     echo -n '^OK^'
 fi
