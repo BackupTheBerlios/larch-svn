@@ -38,6 +38,9 @@ class Welcome(Stage):
     def getHelp(self):
         return _("Click on the 'Forward' button to start.")
 
+    def labelL(self):
+        return ""
+
     def forward(self):
         larchdev = install.larchdev()
         devs = []

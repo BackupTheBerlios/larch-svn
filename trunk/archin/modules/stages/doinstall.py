@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.01
+# 2008.02.02
 
 class DoInstall(Stage):
     def stageTitle(self):
@@ -28,6 +28,9 @@ class DoInstall(Stage):
     def getHelp(self):
         return _("Here the chosen partitions will be formatted and mounted."
                 " Then the running system will be copied onto them.")
+
+    def labelL(self):
+        return ""
 
     def __init__(self):
         """
@@ -38,18 +41,20 @@ class DoInstall(Stage):
         self.addWidget(self.output)
 
         self.progress = Progress()
-        self.addWidget(self.progress)
-        self.request_update(self.run)
+        self.addWidget(self.progress, False)
+        self.request_soon(self.run)
 
     def run(self):
-        install.block_gui(True)
+        # need to disable forward button
+        mainWindow.enable_forward(False)
         self.ok = (self.format() and self.mount() and self.install() and
                 self.unmount())
         if self.ok:
             self.output.report(_("Installation completed successfully."))
-        install.block_gui(False)
         self.output.report(_("Press 'Forward' to continue"))
-        self.stop_callback()
+        # need to reenable forward button
+        mainWindow.enable_forward(True)
+        return self.stop_callback()
 
     def reinit(self):
         self.output.report(_("The installation has already been completed."
@@ -118,31 +123,29 @@ class DoInstall(Stage):
 
     def install(self):
         from time import sleep
+        self.system_size = install.guess_size()
+        self.output.report("%s: %d MiB" % (_("Estimated install size"),
+                self.system_size))
         self.output.report(_("Starting actual installation ..."))
         self.progress.start()
-        install.start_install()     # Returns immediately, doesn't wait
-        print "INSTALLING"
-        system_size = install.guess_size()
-        self.output.report("%s: %d MiB" % (_("Estimated install size"),
-                system_size))
-
-        while install.install_running():
-            # wait a little...
-            sleep(2)
-            # get installed size
-            installed_size = install.get_size()
-            frac = float(installed_size) / system_size
-            if (frac > 1.0):
-                frac = 1.0
-            self.progress.set(frac)
-
+        self.progress_count = 0
+        install.start_install(self.progress_cb)
         self.output.report(_("Copying of system completed."))
         self.output.report(_("Generating initramfs"))
         install.mkinitcpio()
-
         return True
 
+    def progress_cb(self):
+        self.progress_count += 1
+        if self.progress_count < 10:
+            return
+        self.progress_count = 0
 
+        installed_size = install.get_size()
+        frac = float(installed_size) / self.system_size
+        if (frac > 1.0):
+            frac = 1.0
+        self.progress.set(frac)
 
     def forward(self):
         if self.ok:

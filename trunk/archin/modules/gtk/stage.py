@@ -129,6 +129,9 @@ class Stage(gtk.VBox):
     def request_update(self, callback):
         gobject.idle_add(callback)
 
+    def request_soon(self, callback):
+        gobject.timeout_add(100, callback)
+
     def stop_callback(self):
         """Do 'return self.stop_callback()' at the end of a callback
         so that it is not called again in the next idle loop.

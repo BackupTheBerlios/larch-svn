@@ -21,7 +21,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.01
+# 2008.02.02
 
 # Add a Quit button?
 
@@ -64,16 +64,32 @@ class Archin(gtk.Window):
         self.add(box1)
 
         self.hButton.connect("clicked", self.help)
-        self.lButton.connect("clicked", self.back)
-        self.rButton.connect("clicked", self.forward)
+        self.lButton.connect("clicked", self.sigprocess, self.back)
+        self.rButton.connect("clicked", self.sigprocess, self.forward)
 
         self.watchcursor = gtk.gdk.Cursor(gtk.gdk.WATCH)
+
+        self.busy = False
 
     def mainLoop(self):
         self.show_all()
         gtk.main()
 
-    def busy(self):
+    def enable_forward(self, on):
+        self.rButton.set_sensitive(on)
+
+    def sigprocess(self, widget, slot, arg=None):
+        if self.busy:
+            return
+        self.busy = True
+        self.busy_on()
+
+        slot(arg)
+
+        self.busy_off()
+        self.busy = False
+
+    def busy_on(self):
         if not self.window:
             return
 #        gdk_win = gtk.gdk.Window(mainWindow.window,
@@ -86,12 +102,11 @@ class Archin(gtk.Window):
 #        gdk_win.show()
         self.window.set_cursor(self.watchcursor)
 
-# (*) I have commented out the sensitivity switch because it mucks up repeated
+# (*) I should comment out the sensitivity switch because it mucks up repeated
 # clicks on a single button (the mouse must leave and reenter the button
 # before clicking works again). gtk bug 56070
-#        mainWindow.set_sensitive(False)
-        while gtk.events_pending():
-            gtk.main_iteration_do(False)
+        mainWindow.set_sensitive(False)
+        self.eventloop()
 
     def busy_off(self):
         if not self.window:
@@ -101,7 +116,11 @@ class Archin(gtk.Window):
         self.window.set_cursor(None)
 
 # See above (*)
-#        mainWindow.set_sensitive(True)
+        mainWindow.set_sensitive(True)
+
+    def eventloop(self):
+        while gtk.events_pending():
+                gtk.main_iteration(False)
 
     def goto(self, stagename):
         """This is the main function for entering a new stage.
@@ -115,33 +134,29 @@ class Archin(gtk.Window):
 
     def setStage(self, sw):
         self.stage = sw
-        self.lButton.set_label(sw.labelL())
+        llabel = sw.labelL()
+        self.lButton.set_label(llabel)
         self.rButton.set_label(sw.labelR())
         n = self.mainWidget.get_n_pages()
-        self.lButton.set_sensitive(n > 1)
+        self.lButton.set_sensitive(llabel != "")
         self.header.set_label('<span foreground="blue" size="20000">%s</span>'
                 % self.stage.stageTitle())
         self.stage.show_all()
         self.mainWidget.set_current_page(-1)
-        while gtk.events_pending():
-            gtk.main_iteration(False)
+        self.eventloop()
 
     def help(self, widget, data=None):
         self.stage.help()
 
-    def back(self, widget, data=None):
+    def back(self, data):
         """This goes back to the stage previous to the current one in the
         actually executed call sequence.
         """
-        if install.gui_blocked:
-            return
         n = self.mainWidget.get_n_pages()
         stage = self.mainWidget.get_nth_page(n-2)
         self.mainWidget.remove_page(n-1)
         stage.reinit()
         self.setStage(stage)
 
-    def forward(self, widget, data=None):
-        if install.gui_blocked:
-            return
+    def forward(self, data):
         self.stage.forward()

@@ -43,9 +43,12 @@ class Report(gtk.ScrolledWindow):
         while gtk.events_pending():
             gtk.main_iteration(False)
 
-class Progress(gtk.ProgressBar):
+class Progress(gtk.Frame):
     def __init__(self):
-        gtk.ProgressBar.__init__(self)
+        gtk.Frame.__init__(self)
+        self.set_border_width(20)
+        self.pb = gtk.ProgressBar()
+        self.add(self.pb)
         self.set_sensitive(False)
         self.set(0.0)
 
@@ -54,7 +57,7 @@ class Progress(gtk.ProgressBar):
         self.set(0.0)
 
     def set(self, fraction):
-        self.set_fraction(fraction)
+        self.pb.set_fraction(fraction)
         while gtk.events_pending():
             gtk.main_iteration(False)
 

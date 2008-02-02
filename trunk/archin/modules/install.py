@@ -23,11 +23,12 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.01
+# 2008.02.02
 
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, STDOUT
 import os
 import re
+import time
 
 from partition import Partition
 from dialogs import PopupInfo, popupWarning
@@ -47,13 +48,11 @@ class installClass:
         assert (self.xcall("init") == ""), (
                 "Couldn't initialize installation system")
 
-        self.block_gui(False)
-
     def xcall_local(self, cmd):
         """Call a function on the same machine.
         """
-        return Popen("%s/syscalls/%s" % (basePath, cmd), shell=True,
-                stdout=PIPE).communicate()[0]
+        xcmd = ("%s/syscalls/%s" % (basePath, cmd))
+        return Popen(xcmd, shell=True, stdout=PIPE, stderr=STDOUT)
 
     def xcall_net(self, cmd, opt=""):
         """Call a function on another machine.
@@ -62,9 +61,7 @@ class installClass:
         """
         xcmd = ("ssh %s root@%s /opt/larch/archin/syscalls/%s" %
                 (opt, self.host, cmd))
-        print "xcmd", xcmd
-        return Popen(xcmd, shell=True,
-                stdout=PIPE).communicate()[0]   # run the command via ssh
+        return Popen(xcmd, shell=True, stdout=PIPE, stderr=STDOUT)
 
     def terminal(self, cmd):
         """Run a command in a terminal. The environment variable 'XTERM' is
@@ -84,17 +81,25 @@ class installClass:
             else:
                 term += " -e "
 
-            mainWindow.busy()
-            os.system(term + cmd)
-            mainWindow.busy_off()
+            process = Popen(term + cmd, shell=True)
+            while (process.poll() == None):
+                mainWindow.eventloop()
+                time.sleep(0.5)
 
-    def xcall(self, cmd, opt=""):
-        mainWindow.busy()
+
+    def xcall(self, cmd, opt="", callback=None):
         if self.host:
-            op = self.xcall_net(cmd, opt)
+            process = self.xcall_net(cmd, opt)
         else:
-            op = self.xcall_local(cmd)
-        mainWindow.busy_off()
+            process = self.xcall_local(cmd)
+
+        while (process.poll() == None):
+            if callback:
+                callback()
+            mainWindow.eventloop()
+            time.sleep(0.5)
+
+        op = process.stdout.read()
         if op.endswith("^OK^"):
             self.okop = op
             return ""
@@ -361,16 +366,8 @@ class installClass:
         """
         return int(self.xcall("guess-size"))
 
-    def block_gui(self, on):
-        self.gui_blocked = on
-
-    def start_install(self):
-        self.xcall("larch-install &")
-
-    def install_running(self):
-        """If 'larch-install' is running return its PID, else ''.
-        """
-        return self.xcall("install-running")
+    def start_install(self, cb):
+        self.xcall("larch-install", callback=cb)
 
     def get_size(self):
         """Get some estimate of the current size of the system being

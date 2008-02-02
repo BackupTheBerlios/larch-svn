@@ -21,7 +21,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.01
+# 2008.02.02
 
 import gtk
 
@@ -65,8 +65,7 @@ class PopupInfo:
         self.popup.format_secondary_markup(text)
         self.popup.set_title(_("archin"))
         self.popup.show()
-        while gtk.events_pending():
-            gtk.main_iteration(False)
+        mainWindow.eventloop()
 
     def drop(self):
         self.popup.destroy()
