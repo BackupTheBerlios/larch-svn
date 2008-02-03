@@ -2,6 +2,6 @@
 
 # ntfs-resize
 
-# Do a resize of the given (argument $1) NTFS partition, new size is $2.
+# Do a resize of the given (argument $1) NTFS file-system, new size is $2.
 
 if ntfsresize -f -P -s $2 $1; then echo -n '^OK^'; fi

@@ -5,11 +5,10 @@
 # Reduce the size of the first partition (type NTFS) on the given device
 # (argument $1)
 
-# $2 - start position (bytes)
-# $3 - end position (bytes)
+# $2 - end position (cylinders)
 
 if parted -s $1 rm 1; then
-    if parted -s $1 unit B mkpart primary NTFS $2 $3; then
+    if parted -s $1 unit cyl mkpart primary NTFS 0 $2; then
         echo -n '^OK^'
     fi
 fi

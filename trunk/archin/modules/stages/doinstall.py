@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.02
+# 2008.02.03
 
 class DoInstall(Stage):
     def stageTitle(self):
@@ -47,6 +47,12 @@ class DoInstall(Stage):
     def run(self):
         # need to disable forward button
         mainWindow.enable_forward(False)
+
+
+        print install.parts
+
+        print install.format_swaps
+
         self.ok = (self.format() and self.mount() and self.install() and
                 self.unmount())
         if self.ok:
@@ -123,6 +129,16 @@ class DoInstall(Stage):
 
     def install(self):
         from time import sleep
+
+        for d in ("bin", "boot", "etc", "root", "sbin", "srv", "lib", "var"):
+            pass
+
+        # Still to do: home opt usr
+
+        # blocked for testing!
+        print "NOT INSTALLING"
+        return False
+
         self.system_size = install.guess_size()
         self.output.report("%s: %d MiB" % (_("Estimated install size"),
                 self.system_size))

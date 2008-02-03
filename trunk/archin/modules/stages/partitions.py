@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.31
+# 2008.02.03
 
 class Partitions(Stage):
     def stageTitle(self):
@@ -265,6 +265,9 @@ class Partitions(Stage):
                 else:
                     self.reinit()
                     return
+
+
+            print "startmark", startmark
 
             # keep 1st partition, allocate from 2nd
             startmark = install.p1end # valid?

@@ -23,7 +23,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.02
+# 2008.02.03
 
 from subprocess import Popen, PIPE, STDOUT
 import os
@@ -169,6 +169,10 @@ class installClass:
             self.p1size = 0
             self.p1start = 0
             self.p1end = 0
+        # Also get the size of a cylinder, convert to MB
+        c, m = self.xcall("get-cylsize %s" % dev).split()
+        self.cylinders = int(c)
+        self.cylinderMB = float(m) / 1000
 
     def getPartInfo(self, partno):
         """Get size and fstype for the given partition number using the
@@ -187,13 +191,16 @@ class installClass:
 
     def getNTFSinfo(self, part):
         """Return information about the given partition as a tuple:
-                (cluster size (unit for resizing),
+                (cluster size (unit for resizing?),
                  current volume size,
                  current device size,
                  suggested resize point (minimum))
         All sizes are in bytes.
         When resizing, I suppose it makes sense to select a multiple of
-        the cluster size - but this doesn't seem to be necessary.
+        the cluster size - but this doesn't seem to be necessary. For
+        other reasons - it seems to be standard - I have decided to make
+        partitions start on (even?) cylinder boundaries.
+
         If the call fails for some reason, None is returned.
         """
         op = self.xcall("get-ntfsinfo %s" % part)
@@ -219,29 +226,46 @@ class installClass:
         """Shrink selected NTFS partition. First the file-system is shrunk,
         then the partition containing it. The given size is in MB.
         """
+        # This rounding to whole clusters may well not be necessary
         clus = int(s * 1e6) / self.ntfs_cluster_size
         newsize = clus * self.ntfs_cluster_size
 
         dev = self.selectedDevice()
+
         # First a test run
         info = PopupInfo(_("Test run ..."), _("Shrink NTFS partition"))
         res = self.xcall("ntfs-testrun %s1 %s" % (dev, newsize))
         info.drop()
         if res:
             return res
+
         # Now the real thing, resize the file-system
-        info = PopupInfo(_("This is for real ..."), _("Shrink NTFS partition"))
+        info = PopupInfo(_("This is for real, shrinking file-system ..."),
+                _("Shrink NTFS partition"))
         res = self.xcall("ntfs-resize %s1 %s" % (dev, newsize))
         info.drop()
         if res:
             return res
+
         # Now resize the actual partition
-        op = self.xcall("getinfo-ntfs1 %s" % dev)
-        if not op:
-            return _("Couldn't get start of first (NTFS) partition")
-        startbyte = int(re.search(r"^1:([0-9]+)B:", op).group(1))
-        endbyte = startbyte + newsize - 1
-        return self.xcall("part1-resize %s %d %d" % (dev, startbyte, endbyte))
+
+        # Get new start of following partition - even cylinder boundary,
+        # doing quite a safe rounding up.
+        newcyl = (int((newsize / 1e6) / self.cylinderMB + 2) / 2) * 2
+
+        info = PopupInfo(_("Resizing partition ..."),
+                _("Shrink NTFS partition"))
+        res = self.xcall("part1-resize %s %d" % (dev, newcyl))
+        info.drop()
+        if res:
+            return res
+
+        # And finally expand the ntfs file-system into the new partition
+        info = PopupInfo(_("Fitting file-system to new partition ..."),
+                _("Shrink NTFS partition"))
+        res = self.xcall("ntfs-growfit %s1" % dev)
+        info.drop()
+        return res
 
     def gparted_available(self):
         """Return '' if gparted is available.
@@ -278,8 +302,16 @@ class installClass:
         end points. The default type is linux (called 'ext2' but no
         formatting is done). pl can be 'primary', 'extended' or 'logical'.
         """
+        # Partitions are aligned to even cylinder boundaries
+        startcyl = (int(startMB / self.cylinderMB + 1) / 2) * 2
+        endcyl = (int(endMB / self.cylinderMB + 1) / 2) * 2
+        if (endcyl > self.cylinders):
+            endcyl = self.cylinders
+
+        print "mkpart", startcyl, endcyl
+
         return self.xcall("newpart %s %d %d %s %s" % (dev,
-                startMB, endMB, ptype, pl))
+                startcyl, endcyl, ptype, pl))
 
     def getlinuxparts(self, dev):
         """Return a list of partitions on the given device with linux
