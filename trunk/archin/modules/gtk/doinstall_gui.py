@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.01
+# 2008.02.04
 
 import gtk
 
@@ -47,17 +47,29 @@ class Progress(gtk.Frame):
     def __init__(self):
         gtk.Frame.__init__(self)
         self.set_border_width(20)
+        vb = gtk.VBox()
+        hb = gtk.HBox()
+        vb.pack_start(hb)
+        lb = gtk.Label(_("Installed (MiB): "))
+        self.isz = gtk.Entry()
+        self.isz.set_editable(False)
+        hb.pack_end(self.isz, False)
+        hb.pack_end(lb, False)
+
         self.pb = gtk.ProgressBar()
-        self.add(self.pb)
+        vb.pack_start(self.pb)
+        self.add(vb)
         self.set_sensitive(False)
-        self.set(0.0)
+        self.set(None, 0.0)
 
     def start(self):
         self.set_sensitive(True)
-        self.set(0.0)
+        self.set(None, 0.0)
 
-    def set(self, fraction):
+    def set(self, size, fraction):
         self.pb.set_fraction(fraction)
+        if size:
+            self.isz.set_text(str(size))
         while gtk.events_pending():
             gtk.main_iteration(False)
 

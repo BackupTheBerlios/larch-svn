@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.03
+# 2008.02.04
 
 class DoInstall(Stage):
     def stageTitle(self):
@@ -27,7 +27,9 @@ class DoInstall(Stage):
 
     def getHelp(self):
         return _("Here the chosen partitions will be formatted and mounted."
-                " Then the running system will be copied onto them.")
+                " Then the running system will be copied onto them.\n\n"
+                "This latter can take a while, so an estimate of progress (not"
+                " terribly accurate) is shown.")
 
     def labelL(self):
         return ""
@@ -47,11 +49,6 @@ class DoInstall(Stage):
     def run(self):
         # need to disable forward button
         mainWindow.enable_forward(False)
-
-
-        print install.parts
-
-        print install.format_swaps
 
         self.ok = (self.format() and self.mount() and self.install() and
                 self.unmount())
@@ -97,10 +94,11 @@ class DoInstall(Stage):
             if p.mountpoint:
                 i = 0
                 for p0 in self.mplist:
-                    if (p.mountpoint < p0):
+                    if (p.mountpoint < p0[0]):
                         break
                     i += 1
                 self.mplist.insert(i, (p.mountpoint, p.partition))
+
         for m, d in self.mplist:
             self.output.report(_("Mounting partition %s at %s") % (d, m))
             result = install.mount(d, m)
@@ -128,24 +126,23 @@ class DoInstall(Stage):
         return True
 
     def install(self):
-        from time import sleep
-
-        for d in ("bin", "boot", "etc", "root", "sbin", "srv", "lib", "var"):
-            pass
-
-        # Still to do: home opt usr
-
-        # blocked for testing!
-        print "NOT INSTALLING"
-        return False
-
-        self.system_size = install.guess_size()
-        self.output.report("%s: %d MiB" % (_("Estimated install size"),
-                self.system_size))
-        self.output.report(_("Starting actual installation ..."))
         self.progress.start()
         self.progress_count = 0
-        install.start_install(self.progress_cb)
+        self.progress_ratio = 1.0
+        totalsize = 0
+        self.output.report(_("Starting actual installation ..."))
+        partsizes = install.guess_size()
+        self.system_size = partsizes[""]
+        self.basesize = install.get_size()
+        for d in ("bin", "boot", "etc", "root", "sbin", "srv", "lib",
+                "opt", "home", "usr", "var"):
+            install.copyover("/" + d, self.progress_cb)
+            totalsize += partsizes[d]
+            self.progress_ratio = float(totalsize) / (install.get_size()
+                    - self.basesize)
+
+        install.install_tidy()
+
         self.output.report(_("Copying of system completed."))
         self.output.report(_("Generating initramfs"))
         install.mkinitcpio()
@@ -156,12 +153,12 @@ class DoInstall(Stage):
         if self.progress_count < 10:
             return
         self.progress_count = 0
-
         installed_size = install.get_size()
-        frac = float(installed_size) / self.system_size
+        frac = ((installed_size  - self.basesize) * self.progress_ratio
+                / self.system_size)
         if (frac > 1.0):
             frac = 1.0
-        self.progress.set(frac)
+        self.progress.set(installed_size - self.basesize, frac)
 
     def forward(self):
         if self.ok:

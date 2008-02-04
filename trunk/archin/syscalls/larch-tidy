@@ -1,14 +1,7 @@
 #! /bin/sh
-# larch-install  - Copy the live system to the installation partition
-
-#echo "-- This could take a while. Why don't you go and have a nice"
-#echo "-- cup of tea or something?"
+# larch-tidy  - Finish off copy part of installation
 
 INSTALL=/tmp/install
-
-for d in bin boot etc home lib opt root sbin srv usr var; do
-    cp -af /${d} ${INSTALL}
-done
 
 # Make special directories
 mkdir -m 1777 ${INSTALL}/tmp

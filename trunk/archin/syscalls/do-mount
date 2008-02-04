@@ -7,6 +7,9 @@
 if [ "$1" = "/" ]; then
     mount -o dev,exec $1 /tmp/install
 else
+    mkdir -p "/tmp/install$2"
+    chmod "/tmp/install$2" --reference="$2"
+    chown "/tmp/install$2" --reference="$2"
     mount $1 /tmp/install$2
 fi
 

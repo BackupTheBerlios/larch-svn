@@ -2,6 +2,6 @@
 
 # guess-size
 
-# Guess the size of the system to be installed, in MiB
+# Guess the size of each item in the given directory ($1), in MiB
 
-du -s -m --exclude=.livesys / | cut -f1
+du --max-depth=1 -m --exclude=.livesys --exclude=tmp $1

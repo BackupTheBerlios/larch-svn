@@ -23,7 +23,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.03
+# 2008.02.04
 
 from subprocess import Popen, PIPE, STDOUT
 import os
@@ -308,8 +308,6 @@ class installClass:
         if (endcyl > self.cylinders):
             endcyl = self.cylinders
 
-        print "mkpart", startcyl, endcyl
-
         return self.xcall("newpart %s %d %d %s %s" % (dev,
                 startcyl, endcyl, ptype, pl))
 
@@ -392,14 +390,27 @@ class installClass:
     def unmount(self, mp):
         return self.xcall("do-unmount %s" % mp)
 
-    def guess_size(self):
+    def guess_size(self, d='/'):
         """Get some estimate of the size of the system to be installed.
-        Returns a value in MiB.
+        Returns a dict containing sizes for all items (directly) in d, in MiB.
         """
-        return int(self.xcall("guess-size"))
+        if not d.endswith('/'):
+            d += '/'
+        op = self.xcall("guess-size %s" % d)
+        s = {}
+        dl = len(d)
+        for l in op.splitlines():
+            si, di = l.split()
+            # strip off directory prefix
+            x = di[dl:]
+            s[x] = int(si)
+        return s
 
-    def start_install(self, cb):
-        self.xcall("larch-install", callback=cb)
+    def copyover(self, dir, cb):
+        self.xcall("copydir %s" % dir, callback=cb)
+
+    def install_tidy(self):
+        self.xcall("larch-tidy")
 
     def get_size(self):
         """Get some estimate of the current size of the system being
