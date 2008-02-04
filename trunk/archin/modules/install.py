@@ -265,6 +265,7 @@ class installClass:
                 _("Shrink NTFS partition"))
         res = self.xcall("ntfs-growfit %s1" % dev)
         info.drop()
+        self.getDeviceInfo(dev)
         return res
 
     def gparted_available(self):
@@ -391,20 +392,14 @@ class installClass:
         return self.xcall("do-unmount %s" % mp)
 
     def guess_size(self, d='/'):
-        """Get some estimate of the size of the system to be installed.
-        Returns a dict containing sizes for all items (directly) in d, in MiB.
+        """Get some estimate of the size of the given directory d, in MiB.
         """
-        if not d.endswith('/'):
-            d += '/'
-        op = self.xcall("guess-size %s" % d)
-        s = {}
-        dl = len(d)
-        for l in op.splitlines():
-            si, di = l.split()
-            # strip off directory prefix
-            x = di[dl:]
-            s[x] = int(si)
-        return s
+        return int(self.xcall("guess-size %s" % d))
+
+    def lsdir(self, d):
+        """Get a list of items in the given directory ('ls').
+        """
+        return self.xcall("lsdir %s" % d).split()
 
     def copyover(self, dir, cb):
         self.xcall("copydir %s" % dir, callback=cb)

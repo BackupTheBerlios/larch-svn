@@ -21,7 +21,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.02
+# 2008.02.04
 
 # Add a Quit button?
 
@@ -89,7 +89,7 @@ class Archin(gtk.Window):
         self.busy_off()
         self.busy = False
 
-    def busy_on(self):
+    def busy_on(self, fade=True):
         if not self.window:
             return
 #        gdk_win = gtk.gdk.Window(mainWindow.window,
@@ -105,10 +105,11 @@ class Archin(gtk.Window):
 # (*) I should comment out the sensitivity switch because it mucks up repeated
 # clicks on a single button (the mouse must leave and reenter the button
 # before clicking works again). gtk bug 56070
-        mainWindow.set_sensitive(False)
+        if fade:
+            self.mainWidget.set_sensitive(False)
         self.eventloop()
 
-    def busy_off(self):
+    def busy_off(self, fade=True):
         if not self.window:
             return
 #        gdk_win.set_cursor(None)
@@ -116,7 +117,8 @@ class Archin(gtk.Window):
         self.window.set_cursor(None)
 
 # See above (*)
-        mainWindow.set_sensitive(True)
+        if fade:
+            self.mainWidget.set_sensitive(True)
 
     def eventloop(self):
         while gtk.events_pending():

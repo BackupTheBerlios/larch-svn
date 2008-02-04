@@ -29,25 +29,33 @@ class Report(gtk.ScrolledWindow):
     def __init__(self):
         gtk.ScrolledWindow.__init__(self)
         self.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-        view = gtk.TextView()
-        view.set_editable(False)
+        self.view = gtk.TextView()
+        self.view.set_editable(False)
         #view.set_wrap_mode(gtk.WRAP_WORD)
-        self.add(view)
+        self.add(self.view)
         self.show()
-        view.show()
+        self.view.show()
 
-        self.reportbuf = view.get_buffer()
+        self.reportbuf = self.view.get_buffer()
 
     def report(self, text):
         self.reportbuf.insert(self.reportbuf.get_end_iter(), text+'\n')
+        self.view.scroll_mark_onscreen(self.reportbuf.get_insert())
         while gtk.events_pending():
             gtk.main_iteration(False)
 
+    def backline(self):
+        lc = self.reportbuf.get_line_count()
+        li = self.reportbuf.get_iter_at_line(lc-2)
+        ei = self.reportbuf.get_end_iter()
+        self.reportbuf.delete(li, ei)
+
 class Progress(gtk.Frame):
     def __init__(self):
-        gtk.Frame.__init__(self)
+        gtk.Frame.__init__(self, _("System copy progress"))
         self.set_border_width(20)
-        vb = gtk.VBox()
+        vb = gtk.VBox(spacing=10)
+        vb.set_border_width(5)
         hb = gtk.HBox()
         vb.pack_start(hb)
         lb = gtk.Label(_("Installed (MiB): "))
@@ -65,6 +73,9 @@ class Progress(gtk.Frame):
     def start(self):
         self.set_sensitive(True)
         self.set(None, 0.0)
+
+    def ended(self):
+        self.set_sensitive(False)
 
     def set(self, size, fraction):
         self.pb.set_fraction(fraction)

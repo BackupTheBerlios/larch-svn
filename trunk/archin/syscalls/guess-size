@@ -2,6 +2,6 @@
 
 # guess-size
 
-# Guess the size of each item in the given directory ($1), in MiB
+# Guess the size of given directory, in MiB
 
-du --max-depth=1 -m --exclude=.livesys --exclude=tmp $1
+du -s -m $1 | cut -f1

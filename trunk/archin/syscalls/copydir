@@ -7,6 +7,6 @@ d=$( dirname $1 )
 if [ "${d}" == "/" ]; then
     cp -af $1 ${INSTALL}
 else
-    mkdir -p ${d}
+    mkdir -p ${INSTALL}${d}
     cp -af $1 ${INSTALL}${d}
 fi

@@ -49,13 +49,15 @@ class DoInstall(Stage):
     def run(self):
         # need to disable forward button
         mainWindow.enable_forward(False)
+        mainWindow.busy_on(False)
 
         self.ok = (self.format() and self.mount() and self.install() and
                 self.unmount())
         if self.ok:
-            self.output.report(_("Installation completed successfully."))
-        self.output.report(_("Press 'Forward' to continue"))
+            self.output.report(_("\nInstallation completed successfully."))
+        self.output.report(_("\nPress 'Forward' to continue"))
         # need to reenable forward button
+        mainWindow.busy_off(False)
         mainWindow.enable_forward(True)
         return self.stop_callback()
 
@@ -126,23 +128,38 @@ class DoInstall(Stage):
         return True
 
     def install(self):
-        self.progress.start()
         self.progress_count = 0
         self.progress_ratio = 1.0
         totalsize = 0
-        self.output.report(_("Starting actual installation ..."))
-        partsizes = install.guess_size()
-        self.system_size = partsizes[""]
+        self.output.report(_("Estimating installation size ..."))
         self.basesize = install.get_size()
-        for d in ("bin", "boot", "etc", "root", "sbin", "srv", "lib",
-                "opt", "home", "usr", "var"):
-            install.copyover("/" + d, self.progress_cb)
+        dlist = ["/bin", "/boot", "/etc", "/root", "/sbin", "/srv", "/lib",
+                "/opt", "/home"]
+        dlist += ["/usr/" + d for d in install.lsdir("/usr")]
+        dlist.append("/var")
+
+        self.system_size = 0
+        partsizes = {}
+        for d in dlist:
+            gs = install.guess_size(d)
+            partsizes[d] = gs
+            self.system_size += gs
+
+        self.output.report(_("Starting actual installation ...") + "\n---")
+        self.progress.start()
+        isize = self.basesize
+        for d in dlist:
+            #self.output.backline()
+            self.output.report(_("--- Copying %s") % d)
+            #print "cp", d, self.progress_ratio, totalsize, isize-self.basesize
+            install.copyover(d, self.progress_cb)
             totalsize += partsizes[d]
-            self.progress_ratio = float(totalsize) / (install.get_size()
-                    - self.basesize)
+            isize = install.get_size()
+            self.progress_ratio = float(totalsize) / (isize - self.basesize)
 
         install.install_tidy()
 
+        self.progress.ended()
         self.output.report(_("Copying of system completed."))
         self.output.report(_("Generating initramfs"))
         install.mkinitcpio()
