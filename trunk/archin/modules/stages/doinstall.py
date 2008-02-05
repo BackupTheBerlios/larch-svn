@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.04
+# 2008.02.05
 
 class DoInstall(Stage):
     def stageTitle(self):
@@ -93,7 +93,10 @@ class DoInstall(Stage):
         """
         self.mplist = []
         for p in install.parts.values():
-            if p.mountpoint:
+            # Only mount partitions which will be formatted, which have
+            # a mount-point and which are to be mounted at boot.
+            if (p.mountpoint and ('%' not in p.mountpoint) and
+                    p.format and ('A' not in p.mount_options)):
                 i = 0
                 for p0 in self.mplist:
                     if (p.mountpoint < p0[0]):
@@ -163,6 +166,9 @@ class DoInstall(Stage):
         self.output.report(_("Copying of system completed."))
         self.output.report(_("Generating initramfs"))
         install.mkinitcpio()
+        if not install.frugal:
+            self.output.report(_("Generating /etc/fstab"))
+            install.fstab()
         return True
 
     def progress_cb(self):

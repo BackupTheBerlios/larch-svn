@@ -21,12 +21,13 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.04
+# 2008.02.05
 
 # Add a Quit button?
 
 from glob import glob
-import gtk
+import re
+import gtk, gobject
 
 from stage import Stage
 from dialogs import popupError, popupMessage, popupWarning
@@ -102,7 +103,7 @@ class Archin(gtk.Window):
 #        gdk_win.show()
         self.window.set_cursor(self.watchcursor)
 
-# (*) I should comment out the sensitivity switch because it mucks up repeated
+# (*) The sensitivity switch mucks up repeated
 # clicks on a single button (the mouse must leave and reenter the button
 # before clicking works again). gtk bug 56070
         if fade:
@@ -120,9 +121,19 @@ class Archin(gtk.Window):
         if fade:
             self.mainWidget.set_sensitive(True)
 
-    def eventloop(self):
+    def eventloop(self, t=0):
         while gtk.events_pending():
                 gtk.main_iteration(False)
+        if (t > 0.0):
+                self.timedout = False
+                gobject.timeout_add(int(t*1000), self.timeout)
+                while not self.timedout:
+                    gtk.main_iteration(True)
+
+    def timeout(self):
+        self.timedout = True
+        # Cancel this timer
+        return False
 
     def goto(self, stagename):
         """This is the main function for entering a new stage.

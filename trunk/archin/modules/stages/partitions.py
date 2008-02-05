@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.04
+# 2008.02.05
 
 class Partitions(Stage):
     def stageTitle(self):
@@ -237,36 +237,57 @@ class Partitions(Stage):
 
         return self.stop_callback()
 
+
+    def ntfsresize(self):
+        """Shrink NTFS filesystem on first partition.
+        """
+        # convert size to MB
+        newsize = int(self.ntfssize * 1000)
+        message = install.doNTFSshrink(newsize)
+        if message:
+            # resize failed
+            popupMessage(_("Sorry, resizing failed. Here is the"
+                    " error report:\n\n") + message)
+            self.reinit()
+            return False
+        return True
+
     def forward(self):
         if self.expert.get_active():
+            if (self.ntfs.get_keep1_on() and self.ntfs.get_shrink_on()):
+                if not (popupWarning(_("You are about to shrink the"
+                        " first partition. Make sure you have backed up"
+                        " any important data.\n\nContinue?"))
+                        and self.ntfsresize()):
+                    return
             mainWindow.goto('manualPart')
             return
 
         # Set up the installation partitions automatically.
+        if self.ntfs.get_keep1_on():
+            text = _(" + Wipe everything except the first partition")
+            if self.ntfs.get_shrink_on():
+                text += _("\n + Shrink the first partition")
+        else:
+            text = _(" + Completely wipe the drive")
+
+        dev = install.selectedDevice()
+        if not popupWarning(_("You are about to perform destructive"
+                " operations on the data on your disk drive (%s):\n%s\n\n"
+                "This is a risky business, so don't proceed if"
+                " you have not backed up your important data.\n\n"
+                "Continue?") % (dev, text)):
+            self.reinit()
+            return
+
         # If NTFS resizing is to be done, do it now.
         if self.ntfs.get_keep1_on():
             # Keep existing os on 1st partition
 
-            if self.ntfs.get_shrink_on():
-            # Shrink NTFS filesystem, convert size to MB
-                newsize = int(self.ntfssize * 1000)
-                if popupWarning(_("You are about to shrink an NTFS partition.\n"
-                        "This is a risky business, so don't proceed if"
-                        " you have not backed up your important data.\n\n"
-                        "Resize partition?")):
-                    message = install.doNTFSshrink(newsize)
-                    if message:
-                        # resize failed
-                        popupMessage(_("Sorry, resizing failed. Here is the"
-                                " error report:\n\n") + message)
-                        self.reinit()
-                        return
+            if (self.ntfs.get_shrink_on() and not self.ntfsresize()):
+                return
 
-                else:
-                    self.reinit()
-                    return
-
-            # keep 1st partition, allocate from 2nd
+            # allocate partitions from 2nd
             startmark = install.p1end
             partno = 2
 
@@ -283,7 +304,6 @@ class Partitions(Stage):
         # the appropriate information - by the installation stage.
 
         # Remove all existing partitions (except optionally the first)
-        dev = install.selectedDevice()
         install.rmparts(dev, partno)
 
         if (self.home_mb == 0) and (self.swap_mb == 0):

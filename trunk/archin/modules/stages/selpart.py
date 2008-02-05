@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.29
+# 2008.02.05
 
 class SelPart(Stage):
     def stageTitle(self):
@@ -78,41 +78,15 @@ class SelPart(Stage):
         return re.search(r'^%s ' % part, self.mounts, re.M)
 
 
-
-
-
-
-# Not so sure any more about 'saving' the settings, as I am now working
-# directly on the objects. When it actually comes to the formatting, etc.,
-# I would then need to filter the set, though.
-
-    def device_cb(self, dev):
-        self.save_settings()
-        self.setDevice(dev)
-
-    def save_settings(self):
-        # Any partitions with format and/or mount-point need to be entered
-        # into the (install) partitions set. All the others should be
-        # removed if they are already in that set.
-        for p, v in self.parts.items():
-            if (v[2] or v[4]):
-                install.setPartEntry(p, v[2:])
-            elif install.getPartEntry(p):
-                install.setPartEntry(p, None)
-
-
-
-
     def forward(self):
-        sel = self.getSelectedOption()
-        if (sel == 'done'):
-            # prepare and process info
-            #...
-            # ... install.newPartition("%s%d" % (dev, partno), m='/home')
+        for p in install.parts.values():
+            if (p.mountpoint == '/'):
+                mainWindow.goto('swaps')
+                return
 
-            mainWindow.goto('swaps')
-            return
+        popupError(_("You must specify a root ('/') partition"))
 
 
+#################################################################
 
 stages['partSelect'] = SelPart

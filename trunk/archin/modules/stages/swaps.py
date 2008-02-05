@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.01
+# 2008.02.05
 
 class Swaps(Stage):
     def stageTitle(self):
@@ -36,8 +36,7 @@ class Swaps(Stage):
         """
         """
         Stage.__init__(self)
-
-        assert False, "NYI"
+        self.reinit()
 
     def reinit(self):
         # remove all widgets
@@ -72,20 +71,18 @@ class Swaps(Stage):
         if not all:
             self.addLabel(_("There are no swap partitions available."))
 
-    def clearSwaps(self):
-        self.swaps = []
-        self.format_swaps = []
-
-    def addSwap(self, p, format):
-        self.swaps.append(p)
-        if format:
-            self.format_swaps.append(p)
-
     def forward(self):
         install.clearSwaps()
         for p, b in self.swaps.items():
-            if b.getCheck():
+            if self.getCheck(b):
                 install.addSwap(p, (p not in self.done))
+
+        if not popupWarning(_("The installation will now proceed. Then"
+                " there is no way back ...\n\n"
+                "Continue?")):
+            self.reinit()
+            return
+
         mainWindow.goto('install')
 
 

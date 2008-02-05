@@ -23,12 +23,11 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.04
+# 2008.02.05
 
 from subprocess import Popen, PIPE, STDOUT
 import os
 import re
-import time
 
 from partition import Partition
 from dialogs import PopupInfo, popupWarning
@@ -47,6 +46,9 @@ class installClass:
 
         assert (self.xcall("init") == ""), (
                 "Couldn't initialize installation system")
+
+        # Allow possibility of offering 'frugal' installation.
+        self.frugal = False
 
     def xcall_local(self, cmd):
         """Call a function on the same machine.
@@ -83,8 +85,7 @@ class installClass:
 
             process = Popen(term + cmd, shell=True)
             while (process.poll() == None):
-                mainWindow.eventloop()
-                time.sleep(0.5)
+                mainWindow.eventloop(0.5)
 
 
     def xcall(self, cmd, opt="", callback=None):
@@ -96,8 +97,7 @@ class installClass:
         while (process.poll() == None):
             if callback:
                 callback()
-            mainWindow.eventloop()
-            time.sleep(0.5)
+            mainWindow.eventloop(0.5)
 
         op = process.stdout.read()
         if op.endswith("^OK^"):
@@ -330,6 +330,7 @@ class installClass:
         """
         pa = Partition(p, s, fpre, m, f, fnew, mo, fo)
         self.parts[p] = pa
+        return pa
 
     def getPartition(self, part):
         return self.parts.get(part)

@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.30
+# 2008.02.05
 
 import gtk
 
@@ -76,7 +76,7 @@ class SelTable(gtk.ScrolledWindow):
             devw = gtk.Label(p.partition)
             mpw = SelMountPoint(self, p, self.mountpoints)
 
-            try: s = "%8.1f GB" % float(p.size) / 1000
+            try: s = "%8.1f GB" % (float(p.size) / 1000)
             except: s = '?'
             sizew = gtk.Label(s)
             fmtw = gtk.CheckButton()
@@ -89,10 +89,7 @@ class SelTable(gtk.ScrolledWindow):
             try:
                 fstw.set_active(self.filesystems.index(fs))
             except:
-                if (fs == None):
-                    fstw.set_active(-1)
-                else:
-                    raise
+                fstw.set_active(-1)
 
             fstw.set_sensitive(p.format)
             # callable externally as:
@@ -232,10 +229,7 @@ class SelTable(gtk.ScrolledWindow):
         try:
             r[5].set_active(self.filesystems.index(fst))
         except:
-            if (fst == None):
-                r[5].set_active(-1)
-            else:
-                raise
+            r[5].set_active(-1)
 
 
 class SelDevice(gtk.HBox):
