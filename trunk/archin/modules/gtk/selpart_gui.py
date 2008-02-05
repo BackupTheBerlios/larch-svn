@@ -70,8 +70,15 @@ class SelTable(gtk.ScrolledWindow):
                 self.table.remove(w)
         self.rows = []
 
-        self.table.resize(len(partlist) + 2, 6)
         ri = 1
+        if partlist:
+            self.table.resize(len(partlist) + ri+1, 6)
+        else:
+            self.table.resize(ri+2, 6)
+            notice = gtk.Label(_("No partitions available on this device"))
+            self.table.attach(notice, 0, 6, ri+1, ri+2, yoptions=0)
+            self.rows = [[None, notice]]
+
         for p in partlist:
             devw = gtk.Label(p.partition)
             mpw = SelMountPoint(self, p, self.mountpoints)
@@ -85,9 +92,8 @@ class SelTable(gtk.ScrolledWindow):
             fstw = gtk.ComboBox(self.fs_liststore)
             fstw.pack_start(self.cellr, True)
             fstw.add_attribute(self.cellr, 'text', 0)
-            fs = p.newformat or p.existing_format
             try:
-                fstw.set_active(self.filesystems.index(fs))
+                fstw.set_active(self.filesystems.index(p.newformat))
             except:
                 fstw.set_active(-1)
 
@@ -112,6 +118,8 @@ class SelTable(gtk.ScrolledWindow):
 
             self.fstw_cb(fstw, p)
             #self.update_options(p)
+
+        self.table.show_all()
 
     def popupOptions(self, widget, partition):
         self.popup_part = partition
@@ -232,22 +240,37 @@ class SelTable(gtk.ScrolledWindow):
             r[5].set_active(-1)
 
 
-class SelDevice(gtk.HBox):
+class SelDevice(gtk.Frame):
     """This widget allows selection of the device on which partitions are
     to be allocated to mountpoints, formatted, etc.
     """
     def __init__(self, master, devices):
-        gtk.HBox.__init__(self)
+        gtk.Frame.__init__(self)
+        self.set_border_width(5)
+        hb = gtk.HBox()
         self.master = master
+        self.devices = devices
         label = gtk.Label(_("Configuring partitions on drive "))
-        combo = gtk.combo_box_new_text()
+        hb.pack_start(label, False)
+        self.combo = gtk.combo_box_new_text()
+        hb.pack_start(self.combo, False)
+        self.add(hb)
         for d in devices:
-            combo.append_text(d.rstrip('-'))
-        combo.connect('changed', self.newdevice)
+            self.combo.append_text(d.rstrip('-'))
+        self.combo.connect('changed', mainWindow.sigprocess, self.newdevice)
 
-    def newdevice(self, widget, data=None):
-        self.master.setDevice(widget.get_active_text())
+    def newdevice(self, data):
+        d = self.combo.get_active_text()
+        self.updated = True
+        if d:
+            self.master.setDevice(d)
 
+    def setdevice(self, d):
+        self.updated = False
+        self.combo.set_active(self.devices.index(d))
+        mainWindow.eventloop()
+        if (not self.updated) and d:
+            self.master.setDevice(d)
 
 class SelMountPoint(gtk.HBox):
     def __init__(self, table, part, mountpoints):
@@ -264,7 +287,7 @@ class SelMountPoint(gtk.HBox):
         pb.connect("button_press_event", self.pb_cb, part)
         self.pack_start(self.en)
         self.pack_start(pb)
-        self.show_all()
+#        self.show_all()
 
     def pb_cb(self, widget, event, part):
         if (event.type != gtk.gdk.BUTTON_PRESS):

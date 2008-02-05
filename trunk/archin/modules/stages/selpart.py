@@ -43,12 +43,12 @@ class SelPart(Stage):
         Stage.__init__(self)
         from selpart_gui import SelTable, SelDevice
 
-        self.addWidget(SelDevice(self, [d[0] for d in install.devices]), False)
+        self.devselect = SelDevice(self, [d[0] for d in install.devices])
+        self.addWidget(self.devselect, False)
 
         filesystems = ['ext3', 'reiserfs', 'ext2', 'jfs', 'xfs']
         # List of mount-point suggestions
-        mountpoints = ['/', '/home', '/boot', '/var', '/opt',
-                 '/usr', '/mnt/%']
+        mountpoints = ['/', '/home', '/boot', '/var', '/opt', '/usr']
 
         self.table = SelTable(self, filesystems, mountpoints)
         self.addWidget(self.table)
@@ -56,7 +56,7 @@ class SelPart(Stage):
 
     def reinit(self):
         self.mounts = install.getmounts()
-        self.setDevice(install.selectedDevice())
+        self.devselect.setdevice(install.selectedDevice())
 
     def setDevice(self, dev):
         self.device = dev

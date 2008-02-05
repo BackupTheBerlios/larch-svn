@@ -95,8 +95,7 @@ class DoInstall(Stage):
         for p in install.parts.values():
             # Only mount partitions which will be formatted, which have
             # a mount-point and which are to be mounted at boot.
-            if (p.mountpoint and ('%' not in p.mountpoint) and
-                    p.format and ('A' not in p.mount_options)):
+            if (p.mountpoint and p.format and ('A' not in p.mount_options)):
                 i = 0
                 for p0 in self.mplist:
                     if (p.mountpoint < p0[0]):

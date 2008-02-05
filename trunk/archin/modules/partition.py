@@ -22,7 +22,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.28
+# 2008.02.05
 
 class Partition:
     """The instances of this class manage the formatting/mount
@@ -33,6 +33,7 @@ class Partition:
         self.size = s
         self.existing_format = fpre
         self.mountpoint = m
+        self.mount_options = None
         self.newformat = fnew
         self.format = f
         if self.format:
@@ -43,18 +44,19 @@ class Partition:
             else:
                 self.format_options = self.default_flags(
                         self.format_flags(self.newformat))
+
+            if self.mountpoint:
+                if (mo != None):
+                    self.mount_options = mo
+                else:
+                    self.mount_options = self.default_flags(
+                            self.mount_flags(self.newformat or
+                                    self.existing_format))
+
         else:
             self.newformat = None
             self.format_options = None
-        if self.mountpoint:
-            if (mo != None):
-                self.mount_options = mo
-            else:
-                self.mount_options = self.default_flags(
-                        self.mount_flags(self.newformat or
-                                self.existing_format))
-        else:
-            self.mount_options = None
+            self.mountpoint = None
 
     def format_flags(self, fstype):
         """Return a list of available format flags for the given
@@ -112,6 +114,7 @@ class Partition:
     def format_cb(self, table, on):
         self.format = on
         table.enable_fstype(self, on)
+        table.enable_mountpoint(self, on)
         # Ensure changed signal emitted when real setting passed (later)
         table.set_fstype(self, None)
         if on:
@@ -124,17 +127,20 @@ class Partition:
             self.newformat = None
             if not self.mountpoint:
                 self.mount_options = None
-            table.set_fstype(self, self.existing_format)
 
     def fstype_cb(self, table, fstype):
         if self.format:
             # if formatting
+            on = True
             self.newformat = fstype
         else:
+            on = False
             self.newformat = None
+            table.set_mountpoint(self, None)
+
+        table.enable_mountpoint(self, on)
 
         if fstype:
-            on = True
             self.format_options = self.default_flags(
                     self.format_flags(self.newformat))
             if self.mountpoint:
@@ -142,11 +148,7 @@ class Partition:
                 self.mount_options = self.default_flags(self.mount_flags(
                         self.newformat or self.existing_format))
         else:
-            on = False
             self.format_options = None
-            table.set_mountpoint(self, None)
-
-        table.enable_mountpoint(self, on)
 
     def get_format_options(self):
         fopts = []
