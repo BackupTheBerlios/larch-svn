@@ -23,7 +23,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.06
+# 2008.02.10
 
 from subprocess import Popen, PIPE, STDOUT
 import os, shutil
@@ -388,9 +388,6 @@ class installClass:
         return self.xcall("part-format %s %s %s" % (p.partition,
                 p.newformat, fo))
 
-    def mount(self, part, mp):
-        return self.xcall("do-mount %s %s" % (part, mp))
-
     def checkEmpty(self, mp):
         if self.xcall("check-mount %s" % mp):
             return popupWarning(_("The partition mounted at %s is not"
@@ -398,9 +395,6 @@ class installClass:
                     " attempt to install to it. Please reconsider.\n\n"
                     " Do you still want to install to it?") % mp)
         return True
-
-    def unmount(self, mp):
-        return self.xcall("do-unmount %s" % mp)
 
     def guess_size(self, d='/'):
         """Get some estimate of the size of the given directory d, in MiB.
@@ -424,6 +418,50 @@ class installClass:
         Returns a value in MiB.
         """
         return int(self.xcall("installed-size"))
+
+    def mount(self):
+        """The order is important in some cases, so when building the list
+        care must be taken that inner mounts (e.g. '/home') are placed
+        after their containing mounts (e.g. '/') in the list.
+        """
+        self.mplist = []
+        for p in self.parts.values():
+            # Only mount partitions which will be formatted, which have
+            # a mount-point and which are to be mounted at boot.
+            if (p.mountpoint and p.format and ('A' not in p.mount_options)):
+                i = 0
+                for p0 in self.mplist:
+                    if (p.mountpoint < p0[0]):
+                        break
+                    i += 1
+                self.mplist.insert(i, (p.mountpoint, p.partition))
+        return self.remount(True)
+
+    def remount(self, check=False):
+        """This mounts the partitions used by the new system using the
+        list prepared by 'mount'.
+        """
+        for m, d in self.mplist:
+            result = self.xcall("do-mount %s %s" % (d, m))
+            if result:
+                return None
+            # Check that there are no files on this partition. The warning
+            # can be ignored however.
+            if check and not self.checkEmpty(m):
+                return None
+        return self.mplist
+
+    def unmount(self):
+        """To unmount the partitions mounted by the installer.
+        """
+        mlist = list(self.mplist)
+        mlist.reverse()
+        for m, d in mlist:
+            # the 'list()' is needed because of the 'remove' below
+            result = self.xcall("do-unmount %s" % m)
+            if result:
+                return False
+        return True
 
     def mkinitcpio(self):
         self.xcall("do-mkinitcpio")
@@ -522,3 +560,78 @@ class installClass:
         fw.write(fstab)
         fw.close()
         self.xsendfile("/tmp/archinfstab", "/tmp/install/etc/fstab")
+
+    def set_devicemap(self):
+        """Generate a (temporary) device.map file on the target and read
+        its contents to a list of pairs in self.device_map.
+        It also scans all partitions for menu.lst files, which are
+        then stored as (device, path) pairs.
+        """
+        if self.remount():
+            # Filter out new system '/' and '/boot'
+            bar = []
+            for p in self.parts.values():
+                if (p.mountpoint == '/') or (p.mountpoint == '/boot'):
+                    bar.append(p.partition)
+
+            self.device_map = []
+            self.menulst = []
+            for line in self.xcall("mkdevicemap").splitlines():
+                spl = line.split()
+                if (spl[0].startswith('(')):
+                    self.device_map.append(spl)
+                elif (spl[0] == '+++'):
+                    d = self.grubdevice(spl[2])
+                    if d not in bar:
+                        self.menulst.append((d, spl[1]))
+            return self.unmount() and (self.device_map != [])
+        return False
+
+    def grubdevice(self, device):
+        """Convert from a grub drive name to a linux drive name, or vice
+        versa. Uses the information previously gathered by set_devicemap().
+        This works for drives and partitions in both directions.
+        """
+        if device.startswith('('):
+            d = device.split(',')
+            if (len(d) == 1):
+                part = ''
+            else:
+                part = str(int(d[1].rstrip(')')) + 1)
+                d = d[0] + ')'
+            for a, b in self.device_map:
+                if (a == d):
+                    return (b + part)
+        else:
+            d  = device.rstrip('0123456789')
+            if (d == device):
+                part = ')'
+            else:
+                part = ',%d)' % (int(device[len(d):]) - 1)
+            for a, b in self.device_map:
+                if (b == d):
+                    return a.replace(')', part)
+        return None
+
+    def getbootinfo(self):
+        """Retrieves kernel file name and a list of initramfs files from
+        the boot directory of the newly installed system.
+        """
+        self.remount()
+        kernel = None
+        inits = []
+        for line in self.xcall("get-bootinfo").splitlines():
+            if line.startswith('+++'):
+                kernel = line.split()[1]
+            else:
+                inits.append(line)
+        if not kernel:
+            popupError(inits[0], _("GRUB problem"))
+            return None
+        if not inits:
+            popupError(_("No initramfs found"), _("GRUB problem"))
+            return None
+        return (kernel, inits)
+
+    def readmenulst(self, dev, path):
+        return self.xcall("readmenulst %s %s" % (dev, path))

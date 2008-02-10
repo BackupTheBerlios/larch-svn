@@ -21,7 +21,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.02
+# 2008.02.08
 
 import gtk
 
@@ -69,3 +69,46 @@ class PopupInfo:
 
     def drop(self):
         self.popup.destroy()
+
+def popupEditor(title, text, revert_cb=None):
+    """A simple popup text editor with just three buttons:
+            ok: return the text
+            revert: refetch the 'original' text
+            cancel: return None
+    The reversion is handled by means of a callback, which must be
+    supplied by the user, and is optional.
+    """
+    dialog = gtk.Dialog(title, None,
+            gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT)
+    if revert_cb:
+        dialog.add_button(gtk.STOCK_REVERT_TO_SAVED, gtk.RESPONSE_REJECT)
+    dialog.add_button(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL)
+    dialog.add_button(gtk.STOCK_OK, gtk.RESPONSE_ACCEPT)
+
+    sw = gtk.ScrolledWindow()
+    sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+    textview = gtk.TextView()
+    buffer = textview.get_buffer()
+    sw.add(textview)
+    sw.show_all()
+    sw.set_size_request(600, 400)
+    dialog.vbox.pack_start(sw)
+
+    buffer.set_text(text)
+
+    while True:
+        res = dialog.run()
+        if (res == gtk.RESPONSE_REJECT):
+            dialog.set_sensitive(False)
+            buffer.set_text(revert_cb())
+            dialog.set_sensitive(True)
+        else:
+            break
+
+    if (res == gtk.RESPONSE_ACCEPT):
+        res = buffer.get_text(*buffer.get_bounds())
+    else:
+        res = None
+    dialog.destroy()
+    return res
+

@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.05
+# 2008.02.10
 
 class DoInstall(Stage):
     def stageTitle(self):
@@ -51,11 +51,26 @@ class DoInstall(Stage):
         mainWindow.enable_forward(False)
         mainWindow.busy_on(False)
 
-        self.ok = (self.format() and self.mount() and self.install() and
-                self.unmount())
-        if self.ok:
-            self.output.report(_("\nInstallation completed successfully."))
-        self.output.report(_("\nPress 'Forward' to continue"))
+        self.ok = False
+        if self.format():
+            mountlist = install.mount()
+            if mountlist:
+                for m, p in mountlist:
+                    self.output.report(_("Mounted partition %s at %s")
+                            % (p, m))
+
+                if (self.install() and install.unmount()):
+                    self.output.report(_("Unmounted installation"
+                            " partitions."))
+                    self.output.report(_("\nInstallation completed"
+                            " successfully."))
+                    self.output.report(_("\nPress 'Forward' to continue"))
+                    self.ok = True
+                else:
+                    self.output.report(_("\nInstallation failed"))
+            else:
+                self.output.report(_("Couldn't mount installation"
+                        " partition(s)"))
         # need to reenable forward button
         mainWindow.busy_off(False)
         mainWindow.enable_forward(True)
@@ -66,6 +81,11 @@ class DoInstall(Stage):
                 " No further action is possible."))
 
     def format(self):
+
+
+#        print "NOT FORMATTING"
+#        return True
+
         # Swaps
         for p in install.format_swaps:
             self.output.report(_("Formatting partition %s as swap ...") % p)
@@ -83,53 +103,14 @@ class DoInstall(Stage):
                 if result:
                     self.output.report(result)
                     return False
-
-        return True
-
-    def mount(self):
-        """The order is important in some cases, so when building the list
-        care must be taken that inner mounts (e.g. '/home') are placed
-        after their containing mounts (e.g. '/') in the list.
-        """
-        self.mplist = []
-        for p in install.parts.values():
-            # Only mount partitions which will be formatted, which have
-            # a mount-point and which are to be mounted at boot.
-            if (p.mountpoint and p.format and ('A' not in p.mount_options)):
-                i = 0
-                for p0 in self.mplist:
-                    if (p.mountpoint < p0[0]):
-                        break
-                    i += 1
-                self.mplist.insert(i, (p.mountpoint, p.partition))
-
-        for m, d in self.mplist:
-            self.output.report(_("Mounting partition %s at %s") % (d, m))
-            result = install.mount(d, m)
-            if result:
-                self.output.report(result)
-                return False
-            # Check that there are no files on this partition. The warning
-            # can be ignored however.
-            if not install.checkEmpty(m):
-                return False
-        return True
-
-    def unmount(self):
-        """To unmount the partitions mounted by the installer.
-        """
-        mlist = list(self.mplist)
-        mlist.reverse()
-        for m, d in mlist:
-            # the 'list()' is needed because of the 'remove' below
-            self.output.report(_("Unmounting partition %s from %s") % (d, m))
-            result = install.unmount(m)
-            if result:
-                self.output.report(result)
-                return False
         return True
 
     def install(self):
+
+#        print "NOT INSTALLING"
+#        return True
+
+
         self.progress_count = 0
         self.progress_ratio = 1.0
         totalsize = 0

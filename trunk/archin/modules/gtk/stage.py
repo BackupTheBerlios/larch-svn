@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.30
+# 2008.02.10
 
 import gtk, gobject
 
@@ -58,8 +58,10 @@ class Stage(gtk.VBox):
         dialog.run()
         dialog.destroy()
 
-    def addOption(self, name, label, default=False, style=None):
+    def addOption(self, name, label, default=False, style=None, callback=None):
         b = gtk.RadioButton(self.option0)
+        if callback:
+            b.connect("toggled", self.toggled_cb, callback)
 
         l = gtk.Label()
         if style:
@@ -73,6 +75,12 @@ class Stage(gtk.VBox):
         if default:
             b.set_active(True)
         return b
+
+    def setOption(self, item):
+        for n, b in self.options.items():
+            if (n == item):
+                b.set_active(True)
+                return
 
     def addCheckButton(self, label, callback=None):
         b = gtk.CheckButton(label)
@@ -123,7 +131,7 @@ class Stage(gtk.VBox):
         return None
 
     def toggled_cb(self, widget, callback):
-        callback(widget.get_active())
+        mainWindow.sigprocess(widget, callback, widget.get_active())
 
     # Idle callback handling
     def request_update(self, callback):

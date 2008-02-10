@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.04
+# 2008.02.08
 
 import gtk
 
@@ -41,8 +41,7 @@ class Report(gtk.ScrolledWindow):
     def report(self, text):
         self.reportbuf.insert(self.reportbuf.get_end_iter(), text+'\n')
         self.view.scroll_mark_onscreen(self.reportbuf.get_insert())
-        while gtk.events_pending():
-            gtk.main_iteration(False)
+        mainWindow.eventloop()
 
     def backline(self):
         lc = self.reportbuf.get_line_count()
@@ -81,6 +80,5 @@ class Progress(gtk.Frame):
         self.pb.set_fraction(fraction)
         if size:
             self.isz.set_text(str(size))
-        while gtk.events_pending():
-            gtk.main_iteration(False)
+        mainWindow.eventloop()
 

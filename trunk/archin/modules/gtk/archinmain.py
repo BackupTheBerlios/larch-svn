@@ -21,7 +21,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.05
+# 2008.02.08
 
 # Add a Quit button?
 
@@ -30,7 +30,7 @@ import re
 import gtk, gobject
 
 from stage import Stage
-from dialogs import popupError, popupMessage, popupWarning
+from dialogs import popupError, popupMessage, popupWarning, popupEditor
 
 class Archin(gtk.Window):
     def __init__(self):
