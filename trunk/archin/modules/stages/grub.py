@@ -184,22 +184,23 @@ class Grub(Stage):
     def forward(self):
         opt = self.getSelectedOption()
         if (opt == 'mbr'):
-            print "mbr, use:", self.menulstwhere
-            print self.menulst
+            device = self.mbrinstall.get_drive()
+            path = None
+            text = self.menulst
         elif (opt == 'old'):
-            print "old, use:", self.mlwhere
-            print self.ml
+            device = None
+            path = self.mlwhere
+            text = self.ml
         else:
             assert (opt == 'part'), "No option selected"
-            print "part"
+            device = 'part'
+            path = None
             self.menulstwhere = None
-            print self.revert_cb()
+            text = self.revert_cb()
 
+        install.setup_grub(device, path, text)
 
-        return
-
-
-        mainWindow.goto('???')
+        mainWindow.goto('end')
 
 
 #################################################################

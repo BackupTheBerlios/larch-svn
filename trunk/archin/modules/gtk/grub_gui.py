@@ -80,6 +80,9 @@ class Mbrinstall(gtk.Frame):
         # Start the editor.
         self.master.editmbr_cb()
 
+    def get_drive(self):
+        return self.drive.get_active_text()
+
 
 class Oldgrub(gtk.Frame):
     """

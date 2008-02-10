@@ -637,3 +637,6 @@ class installClass:
 
     def readmenulst(self, dev, path):
         return self.xcall("readmenulst %s %s" % (dev, path))
+
+    def setup_grub(self, dev, path, text):
+        print "setup grub", dev, path
