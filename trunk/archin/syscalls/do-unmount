@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# do-mount
+# do-unmount
 
 # Unmount a partition mounted at /tmp/install$1
 

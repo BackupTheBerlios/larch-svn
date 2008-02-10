@@ -133,27 +133,27 @@ class Grub(Stage):
     def newgrubentries(self):
         import time
         # look for separate boot partition
-        bootpart = None
+        self.bootpart = None
         for p in install.parts.values():
             if (p.mountpoint == '/'):
-                rootpart = p.partition
+                self.rootpart = p.partition
             elif (p.mountpoint == '/boot'):
-                bootpart = p.partition
+                self.bootpart = p.partition
         # add an entry for each initramfs
         text = "# ++++ Section added by archin (%s)\n\n" % time.ctime()
 
         kernel, inits = install.getbootinfo()
-        if bootpart:
-            rp = install.grubdevice(bootpart)
+        if self.bootpart:
+            rp = install.grubdevice(self.bootpart)
             bp = ""
         else:
-            rp = install.grubdevice(rootpart)
+            rp = install.grubdevice(self.rootpart)
             bp = "/boot"
         for init in inits:
-            text += "title  Arch Linux %s (initrd=/boot/%s)\n" % (rootpart,
-                    init)
+            text += "title  Arch Linux %s (initrd=/boot/%s)\n" % (
+                    self.rootpart, init)
             text += "root   %s\n" % rp
-            text += "kernel %s/%s root=%s ro\n" % (bp, kernel, rootpart)
+            text += "kernel %s/%s root=%s ro\n" % (bp, kernel, self.rootpart)
             text += "initrd %s/%s\n\n" % (bp, init)
 
         return (text + "# ---- End of section added by archin\n")
@@ -193,7 +193,10 @@ class Grub(Stage):
             text = self.ml
         else:
             assert (opt == 'part'), "No option selected"
-            device = 'part'
+            if self.bootpart:
+                device = self.bootpart
+            else:
+                device = self.rootpart
             path = None
             self.menulstwhere = None
             text = self.revert_cb()

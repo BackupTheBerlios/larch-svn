@@ -30,7 +30,7 @@ import os, shutil
 import re
 
 from partition import Partition
-from dialogs import PopupInfo, popupWarning
+from dialogs import PopupInfo, popupWarning, popupError
 
 class installClass:
     def __init__(self, host=None, transfer=False):
@@ -639,4 +639,19 @@ class installClass:
         return self.xcall("readmenulst %s %s" % (dev, path))
 
     def setup_grub(self, dev, path, text):
-        print "setup grub", dev, path
+        fh = open("/tmp/archin_menulst", "w")
+        fh.write(text)
+        fh.close()
+        if dev:
+            self.remount()
+            self.xcall("grubinstall %s" % dev)
+            self.xsendfile("/tmp/archin_menulst",
+                    "/tmp/install/boot/grub/menu.lst")
+            self.unmount()
+
+        else:
+            # Just replace the appropriate menu.lst
+            d, p = path.split(':')
+            self.xcall("mount1 %s" % d)
+            self.xsendfile("/tmp/archin_menulst", "/tmp/mnt%s" % p)
+            self.xcall("unmount1")
