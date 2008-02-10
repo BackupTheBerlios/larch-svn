@@ -31,22 +31,34 @@ class Mbrinstall(gtk.Frame):
         self.master = master
         self.set_border_width(20)
 
-        self.mlcombobox = gtk.HBox(spacing=5)
-        self.mlcombobox.set_border_width(5)
+        vb = gtk.VBox(spacing = 10)
+        hb = gtk.HBox(spacing=5)
+        hb.set_border_width(5)
+        vb.pack_start(hb, False)
+        self.drive = gtk.combo_box_new_text()
+        hb.pack_end(self.drive, False)
+        hb.pack_end(gtk.Label(_("Boot Device: ")), False)
+        for d in install.devices:
+            self.drive.append_text(d[0].rstrip('-'))
+        self.drive.set_active(0)
+
+        mlcombobox = gtk.HBox(spacing=5)
+        mlcombobox.set_border_width(5)
         l = gtk.Label(_("Select menu.lst to import: "))
-        self.mlcombobox.pack_start(l, False)
+        mlcombobox.pack_start(l, False)
         self.mlcombo = gtk.combo_box_new_text()
         self.mlcombo.connect("changed", mainWindow.sigprocess, self.newimport)
         self.mlcombo.append_text(_("None"))
         for d, p in install.menulst:
             self.mlcombo.append_text("%s:%s" % (d, p))
-        self.mlcombobox.pack_start(self.mlcombo, False)
+        mlcombobox.pack_start(self.mlcombo, False)
 
         eb = gtk.Button(_("Edit menu.lst"))
         eb.connect("clicked", self.editmbr)
-        self.mlcombobox.pack_end(eb, False)
+        mlcombobox.pack_end(eb, False)
 
-        self.add(self.mlcombobox)
+        vb.pack_start(mlcombobox, False)
+        self.add(vb)
         self.show_all()
 
     def set_enabled(self, on):
@@ -55,6 +67,7 @@ class Mbrinstall(gtk.Frame):
         else:
             self.mlcombo.set_active(-1)
         self.set_sensitive(on)
+        self.newimport()
 
     def newimport(self, data=None):
         if (self.mlcombo.get_active() <= 0):
@@ -76,21 +89,21 @@ class Oldgrub(gtk.Frame):
         self.set_border_width(20)
         self.master = master
 
-        self.mlcombobox = gtk.HBox(spacing=5)
-        self.mlcombobox.set_border_width(5)
+        mlcombobox = gtk.HBox(spacing=5)
+        mlcombobox.set_border_width(5)
         l = gtk.Label(_("Select menu.lst to use: "))
-        self.mlcombobox.pack_start(l, False)
+        mlcombobox.pack_start(l, False)
         self.mlcombo = gtk.combo_box_new_text()
         self.mlcombo.connect("changed", mainWindow.sigprocess, self.newml)
         for d, p in install.menulst:
             self.mlcombo.append_text("%s:%s" % (d, p))
-        self.mlcombobox.pack_start(self.mlcombo, False)
+        mlcombobox.pack_start(self.mlcombo, False)
 
         eb = gtk.Button(_("Edit menu.lst"))
         eb.connect("clicked", self.editml)
-        self.mlcombobox.pack_end(eb, False)
+        mlcombobox.pack_end(eb, False)
 
-        self.add(self.mlcombobox)
+        self.add(mlcombobox)
         self.set_enabled(False)
         self.show_all()
 
@@ -100,6 +113,7 @@ class Oldgrub(gtk.Frame):
         else:
             self.mlcombo.set_active(-1)
         self.set_sensitive(on)
+        self.newml(None)
 
     def newml(self, widget, data=None):
         self.master.setml_cb(self.mlcombo.get_active_text())

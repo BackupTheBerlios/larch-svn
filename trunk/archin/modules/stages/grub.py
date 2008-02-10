@@ -45,8 +45,6 @@ class Grub(Stage):
         # Set up grub's device map and a list of existing menu.lst files.
         assert install.set_devicemap(), "Couldn't get device map for GRUB"
 
-        # I would need callbacks for changing options - need to add that
-        # to stage.py
         self.addOption('mbr', _("Install GRUB to MBR - make it the main"
                 " bootloader"), True, callback=self.mbrtoggled)
         self.mbrinstall = Mbrinstall(self)
@@ -64,11 +62,12 @@ class Grub(Stage):
         self.reinit()
 
     def reinit(self):
+        self.request_soon(self.init)
+
+    def init(self):
         self.setOption('part')
         self.setOption('mbr')
-#TODO
-        # Just setting the option is not enough to get the initial texts
-        # generated for options 'mbr' and 'old'.
+        return self.stop_callback()
 
     # Stuff for 'include existing menu'
     def mbrtoggled(self, on):

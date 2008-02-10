@@ -584,7 +584,8 @@ class installClass:
                     d = self.grubdevice(spl[2])
                     if d not in bar:
                         self.menulst.append((d, spl[1]))
-            return self.unmount() and (self.device_map != [])
+            ok = self.unmount() and (self.device_map != [])
+            return ok
         return False
 
     def grubdevice(self, device):
@@ -625,6 +626,7 @@ class installClass:
                 kernel = line.split()[1]
             else:
                 inits.append(line)
+        self.unmount()
         if not kernel:
             popupError(inits[0], _("GRUB problem"))
             return None
