@@ -21,7 +21,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.08
+# 2008.02.11
 
 import gtk
 
@@ -30,7 +30,7 @@ def popupError(text, title=""):
             gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
             gtk.MESSAGE_ERROR, gtk.BUTTONS_OK,
             title)
-    dialog.format_secondary_markup(text)
+    dialog.format_secondary_text(text)
     dialog.set_title(_("archin Error"))
     dialog.run()
     dialog.destroy()

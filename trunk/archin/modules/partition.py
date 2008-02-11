@@ -22,7 +22,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.05
+# 2008.02.11
 
 class Partition:
     """The instances of this class manage the formatting/mount
@@ -64,11 +64,11 @@ class Partition:
         """
         # At the moment there is only an entry for 'ext3'
         return { 'ext3' : [
-                (_("disable boot-time checks"), 'd', True,
+                (_("disable boot-time checks"), 'd', False,
                     _("Normally an ext3 file-system will be checked every"
                       " 30 mounts or so. With a large partition this can"
-                      " take quite a while, and is, strictly speaking,"
-                      " unnecessary - because of the journalling.")),
+                      " take quite a while, and some people like to disable"
+                      " this and just rely on the journalling.")),
 
                 (_("directory indexing"), 'i', True,
                     _("This is supposed to speed up access.")),

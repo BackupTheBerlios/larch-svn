@@ -21,7 +21,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.08
+# 2008.02.11
 
 # Add a Quit button?
 
@@ -40,7 +40,7 @@ class Archin(gtk.Window):
 
         gtk.Window.__init__(self)
         self.set_default_size(600,400)
-        self.connect("destroy", gtk.main_quit)
+        self.connect("destroy", self.exit)
         self.set_border_width(3)
 
         self.header = gtk.Label()
@@ -75,6 +75,9 @@ class Archin(gtk.Window):
     def mainLoop(self):
         self.show_all()
         gtk.main()
+
+    def exit(self, widget=None, data=None):
+        gtk.main_quit()
 
     def enable_forward(self, on):
         self.rButton.set_sensitive(on)

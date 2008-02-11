@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.23
+# 2008.02.11
 
 class Welcome(Stage):
     def stageTitle(self):
@@ -65,7 +65,7 @@ class Welcome(Stage):
         if not devs:
             popupError(_("No disk(-like) devices were found,"
                     " so Arch Linux can not be installed on this machine"))
-            end()
+            install.tidyup()
         nds = len(devs)         # Total number of devices
         mds = nds - count       # Number of devices with mounted partitions
         if mds:

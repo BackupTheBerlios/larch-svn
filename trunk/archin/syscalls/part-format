@@ -8,6 +8,10 @@ fmtext3 ()
 {
     mke2fs -j $1
 
+    if [ "$1" != "/" ]; then
+        tune2fs -m 1 $1
+    fi
+
     opts="$2"
 
     while [ -n "${opts}" ]; do

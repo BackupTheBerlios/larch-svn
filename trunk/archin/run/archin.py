@@ -21,9 +21,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.29
-
-# Add a Quit button?
+# 2008.02.11
 
 import os, sys
 
@@ -33,37 +31,51 @@ sys.path.append("%s/modules/gtk" % basedir)
 
 from install import installClass
 from archinmain import Archin
+from dialogs import popupError
 
-def end():
-    print "Exiting"
+def errorTrap(type, value, tb):
+    etext = "".join(traceback.format_exception(type, value, tb))
+    popupError(etext, _("This error could not be handled."))
+    if initialized:
+        try:
+            install.tidyup()
+        except:
+            pass
     quit()
 
-if (__name__ == "__main__"):
-    import __builtin__
-    def tr(s):
-        return s
-    __builtin__._ = tr
 
-    import sys
-    transfer = False
-    if (len(sys.argv) == 1):
-        target = None
-    elif (len(sys.argv) == 2):
-        target = sys.argv[1]
-    elif ((len(sys.argv) == 3) and (sys.argv[1] == '-t')):
-        target = sys.argv[2]
-        transfer = True
-    else:
-        print "ERROR: too many arguments. Usage:"
-        print "          archin.py                       # local installation"
-        print "          archin.py [-t] target-address   # remote installation"
-        print "              The '-t' option causes the installation scripts"
-        print "              to be copied to the remote machine."
-        sys.exit(1)
+import __builtin__
+def tr(s):
+    return s
+__builtin__._ = tr
 
-    __builtin__.basePath = basedir
-    __builtin__.stages = {}
-    __builtin__.mainWindow = Archin()
-    __builtin__.install = installClass(target, transfer)
-    mainWindow.goto('welcome')
-    mainWindow.mainLoop()
+import traceback
+initialized = False
+
+sys.excepthook = errorTrap
+
+transfer = False
+if (len(sys.argv) == 1):
+    target = None
+elif (len(sys.argv) == 2):
+    target = sys.argv[1]
+elif ((len(sys.argv) == 3) and (sys.argv[1] == '-t')):
+    target = sys.argv[2]
+    transfer = True
+else:
+    popupError(_("Usage:\n"
+        "          archin.py \t\t\t\t\t # local installation\n"
+        "          archin.py [-t] target-address \t # remote installation\n"
+        "\n              The '-t' option causes the installation scripts\n"
+        "              to be copied to the remote machine."),
+        _("Bad arguments"))
+    quit()
+
+__builtin__.basePath = basedir
+__builtin__.stages = {}
+__builtin__.mainWindow = Archin()
+__builtin__.install = installClass(target, transfer)
+initialized = True
+mainWindow.goto('welcome')
+mainWindow.mainLoop()
+install.tidyup()

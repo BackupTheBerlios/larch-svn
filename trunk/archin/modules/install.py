@@ -23,7 +23,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.10
+# 2008.02.11
 
 from subprocess import Popen, PIPE, STDOUT
 import os, shutil
@@ -47,8 +47,20 @@ class installClass:
         assert (self.xcall("init") == ""), (
                 "Couldn't initialize installation system")
 
-        # Allow possibility of offering 'frugal' installation.
+        # Create a directory for temporary files
+        shutil.rmtree("/tmp/archin", True)
+        os.mkdir("/tmp/archin")
+
+        # Allow possibility of offering 'frugal' installation (may never be
+        # implemented as it should perhaps be handled completely separately).
         self.frugal = False
+
+    def tidyup(self):
+        tu = self.xcall("tidyup")
+        if tu:
+            popupError(tu, _("Tidying up failed,"
+                    " there may still be devices mounted"))
+        shutil.rmtree("/tmp/archin", True)
 
     def xsendfile(self, path, dest):
         """Copy the given file (path) to dest on the target.
@@ -556,10 +568,10 @@ class installClass:
                 fstab += ("#/dev/mapper/%-6s /mnt/lvm_%-4s auto"
                     "   user,noauto,noatime 0     0\n" % (p, p))
 
-        fw = open("/tmp/archinfstab", "w")
+        fw = open("/tmp/archin/fstab", "w")
         fw.write(fstab)
         fw.close()
-        self.xsendfile("/tmp/archinfstab", "/tmp/install/etc/fstab")
+        self.xsendfile("/tmp/archin/fstab", "/tmp/install/etc/fstab")
 
     def set_devicemap(self):
         """Generate a (temporary) device.map file on the target and read
@@ -639,13 +651,13 @@ class installClass:
         return self.xcall("readmenulst %s %s" % (dev, path))
 
     def setup_grub(self, dev, path, text):
-        fh = open("/tmp/archin_menulst", "w")
+        fh = open("/tmp/archin/menulst", "w")
         fh.write(text)
         fh.close()
         if dev:
             self.remount()
             self.xcall("grubinstall %s" % dev)
-            self.xsendfile("/tmp/archin_menulst",
+            self.xsendfile("/tmp/archin/menulst",
                     "/tmp/install/boot/grub/menu.lst")
             self.unmount()
 
@@ -653,5 +665,5 @@ class installClass:
             # Just replace the appropriate menu.lst
             d, p = path.split(':')
             self.xcall("mount1 %s" % d)
-            self.xsendfile("/tmp/archin_menulst", "/tmp/mnt%s" % p)
+            self.xsendfile("/tmp/archin/menulst", "/tmp/mnt%s" % p)
             self.xcall("unmount1")
