@@ -21,7 +21,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-#2007.12.19
+#2008.02.11
 
 # Replacement for msg which includes leading and trailing spaces
 msg_ () { [ "${quiet}" != "y" ] && echo "$@"; }
@@ -36,8 +36,8 @@ msg_ () { [ "${quiet}" != "y" ] && echo "$@"; }
 test_live_data_dir ()
 {
     /bin/mount -r -t iso9660 "$1" $2 >/dev/null 2>/dev/null || \
-    /bin/mount -r -t vfat "$1" $2 >/dev/null 2>/dev/null || \
-    /bin/mount -r -t ext2 "$1" $2 >/dev/null 2>/dev/null
+    /bin/mount -r -t vfat -o noatime,nodiratime "$1" $2 >/dev/null 2>/dev/null || \
+    /bin/mount -r -t ext2 -o noatime,nodiratime "$1" $2 >/dev/null 2>/dev/null
     if [ $? -eq 0 ]; then
         if [ -f "$2/larch/larchboot" ]; then
             LDEV="$1"
@@ -73,8 +73,8 @@ run_hook ()
     LDEV="${root}"
     if [ "x${LDEV}" != "x" ]; then
         /bin/mount -r -t iso9660 "${LDEV}" "${cdmount}" >/dev/null 2>/dev/null || \
-        /bin/mount -r -t vfat "${LDEV}" "${cdmount}" >/dev/null 2>/dev/null || \
-        /bin/mount -r -t ext2 "${LDEV}" "${cdmount}" >/dev/null 2>/dev/null
+        /bin/mount -r -t vfat -o noatime,nodiratime "${LDEV}" "${cdmount}" >/dev/null 2>/dev/null || \
+        /bin/mount -r -t ext2 -o noatime,nodiratime "${LDEV}" "${cdmount}" >/dev/null 2>/dev/null
         if [ $? -eq 0 ]; then
             if [ -d "${cdmount}/larch" ]; then
                 msg_ ":: larch system at ${LDEV}"

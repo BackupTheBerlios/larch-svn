@@ -500,6 +500,8 @@ class installClass:
                 sysm = True
                 if ('T' in p.mount_options):
                     opt += ',noatime'
+                if ('D' in p.mount_options):
+                    opt += ',nodiratime'
                 if ('A' in p.mount_options):
                     opt += ',noauto'
                     pas = '0'

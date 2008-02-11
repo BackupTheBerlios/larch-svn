@@ -88,7 +88,14 @@ class Partition:
             flg = [ (_("noatime"), 'T', True,
                     _("Disables recording atime (access time) to disk, thus"
                       " speeding up disk access. This is unlikely to cause"
-                      " problems (famous last words ...).")),
+                      " problems (famous last words ...). Important for"
+                      " flash devices")),
+
+                    (_("nodiratime"), 'D', True,
+                    _("Disables recording directory access time to disk, thus"
+                      " speeding up disk access. This is unlikely to cause"
+                      " problems (famous last words ...). Important for"
+                      " flash devices")),
 
                     (_("noauto"), 'A', False,
                     _("Don't mount this partition during system"
