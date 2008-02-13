@@ -2,6 +2,8 @@
 squashfs-tools
 lzop
 
+syslinux
+
 # You need a kernel. At the moment the only standard Arch kernel
 # which works (because of needing 'squashfs' and 'unionfs') is 'beyond'.
 #kernel26 is now in 'base'
@@ -104,13 +106,12 @@ xf86-video-voodoo
 gparted
 desktop-file-utils
 gimp
+wicd
 
 firefox
 thunderbird
 
 # xfce
 xfce4
-#kdebase
-#k3b
 
 geany

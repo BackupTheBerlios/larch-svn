@@ -119,12 +119,14 @@ mklive ()
         :
     else
         ${chrootx} bash -c "( cd /.larch/tmp/larch/rebuild;
-                makepkg -i -p PKGREBUILD)"
+                makepkg --asroot -i -p PKGREBUILD)"
     fi
 
     # larch must be rebuilt first because these change their directories:
-    ${chrootx} bash -c "( cd /.larch/tmp/larch/larch-live; makepkg -i )"
-    ${chrootx} bash -c "( cd /.larch/tmp/larch/larchin; makepkg -i )"
+    ${chrootx} bash -c "( cd /.larch/tmp/larch/larch-live;
+            makepkg --asroot -i )"
+    ${chrootx} bash -c "( cd /.larch/tmp/larch/larchin;
+            makepkg --asroot -i )"
 
     rm -r ${LARCHBUILD}/tmp/larch
 
@@ -363,7 +365,7 @@ buildiso ()
         if [ -n "${PROFILE}" ] && [ -d ${PROFILE}/cd-root/isolinux ]; then
             cp -rf ${PROFILE}/cd-root/isolinux ${CDDATA} 2>/dev/null
         fi
-        cp ${LARCHDATA}/syslinux/isolinux.bin ${CDDATA}/isolinux
+        cp /usr/lib/syslinux/isolinux.bin ${CDDATA}/isolinux
 
         if [ -n "${USB}" ]; then
             usbboot ${CDDATA}

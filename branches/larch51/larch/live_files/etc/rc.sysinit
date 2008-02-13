@@ -4,7 +4,7 @@
 #
 # based on the version in 'initscripts-2007.11-2'
 #
-# 2008.01.01
+# 2008.02.13
 
 . /etc/rc.conf
 . /etc/rc.d/functions
@@ -238,7 +238,7 @@ stat_done
 
 if [ -z "$( cat /etc/fstab | grep "^#KEEP" )" ]; then
     stat_busy "Generating fresh /etc/fstab"
-    /opt/larch/bin/gen_fstab -l
+    /opt/larch-live/run/gen_fstab -l
     stat_done
 fi
 
