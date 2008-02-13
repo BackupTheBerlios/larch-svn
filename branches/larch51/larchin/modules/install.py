@@ -23,7 +23,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.12
+# 2008.02.13
 
 from subprocess import Popen, PIPE, STDOUT
 import os, shutil
@@ -422,7 +422,12 @@ class installClass:
         self.xcall("copydir %s" % dir, callback=cb)
 
     def install_tidy(self):
+        """Complete the copy part of the installation, creating missing
+        items, etc.
+        """
         self.xcall("larch-tidy")
+        # And remove packages exclusively intended for the live system.
+        self.xcall("pacrm larch-live larchin")
 
     def get_size(self):
         """Get some estimate of the current size of the system being

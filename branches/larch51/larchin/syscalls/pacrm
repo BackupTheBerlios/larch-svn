@@ -1,0 +1,8 @@
+#! /bin/sh
+# pacrm  - Uninstall a list of packages from the newly installed system
+
+INSTALL=/tmp/install
+
+for p in $@; do
+    pacman -r ${INSTALL} -R ${p} 2>/dev/null
+
