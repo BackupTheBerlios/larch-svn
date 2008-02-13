@@ -1,0 +1,14 @@
+2008.02.12
+Reorganization of directory layout
+
+2008.01.13
+Adjustments for changes in pacman-3.1, version 5.0.8
+
+2008.01.02
+Fixes for merging when file paths contain spaces (merge_overlay), version 5.0.7
+
+2008.01.02
+larch-5 (with simplified union structure, no CD/DVD session save) available
+for testing.
+
+Initial test release, version 5.0.6.

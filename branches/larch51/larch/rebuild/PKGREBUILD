@@ -1,0 +1,33 @@
+# Maintainer: Michael Towers <gradgrind[at]online[dot]de>
+# This rebuilds a larch package from an unpacked/installed larch package
+# The version number is filled in by the initial PKGBUILD
+pkgname=larch
+pkgver="?"
+pkgrel="?"
+
+pkgdesc="Scripts for generating live Archlinux CDs and USB-sticks"
+url="http://larch.berlios.de"
+depends=()
+arch=(i686 x86_64)
+license=('GPL')
+
+build() {
+  mkdir -p ${startdir}/pkg/opt/larch
+  cp -dr ${startdir}/../run ${startdir}/pkg/opt/larch
+  cp -dr ${startdir}/../cd-root ${startdir}/pkg/opt/larch
+  cp -dr ${startdir}/../docs ${startdir}/pkg/opt/larch
+  cp -dr ${startdir}/../initcpio_files ${startdir}/pkg/opt/larch
+  cp -dr ${startdir}/../live_files ${startdir}/pkg/opt/larch
+  cp -dr ${startdir}/../profile0 ${startdir}/pkg/opt/larch
+  cp ${startdir}/../buildlive ${startdir}/pkg/opt/larch
+
+  cp -dr ${startdir}/../klibc ${startdir}/pkg/opt/larch
+
+  cp -dr ${startdir}/../larch-live ${startdir}/pkg/opt/larch
+  cp -dr ${startdir}/../larchin ${startdir}/pkg/opt/larch
+
+  mkdir ${startdir}/pkg/opt/larch/rebuild
+  cp -dr ${startdir}/etc ${startdir}/pkg/opt/larch/rebuild
+  cp ${startdir}/PKGREBUILD ${startdir}/pkg/opt/larch/rebuild
+  cp -dr ${startdir}/etc ${startdir}/pkg
+}

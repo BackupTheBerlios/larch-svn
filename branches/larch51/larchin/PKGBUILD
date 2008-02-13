@@ -1,0 +1,18 @@
+# Maintainer: Michael Towers <gradgrind[at]online[dot]de>
+pkgname=larchin
+pkgver=5.1.0
+pkgrel=1
+
+pkgdesc="larch: hard disk installer with gui"
+url="http://larch.berlios.de"
+depends=()
+arch=(i686 x86_64)
+license=('GPL')
+
+build() {
+  mkdir -p ${startdir}/pkg/opt/larchin
+  cp -dr ${startdir}/run ${startdir}/pkg/opt/larchin
+  cp -dr ${startdir}/modules ${startdir}/pkg/opt/larchin
+  cp -dr ${startdir}/syscalls ${startdir}/pkg/opt/larchin
+  cp -dr ${startdir}/etc ${startdir}/pkg
+}

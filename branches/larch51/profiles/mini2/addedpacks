@@ -1,0 +1,34 @@
+# These are needed to build a live CD
+squashfs-tools
+lzop
+
+# You need a kernel. At the moment the only standard Arch kernel
+# which works (because of needing 'squashfs' and 'unionfs') is 'beyond'.
+#kernel26 is now in 'base'
+aufs
+
+# To eject a cd
+eject
+
+# If using 'abs':
+#cvsup
+
+# Useful for use as installer, etc.
+# dialog, diffutils now in base
+# mdadm, lvm2 now in base
+ntfsprogs
+parted
+#ddcxinfo-knoppix
+#hwd
+
+# generally useful tools which don't require X
+openssh
+dosfstools
+lynx
+mc-utf8
+unzip
+zip
+
+lsof
+#cdrkit
+#dvd+rw-tools
