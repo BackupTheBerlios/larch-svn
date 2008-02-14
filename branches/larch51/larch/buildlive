@@ -301,11 +301,7 @@ mklive ()
     if [ -f ${LARCHBUILD}/tmp/overlay/etc/rc.conf ]; then
         hosts=${LARCHBUILD}/tmp/overlay/etc/hosts
         if ! [ -f ${LARCHBUILD}/tmp/overlay/etc/hosts ]; then
-            if [ -n "${INSTLDIR}" ]; then
-                hosts=${INSTLDIR}/etc/hosts
-            else
-                cp ${INSTLDIR}/etc/hosts ${LARCHBUILD}/tmp/overlay/etc
-            fi
+            cp ${INSTLDIR}/etc/hosts ${LARCHBUILD}/tmp/overlay/etc
         fi
         (   . ${LARCHBUILD}/tmp/overlay/etc/rc.conf;
             lh="127.0.0.1       localhost.localdomain   localhost       ";

@@ -134,8 +134,10 @@ umount ${stick}
 
 echo "// Running syslinux"
 mount --bind /dev ${AINSTALL}/dev
+mount --bind /proc ${AINSTALL}/proc
 chroot ${AINSTALL} syslinux ${device}
 umount ${AINSTALL}/dev
+umount ${AINSTALL}/proc
 
 echo "//"
 echo "// Done!"
