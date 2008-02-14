@@ -19,14 +19,7 @@ ntfsprogs
 parted
 #ddcxinfo-knoppix
 #hwd
-
-# generally useful tools which don't require X
-openssh
-dosfstools
-lynx
-mc-utf8
-unzip
-zip
+sudo
 
 lsof
 cdrkit
@@ -103,7 +96,6 @@ xf86-video-vmware
 xf86-video-voodoo
 
 # X apps
-gparted
 desktop-file-utils
 gimp
 wicd
@@ -113,5 +105,8 @@ thunderbird
 
 # xfce
 xfce4
+thunar-volman
 
 geany
+
+ttf-dejavu

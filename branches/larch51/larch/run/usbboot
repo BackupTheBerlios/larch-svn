@@ -21,30 +21,27 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.12
+# 2008.02.14
 
 APP="$( basename $0 )"
-# Get path to larch base directory, via the location of this script
-FULLPATH="$( readlink -f $0 )"
-SCRIPTDIR="$( dirname ${FULLPATH} )"
-if ! which ${APP} &>/dev/null; then
-    PATH=${SCRIPTDIR}:${PATH}
-fi
 
 usage () {
     echo
     echo "Usage:"
-    echo "  ${APP} <cd image directory>"
+    echo "  ${APP} [<Arch installation root directory>]"
     echo
-    echo "   Prepare a bootable USB-stick from a larch cd image."
-    echo
-    echo "   You can use a larch cd by mounting it and passing"
-    echo "   the mount point as argument to ${APP}"
-    echo
+    echo "   Prepare a bootable USB-stick from a larch build."
+    echo "   If no Arch directory is given, '/' is assumed."
     exit 1
 }
 
-CDDATA="$1"
+if [ -n "$1" ]; then
+    AINSTALL="$( readlink -f $1 )"
+else
+    AINSTALL=""
+fi
+CDDATA=${AINSTALL}/.larch/cd
+
 if [ ! -f ${CDDATA}/system.sqf ]; then
     echo "ERROR: ${CDDATA} does not contain larch cd data"
     usage
@@ -79,13 +76,14 @@ if [ -z "`echo ${ans} | grep '^ *[yY]'`" ]; then exit 2; fi
 echo "//"
 echo "// Enter the number of the partition you wish to use (0 to quit):"
 
-:> /tmp/devices
+devices=/tmp/devices$$
+:> ${devices}
 i=0
 sfdisk -d | grep "/dev/sd[a-z][1-4] " | grep -v "Id= [05]" | \
         sed "s|\(.*\):.*size=\( *[0-9]*\).*|\1 \2|" | while read device sectors; do
 
     i=$(( ${i} + 1 ))
-    echo "${device}" >>/tmp/devices
+    echo "${device}" >>${devices}
     echo "// ${i}: ${device} $(( ${sectors} / 2048 )) MiB"
 done
 
@@ -96,8 +94,10 @@ while true; do
     { while read device; do
         i=$(( ${i} + 1 ))
         if [ "${d}" -eq "${i}" ]; then break 2; fi
-    done } </tmp/devices
+    done } <${devices}
 done
+
+rm ${devices}
 
 echo "//"
 read -p "// \"${device}\" will now be prepared. Continue? [y/N]: " ans
@@ -115,7 +115,7 @@ dd if=/dev/zero of=${device} bs=512 count=1
 mkfs.vfat ${device}
 
 echo "// Copying the boot sector"
-dd if=/usr/lib/syslinux/mbr.bin of=${dev}
+dd if=${AINSTALL}/usr/lib/syslinux/mbr.bin of=${dev}
 
 echo "// Copying the files"
 stick=/tmp/mnt
@@ -133,7 +133,9 @@ rm -f ${stick}/syslinux/isolinux*
 umount ${stick}
 
 echo "// Running syslinux"
-syslinux ${device}
+mount --bind /dev ${AINSTALL}/dev
+chroot ${AINSTALL} syslinux ${device}
+umount ${AINSTALL}/dev
 
 echo "//"
 echo "// Done!"

@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.13
+# 2008.02.14
 
 # Location for the CD image
 CDDATA="${LARCHBUILD}/cd"
@@ -297,6 +297,22 @@ mklive ()
             done }
     fi
 
+    # Add hostname to /etc/hosts localhost, if making new rc.conf
+    if [ -f ${LARCHBUILD}/tmp/overlay/etc/rc.conf ]; then
+        hosts=${LARCHBUILD}/tmp/overlay/etc/hosts
+        if ! [ -f ${LARCHBUILD}/tmp/overlay/etc/hosts ]; then
+            if [ -n "${INSTLDIR}" ]; then
+                hosts=${INSTLDIR}/etc/hosts
+            else
+                cp ${INSTLDIR}/etc/hosts ${LARCHBUILD}/tmp/overlay/etc
+            fi
+        fi
+        (   . ${LARCHBUILD}/tmp/overlay/etc/rc.conf;
+            lh="127.0.0.1       localhost.localdomain   localhost       ";
+            sed -i "s|^127\.0\.0\.1.*|${lh}${HOSTNAME}|" ${hosts}
+        )
+    fi
+
     for d in $( ls ${INSTLDIR}/mnt ); do
         if [ -d ${INSTLDIR}/mnt/${d} ]; then
             mkdir -p ${LARCHBUILD}/tmp/overlay/mnt/${d}
@@ -353,7 +369,7 @@ buildiso ()
         fi
 
         if [ -n "${USB}" ]; then
-            usbboot_grub -c ${INSTLDIR} ${CDDATA}
+            usbboot_grub ${INSTLDIR}
         else
             echo "// creating GRUB-booting LiveCD ISO image..."
             mkiso "-b boot/grub/stage2_eltorito"
@@ -365,10 +381,10 @@ buildiso ()
         if [ -n "${PROFILE}" ] && [ -d ${PROFILE}/cd-root/isolinux ]; then
             cp -rf ${PROFILE}/cd-root/isolinux ${CDDATA} 2>/dev/null
         fi
-        cp /usr/lib/syslinux/isolinux.bin ${CDDATA}/isolinux
+        cp ${INSTLDIR}/usr/lib/syslinux/isolinux.bin ${CDDATA}/isolinux
 
         if [ -n "${USB}" ]; then
-            usbboot ${CDDATA}
+            usbboot ${INSTLDIR}
         else
             echo "// creating isolinux-booting LiveCD ISO image..."
             mkiso "-b isolinux/isolinux.bin -c isolinux/isolinux.boot"

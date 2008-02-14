@@ -21,51 +21,35 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.12
+# 2008.02.14
 
 APP="$( basename $0 )"
-# Get path to larch base directory, via the location of this script
-FULLPATH="$( readlink -f $0 )"
-SCRIPTDIR="$( dirname ${FULLPATH} )"
-if ! which ${APP} &>/dev/null; then
-    PATH=${SCRIPTDIR}:${PATH}
-fi
 
 usage () {
     echo
     echo "Usage:"
-    echo "  ${APP} [-c <chroot dir>] <cd image directory>"
+    echo "  ${APP} [<Arch installation root directory>]"
     echo
-    echo "   Prepare a bootable USB-stick from a larch cd image."
-    echo
-    echo "   You can use a larch cd by mounting it and passing"
-    echo "   the mount point as argument to ${APP}"
-    echo
-    echo "         -c  This option is used by mklarch. It allows"
-    echo "             use of a grub installed somewhere else ..."
+    echo "   Prepare a bootable USB-stick from a larch build."
+    echo "   If no Arch directory is given, '/' is assumed."
     exit 1
 }
 
-GRUBCHROOT=""
-while getopts ":c:" Option
-do
-  case ${Option} in
-    c ) GRUBCHROOT="${OPTARG}" ;;
-    * ) usage ;;
-  esac
-done
-shift $((${OPTIND} - 1))
-if [ -n "${GRUBCHROOT}" ]; then
-    if [ ! -x ${GRUBCHROOT}/sbin/grub ]; then
-        echo "ERROR: ${GRUBCHROOT}/sbin/grub not found"
+if [ -n "$1" ]; then
+    AINSTALL="$( readlink -f $1 )"
+    if [ ! -x ${AINSTALL}/sbin/grub ]; then
+        echo "ERROR: ${AINSTALL}/sbin/grub not found"
         exit 1
     fi
-elif ! which grub &>/dev/null; then
-    echo "ERROR: grub not found"
-    exit 1
+else
+    AINSTALL=""
+    if ! which grub &>/dev/null; then
+        echo "ERROR: grub not found"
+        exit 1
+    fi
 fi
+CDDATA=${AINSTALL}/.larch/cd
 
-CDDATA="$1"
 if [ ! -f ${CDDATA}/system.sqf ]; then
     echo "ERROR: ${CDDATA} does not contain larch cd data"
     usage
@@ -101,13 +85,14 @@ fi
 echo "//"
 echo "// Enter the number of the partition you wish to use (0 to quit):"
 
-:> /tmp/devices
+devices=/tmp/devices$$
+:> ${devices}
 i=0
 sfdisk -d | grep "/dev/sd[a-z][1-4] " | grep -v "Id= [05]" | \
         sed "s|\(.*\):.*size=\( *[0-9]*\).*|\1 \2|" | while read device sectors; do
 
     i=$(( ${i} + 1 ))
-    echo "${device}" >>/tmp/devices
+    echo "${device}" >>${devices}
     echo "// ${i}: ${device} $(( ${sectors} / 2048 )) MiB"
 done
 
@@ -118,8 +103,10 @@ while true; do
     { while read device; do
         i=$(( ${i} + 1 ))
         if [ "${d}" -eq "${i}" ]; then break 2; fi
-    done } </tmp/devices
+    done } <${devices}
 done
+
+rm ${devices}
 
 echo "//"
 read -p "// \"${device}\" will now be prepared. Continue? [y/N]: " ans
@@ -153,26 +140,26 @@ grubdevice ()
 #(fd0)   /dev/fd0
 #(hd0)   /dev/hda
 #(hd1)   /dev/sda
-gdev="$( cat ${GRUBCHROOT}${dmap} | grep "${dev}" | cut -f1  | tr -d "()" )"
+gdev="$( cat ${AINSTALL}${dmap} | grep "${dev}" | cut -f1  | tr -d "()" )"
 gpart=$(( ${part} - 1 ))
 echo "// Installing GRUB to (${gdev}), root (${gdev},${gpart})"
 }
 
 dmap=/tmp/device.map
-rm -f ${GRUBCHROOT}${dmap}
-if [ -n "${GRUBCHROOT}" ]; then
+rm -f ${AINSTALL}${dmap}
+if [ -n "${AINSTALL}" ]; then
     # First try to get a device mapping
-    mount --bind /dev ${GRUBCHROOT}/dev
-    echo "quit" | chroot ${GRUBCHROOT} grub --no-floppy --device-map=${dmap} --batch
+    mount --bind /dev ${AINSTALL}/dev
+    echo "quit" | chroot ${AINSTALL} grub --no-floppy --device-map=${dmap} --batch
     grubdevice
     # Now actually install grub
     # As far as I can tell, the extra options to grub are not needed here
-    chroot ${GRUBCHROOT} grub --batch <<EOT
+    chroot ${AINSTALL} grub --batch <<EOT
 root (${gdev},${gpart})
 setup (${gdev})
 quit
 EOT
-    umount ${GRUBCHROOT}/dev
+    umount ${AINSTALL}/dev
 else
     # First try to get a device mapping
     echo "quit" | grub --no-floppy --device-map=${dmap} --batch
@@ -185,7 +172,7 @@ setup (${gdev})
 quit
 EOT
 fi
-rm -f ${GRUBCHROOT}${dmap}
+rm -f ${AINSTALL}${dmap}
 
 echo "//"
 echo "// Done!"
