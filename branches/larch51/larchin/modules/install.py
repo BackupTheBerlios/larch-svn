@@ -23,10 +23,10 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.13
+# 2008.02.14
 
 from subprocess import Popen, PIPE, STDOUT
-import os, shutil
+import os, shutil, signal
 import re
 
 from partition import Partition
@@ -56,6 +56,9 @@ class installClass:
         self.frugal = False
 
     def tidyup(self):
+        if self.process:
+            os.kill(self.process.pid, signal.SIGKILL)
+            self.process.wait()
         tu = self.xcall("tidyup")
         if tu:
             popupError(tu, _("Tidying up failed,"
@@ -105,23 +108,24 @@ class installClass:
             else:
                 term += " -e "
 
-            process = Popen(term + cmd, shell=True)
-            while (process.poll() == None):
+            self.process = Popen(term + cmd, shell=True)
+            while (self.process.poll() == None):
                 mainWindow.eventloop(0.5)
-
+            self.process = None
 
     def xcall(self, cmd, opt="", callback=None):
         if self.host:
-            process = self.xcall_net(cmd, opt)
+            self.process = self.xcall_net(cmd, opt)
         else:
-            process = self.xcall_local(cmd)
+            self.process = self.xcall_local(cmd)
 
-        while (process.poll() == None):
+        while (self.process.poll() == None):
             if callback:
                 callback()
             mainWindow.eventloop(0.5)
 
-        op = process.stdout.read()
+        op = self.process.stdout.read()
+        self.process = None
         if op.endswith("^OK^"):
             self.okop = op
             return ""

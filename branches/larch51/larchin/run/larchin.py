@@ -21,7 +21,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.12
+# 2008.02.14
 
 import os, sys
 
@@ -78,4 +78,3 @@ __builtin__.install = installClass(target, transfer)
 initialized = True
 mainWindow.goto('welcome')
 mainWindow.mainLoop()
-install.tidyup()

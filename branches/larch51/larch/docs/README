@@ -1,5 +1,6 @@
-larch - scripts for building a highly customizable Archlinux live CD/DVD/USB-stick
-      - also suitable for installing Archlinux to a hard disk
+larch - scripts for building a highly customizable Arch Linux live CD/DVD
+      - or USB-stick
+      - also suitable for installing Arch Linux to a hard disk
 
 Author: Michael Towers (gradgrind at online dot de)
 Licence: GPL (see COPYING, LICENCE)
@@ -29,3 +30,8 @@ The key components are:
     larchify - Build a larch live system from an existing Arch Linux
            installation (including from one made by 'mklarch').
 
+Logos are derived from the Arch Linux logos, and are released under a
+Creative Commons Licence, see 'http://www.archlinux.org/art'.
+
+The larch project uses Arch Linux as its basis, but is not an official
+Arch Linux ('http://www.archlinux.org') project.

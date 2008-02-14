@@ -21,7 +21,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.12
+# 2008.02.14
 
 # Add a Quit button?
 
@@ -77,6 +77,7 @@ class Larchin(gtk.Window):
         gtk.main()
 
     def exit(self, widget=None, data=None):
+        install.tidyup()
         gtk.main_quit()
 
     def enable_forward(self, on):
