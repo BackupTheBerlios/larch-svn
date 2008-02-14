@@ -15,4 +15,5 @@ build() {
   cp -dr ${startdir}/modules ${startdir}/pkg/opt/larchin
   cp -dr ${startdir}/syscalls ${startdir}/pkg/opt/larchin
   cp -dr ${startdir}/etc ${startdir}/pkg
+  cp ${startdir}/larchin1.jpg ${startdir}/pkg/opt/larchin
 }
