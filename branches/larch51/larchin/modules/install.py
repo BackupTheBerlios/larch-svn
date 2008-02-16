@@ -23,7 +23,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.14
+# 2008.02.16
 
 from subprocess import Popen, PIPE, STDOUT
 import os, shutil, signal
@@ -44,6 +44,7 @@ class installClass:
                     (basePath, self.host), shell=True,
                     stdout=PIPE).communicate()[0]   # copy larchin over
 
+        self.processes = []
         assert (self.xcall("init") == ""), (
                 "Couldn't initialize installation system")
 
@@ -56,9 +57,9 @@ class installClass:
         self.frugal = False
 
     def tidyup(self):
-        if self.process:
-            os.kill(self.process.pid, signal.SIGKILL)
-            self.process.wait()
+        for p in self.processes:
+            os.kill(p.pid, signal.SIGKILL)
+            p.wait()
         tu = self.xcall("tidyup")
         if tu:
             popupError(tu, _("Tidying up failed,"
@@ -108,24 +109,26 @@ class installClass:
             else:
                 term += " -e "
 
-            self.process = Popen(term + cmd, shell=True)
-            while (self.process.poll() == None):
+            process = Popen(term + cmd, shell=True)
+            self.processes.append(process)
+            while (process.poll() == None):
                 mainWindow.eventloop(0.5)
-            self.process = None
+            del(self.processes[-1])
 
     def xcall(self, cmd, opt="", callback=None):
         if self.host:
-            self.process = self.xcall_net(cmd, opt)
+            process = self.xcall_net(cmd, opt)
         else:
-            self.process = self.xcall_local(cmd)
+            process = self.xcall_local(cmd)
+        self.processes.append(process)
 
-        while (self.process.poll() == None):
+        while (process.poll() == None):
             if callback:
                 callback()
             mainWindow.eventloop(0.5)
 
-        op = self.process.stdout.read()
-        self.process = None
+        op = process.stdout.read()
+        del(self.processes[-1])
         if op.endswith("^OK^"):
             self.okop = op
             return ""

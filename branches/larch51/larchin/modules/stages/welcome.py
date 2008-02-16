@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.12
+# 2008.02.15
 
 class Welcome(Stage):
     def stageTitle(self):
@@ -42,7 +42,8 @@ class Welcome(Stage):
         return ""
 
     def forward(self):
-        larchdev = install.larchdev()
+        larchdev = install.larchdev().rstrip('0123456789')
+        larchcount = 0
         devs = []
         ld = install.listDevices()
         # Note that if one of these has mounted partitions it will not be
@@ -56,6 +57,8 @@ class Welcome(Stage):
                 # Mark devices which have mounted partitions
                 for m in mounts:
                     if m.startswith(d):
+                        if (d == larchdev):
+                            larchcount = 1
                         d += "-"
                         count -= 1
                         break
@@ -68,7 +71,9 @@ class Welcome(Stage):
             install.tidyup()
         nds = len(devs)         # Total number of devices
         mds = nds - count       # Number of devices with mounted partitions
-        if mds:
+        mds2 = mds - larchcount # Number excluding the larch boot device
+
+        if mds2:
             popupMessage(_("%d devices were found with mounted partitions."
                     " These devices are not available for automatic"
                     " partitioning, you must partition them manually.")

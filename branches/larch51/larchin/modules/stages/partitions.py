@@ -19,7 +19,9 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.05
+# 2008.02.16
+
+# I think the logic of this stage is probably too complicated ...
 
 class Partitions(Stage):
     def stageTitle(self):
@@ -42,12 +44,11 @@ class Partitions(Stage):
         all the setting up of the data is done in 'reinit'.
         """
         Stage.__init__(self)
-        from partitions_gui import NtfsWidget, SwapWidget, HomeWidget, RootWidget
+        from partitions_gui import NtfsWidget, SwapWidget, HomeWidget
+        from partitions_gui import TotalWidget, RootWidget
 
         # Info: total drive size
-        self.totalsize = self.addLabel("", 'right')
-        self.homesize = 0.0
-        self.home_on = False
+        self.totalsize = self.addWidget(TotalWidget())
 
         # NTFS resizing
         self.ntfs = self.addWidget(NtfsWidget(self))
@@ -59,7 +60,7 @@ class Partitions(Stage):
         self.home = self.addWidget(HomeWidget(self))
 
         # root size
-        self.root = self.addWidget(RootWidget(self))
+        self.root = self.addWidget(RootWidget())
 
         # Manual partitioning
         self.expert = self.addCheckButton(_("'Expert' (manual) partitioning"),
@@ -69,21 +70,25 @@ class Partitions(Stage):
 
     def reinit(self):
         self.ntfsFlag = False   # Used for flagging update requests
+
         install.clearParts()    # Clear list of assigned partitions
 
-        dev = install.selectedDevice()
+        self.dev = install.selectedDevice()
         # Info on drive and partitions (dev="/dev/sda", etc.):
-        install.getDeviceInfo(dev)
+        install.getDeviceInfo(self.dev)
         self.dsize = float(install.dsize) / 1000
-        self.setLabel(self.totalsize, _("Total capacity of drive %s:"
-                " %6.1f GB  ") % (dev, self.dsize))
+        self.totalsize.set(self.dev, self.dsize)
 
-        self.ntfs.enable(self.keep1init(dev))
+        self.request_update(self.start)
 
-        self.swap.set_on(True)
-        self.home.set_on(True)
-        self.setCheck(self.expert, True)
+    def start(self):
+        self.ntfs.enable(self.keep1init(self.dev))
+
+        self.swap.enable(True)
         self.setCheck(self.expert, False)
+        self.ntfs_changed()
+        return self.stop_callback()
+
 
     def keep1init(self, dev):
         """Only offer to keep first partition if:
@@ -128,37 +133,25 @@ class Partitions(Stage):
             val = valmin
         self.ntfs.set_shrinkadjust(lower=valmin, upper=valmax, value=val)
 
-        # Activate shrinking by default if less than half the drive is free
-        self.ntfs.set_shrink(self.p1end > (self.dsize/2))
+        # Activate shrinking by default if self.forceshrink is set or
+        # less than half the drive is free
+        self.ntfs.set_shrink(self.forceshrink or (self.p1end > (self.dsize/2)))
+
+        # Enable retention of the first partition by default
+        self.ntfs.set_keep1(True)
         return True
 
     def keep1_cb(self, on):
         enshrink = (on and not self.noshrink)
-        self.ntfs.enable_shrinkframe(enshrink)
-        if enshrink:
-            if self.ntfs.get_shrink_on():
-                self.ntfssize = self.ntfs.get_shrinkadjust()
-                if self.forceshrink:
-                    self.ntfs.enable_shrinkswitch(False)
-            else:
-                self.ntfssize = self.p1end
-                self.ntfs.enable_shrinkadjust(False)
-        elif on:
-            self.ntfssize = self.p1end
-        else:
-            self.ntfssize = 0.0
+        self.ntfs.enable_shrink(enshrink)
+        if enshrink and self.ntfs.shrinkstate:
+            self.ntfs.enable_shrinkswitch(not self.forceshrink)
         self.ntfs_changed()
 
     def shrink_cb(self, on):
-        self.ntfs.enable_shrinkadjust(on)
-        if on:
-            self.ntfssize = self.ntfs.get_shrinkadjust()
-        else:
-            self.ntfssize = self.p1end
         self.ntfs_changed()
 
     def ntfssize_cb(self, size):
-        self.ntfssize = size
         self.ntfs_changed()
 
     def ntfs_changed(self):
@@ -168,40 +161,39 @@ class Partitions(Stage):
             self.ntfsFlag = True
             self.request_update(self.recalculate)
 
-    def swapsize_cb(self, size):
-        self.swapsize = size
+    def swapsize_cb(self):
         self.adjustroot()
 
     def swap_cb(self, on):
-        self.swapsize = self.swap.get_value()
-        self.swap.enable_adjust(on)
         self.adjustroot()
 
-    def homesize_cb(self, size):
-        self.homesize = size
+    def homesize_cb(self):
         self.adjustroot()
 
     def home_cb(self, on):
-        self.homesize = self.home.get_value()
-        self.home.enable_adjust(on)
         self.adjustroot()
 
     def expert_cb(self, on):
         self.home.enable((not on) and self.home_on)
         self.swap.enable(not on)
+        self.adjustroot()
 
     def adjustroot(self):
         self.rootsize = self.dsize
-        if self.ntfs.isenabled():
-            self.rootsize -= self.ntfssize
-        if (self.swap.isenabled() and self.swap.get_on()):
-            self.swap_mb = int(self.swapsize * 1000)
-            self.rootsize -= self.swapsize
+        if (self.ntfs.is_enabled and self.ntfs.keep1state):
+            if self.ntfs.shrinkstate:
+                self.rootsize -= self.ntfs.size
+            else:
+                self.rootsize -= self.p1end
+
+        if (self.swap.is_enabled and self.swap.swapstate):
+            self.swap_mb = int(self.swap.size * 1000)
+            self.rootsize -= self.swap.size
         else:
             self.swap_mb = 0
-        if (self.home.isenabled() and self.home.get_on()):
-            self.home_mb = int(self.homesize * 1000)
-            self.rootsize -= self.homesize
+        if (self.home.is_enabled and self.home.homestate):
+            self.home_mb = int(self.home.size * 1000)
+            self.rootsize -= self.home.size
         else:
             self.home_mb = 0
         self.root.set_value(self.rootsize)
@@ -213,19 +205,22 @@ class Partitions(Stage):
         self.ntfsFlag = False
 
         MINSPLITSIZE = 20.0    # GB
-        HOMESIZE = 50          # % of total
         SWAPSIZE = 5           # % of total
         SWAPMAX  = 2.0         # GB
         SWAPMAXSIZE = 10       # % of total
         SWAPDEF = 1.0          # GB
-        freesize = self.dsize - self.ntfssize
+        freesize = self.dsize
+        if (self.ntfs.is_enabled and self.ntfs.keep1state):
+            if self.ntfs.shrinkstate:
+                freesize -= self.ntfs.size
+            else:
+                freesize -= self.p1end
 
         self.home_on = (freesize >= MINSPLITSIZE)
         home_upper = freesize - SWAPMAX - 5.0
-        home_value = freesize * HOMESIZE / 100
+        home_value = home_upper - 2.0
         self.home.set_adjust(upper=home_upper, value=home_value)
-        if not self.getCheck(self.expert):
-            self.home.enable(self.home_on)
+        self.home.enable(self.home_on and (not self.getCheck(self.expert)))
 
         swap_upper = freesize * SWAPMAXSIZE / 100
         if (swap_upper > SWAPMAX):
@@ -242,7 +237,7 @@ class Partitions(Stage):
         """Shrink NTFS filesystem on first partition.
         """
         # convert size to MB
-        newsize = int(self.ntfssize * 1000)
+        newsize = int(self.ntfs.size * 1000)
         message = install.doNTFSshrink(newsize)
         if message:
             # resize failed
@@ -253,47 +248,39 @@ class Partitions(Stage):
         return True
 
     def forward(self):
-        if self.expert.get_active():
-            if (self.ntfs.get_keep1_on() and self.ntfs.get_shrink_on()):
-                if not (popupWarning(_("You are about to shrink the"
-                        " first partition. Make sure you have backed up"
-                        " any important data.\n\nContinue?"))
-                        and self.ntfsresize()):
-                    return
+        if (self.ntfs.is_enabled and self.ntfs.keep1state
+                and self.ntfs.shrinkstate):
+            if not popupWarning(_("You are about to shrink the"
+                    " first partition. Make sure you have backed up"
+                    " any important data.\n\nContinue?")):
+                return
+            if not self.ntfsresize():
+                self.reinit()
+                return
+
+        if self.getCheck(self.expert):
             mainWindow.goto('manualPart')
             return
 
         # Set up the installation partitions automatically.
-        if self.ntfs.get_keep1_on():
-            text = _(" + Wipe everything except the first partition")
-            if self.ntfs.get_shrink_on():
-                text += _("\n + Shrink the first partition")
+        if (self.ntfs.is_enabled and self.ntfs.keep1state):
+            text = _(" * Wipe everything except the first partition")
+            # allocate partitions from 2nd
+            startmark = install.p1end       # altered by ntfsresize
+            partno = 2
         else:
-            text = _(" + Completely wipe the drive")
+            text = _(" * Completely wipe the drive")
+            startmark = 0
+            partno = 1
 
         dev = install.selectedDevice()
-        if not popupWarning(_("You are about to perform destructive"
-                " operations on the data on your disk drive (%s):\n%s\n\n"
+        if not popupWarning(_("You are about to perform a destructive"
+                " operation on the data on your disk drive (%s):\n%s\n\n"
                 "This is a risky business, so don't proceed if"
                 " you have not backed up your important data.\n\n"
                 "Continue?") % (dev, text)):
             self.reinit()
             return
-
-        # If NTFS resizing is to be done, do it now.
-        if self.ntfs.get_keep1_on():
-            # Keep existing os on 1st partition
-
-            if (self.ntfs.get_shrink_on() and not self.ntfsresize()):
-                return
-
-            # allocate partitions from 2nd
-            startmark = install.p1end
-            partno = 2
-
-        else:
-            startmark = 0
-            partno = 1
 
         endmark = install.dsize #-1?
 
