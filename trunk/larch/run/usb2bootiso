@@ -7,8 +7,10 @@
 # use on computers which can't boot from the USB-stick.
 
 # $1 is the base of the 'livified' Arch installation (larchroot)
+# If no path is given, a directory (or symlink) 'larchroot' in the
+# working directory will be used.
 #===================================================================
-# 20080214
+# 2008.02.17
 
 APP="$( basename $0 )"
 # Get path to larch base directory, via the location of this script
@@ -32,12 +34,20 @@ mkiso ()
     fi
 }
 
-if [ -z "$1" ] || [ ! -d $1 ]; then
-    echo "Must pass Arch root directory as argument"
-    exit 1
+if [ -z "$1" ]; then
+    if [ -d larchroot ]; then
+        MP="$( readlink -f larchroot )"
+    else
+        echo "Must pass Arch root directory as argument"
+        exit 1
+    fi
+else
+    if ! [ -d $1 ]; then
+        echo "$1 is not a directory"
+        exit 1
+    fi
+    MP="$( readlink -f $1 )"
 fi
-
-MP="$( readlink -f $1 )"
 
 CDDATA=$( pwd )/bootcd
 rm -rf ${CDDATA}

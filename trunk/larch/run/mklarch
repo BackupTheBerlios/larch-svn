@@ -231,7 +231,7 @@ if [ $? -ne 0 ]; then
     echo "WARNING: Couldn't create 'larchroot' symlink"
 fi
 
-echo "// ${APP} finished"
+echo "// ${APP} finished installation of Arch system"
 echo "//"
 if [ -z "${NOLIVE}" ]; then
     # Get live CD build functions
