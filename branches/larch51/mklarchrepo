@@ -46,8 +46,10 @@ scriptdir="$( dirname ${fullpath} )"
 # makepkg needs '--asroot' if used by root
 if [ $UID -ne 0 ]; then
     asroot=""
+    fkroot="fakeroot"
 else
     asroot="--asroot"
+    fkroot=""
 fi
 
 mkpkg ()
@@ -73,6 +75,6 @@ for ad in $( ls ${scriptdir}/abs ); do
     fi
 done
 
-${scriptdir}/larch/run/gen_repo ${repodir} larch5
+${fkroot} ${scriptdir}/larch/run/gen_repo ${repodir} larch5
 
 echo "Repository at ${repodir} created/updated."
