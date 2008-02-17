@@ -183,7 +183,7 @@ if ! grep '^[larch5]' pacman.conf &>/dev/null; then
         if [ "${sysarch}" != "x86_64" ]; then
             sysarch="i686"
         fi
-        larch5path="larch5path/${sysarch}"
+        larch5path="${larch5path}/${sysarch}"
     fi
     sed "/\[testing\]/ i \
 [larch5]\n\
