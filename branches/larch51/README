@@ -31,10 +31,13 @@ Building:
 Export from svn:
    svn export svn://svn.berlios.de/larch/branches/larch51
 
-Then go to the 'misc' directory and run 'mklarchpak'. This will create a
-larch package, which can be then unpacked for use 'in-place' by the
-'larch-setup' script. Or else the package may be installed with
-'pacman -U'.
+Then run 'mklarchrepo'. This will create a repository of the larch
+packages, at larchrepo.
+
+Copy this directory to an empty working directory (or make a symlink
+from 'larchrepo' in the empty directory to the repository). Then copy
+'larch-setup' to the working directory and run it, or else install the
+larch package with 'pacman -U'.
 
 
 tar / lzo:
