@@ -4,7 +4,7 @@
 #
 # Using pygtk / glade / libglade to build GUI.
 #
-# Copyright (C) 2006-2007  Michael Towers
+# Copyright (C) 2006-2008  Michael Towers
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #-------------------------------------------------------------------
-# Version 1.2 // 27th March 2007
+# Version 1.3 // 17th February 2008
 
 # Set this for your system (probably one of these is OK)
 base_lst = "/usr/share/X11/xkb/rules/base.lst"
@@ -58,6 +58,9 @@ class gui:
                 "on_cbVariant_changed": self.variant
               }
         self.wTree.signal_autoconnect(dic)
+
+        # To prevent error message
+        self.cbVariant = None
 
         # Set up comboboxes
         # Model
@@ -135,9 +138,12 @@ class gui:
             self.iLayout = i
             self.i_xkbset.layout = self.i_xkbset.layouts[i].split(None , 1)[0]
             self.showVariants ()
-	    self.variant(None)
+        self.variant(None)
 
     def variant (self, widget):
+        if not self.cbVariant:
+            # To prevent error message
+            return
         i = self.cbVariant.get_active()
         if (i != self.iVariant) or (widget == None):
             self.iVariant = i
@@ -178,7 +184,7 @@ class xkbset:
             if not line: continue
             if line == "! variant": break
             self.layouts.append (line)
- 
+
         self.allVariants = {}
         while True:
             line = blf.readline().strip()
@@ -200,10 +206,12 @@ class xkbset:
         v = self.variant
         if v == "Standard":
             v = '""'
-        
-        print "setxkbmap -rules xorg -model %s -layout %s -variant %s" % (m, l, v)
-        os.system ("setxkbmap -rules xorg -model %s -layout %s -variant %s" % (m, l, v))
-        
+
+        command = "setxkbmap -rules xorg -model %s -layout %s -variant %s" % (m, l, v)
+        print command
+        os.system (command)
+        os.system ('sed "s|.*setxkbmap.*|%s|" -i ~/.xinitrc' % command)
+
         f = open (self.configfile, "w")
         f.write ("%s|%s|%s\n" % (self.model, self.layout, self.variant))
         f.close ()

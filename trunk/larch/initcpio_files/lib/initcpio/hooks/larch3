@@ -24,7 +24,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.02
+# 2008.02.17
 
 run_hook ()
 {
@@ -113,6 +113,10 @@ run_hook ()
 
     # Copy the (replaced) original versions of Arch system files
     cat ${cdmount}/larch/arch0.tar.gz >/tfs/arch0.tar.gz
+    # Copy the installation tidy-up script (for removing custom live-only stuff)
+    if [ -f ${cdmount}/larch/larch0 ]; then
+        cat ${cdmount}/larch/larch0 >/tfs/larch0
+    fi
 
     msg_ ":: Setting up union file system"
 

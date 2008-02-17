@@ -19,9 +19,7 @@ mknod ${INSTALL}/dev/zero c 1 5
 
 # Remove any files and directories intended only for the live system
 if [ -f /.livesys/larch0 ]; then
-    for fd in $( cat /.livesys/larch0 ); do
-        rm -rf ${fd}
-    done
+    . /.livesys/larch0
 fi
 
 # Get these files in their 'original' versions
