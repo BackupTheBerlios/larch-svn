@@ -57,7 +57,7 @@ mkpkg ()
     # get new package version from PKGBUILD
     . PKGBUILD
     if ! [ -f ${repodir}/${pkgname}-${pkgver}-${pkgrel}*.pkg.tar.gz ]; then
-        for p in $( ls ${repodir} | grep "^${lp}-[0-9]*" ); do
+        for p in $( ls ${repodir} | grep "^${pkgname}-[0-9]*" ); do
             rm ${repodir}/${p}
         done
         makepkg -d ${asroot}
