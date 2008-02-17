@@ -28,6 +28,9 @@
 # It must have LOTS of space, ~ 4GB for a 700MB CD
 INSTLDIR=/home/larchroot
 
+# Default path to larch5 repositories (architecture is sub-directory)
+larch5path="ftp://ftp.berlios.de/pub/larch/larch5"
+
 APP=$( basename $0 )
 # Get path to larch base directory, via the location of this script
 FULLPATH=$( readlink -f $0 )
@@ -180,13 +183,11 @@ if ! grep '^[larch5]' pacman.conf &>/dev/null; then
         if [ "${sysarch}" != "x86_64" ]; then
             sysarch="i686"
         fi
-#TODO
-        # This is just a dummy!
-        larch5path=ftp://ftp.larchhost.org/larch/repository/${sysarch}
+        larch5path="larch5path/${sysarch}"
     fi
     sed "/\[testing\]/ i \
 [larch5]\n\
-Server = file://${larch5path}\n\
+Server = ${larch5path}\n\
 #larch5---\n" -i pacman.conf
 fi
 
