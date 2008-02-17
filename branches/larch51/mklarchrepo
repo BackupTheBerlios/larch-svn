@@ -64,7 +64,7 @@ mkpkg ()
 }
 
 for ad in larch larch-live larchin; do
-    ( cd ${scriptdir}/abs/${ad}; mkpkg )
+    ( cd ${scriptdir}/${ad}; mkpkg )
 done
 
 for ad in $( ls ${scriptdir}/abs ); do

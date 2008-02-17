@@ -2,9 +2,10 @@
 
 pkgname=xkmap
 pkgver=1.2
-pkgrel=1
+pkgrel=2
 pkgdesc="A keymap setter for xorg: a simple graphical front-end for setxkbmap"
 license=('GPL')
+arch=(i686 x86_64)
 depends=('pygtk')
 url="http://none"
 source=(xkmap xkmap.glade)
