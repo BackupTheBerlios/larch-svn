@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.14
+# 2008.02.16
 
 # Location for the CD image
 CDDATA="${LARCHBUILD}/cd"
@@ -88,7 +88,7 @@ mklive ()
         fail=1
     fi
 
-    for p in "lzop" "tar" "squashfs-tools"; do
+    for p in "larch-live" "lzop" "tar" "squashfs-tools"; do
         pac=$( ls ${INSTLDIR}/var/lib/pacman/local | egrep "^${p}-[^-]+-[^-]+$" )
         if [ -z "${pac}" ]; then
             echo "ERROR: Package ${p} is not installed on target"
@@ -110,25 +110,6 @@ mklive ()
         mv ${CDDATA}/system.sqf ${LARCHBUILD}/tmp
     fi
 
-    # Build and install packages for larch, larch-live and larchin
-    echo "// (re)building and installing larch packages"
-    cp -dr ${LARCHDATA} ${LARCHBUILD}/tmp
-
-    if [ -z  "${INSTLDIR}" ] && [ "${LARCHDATA}" == "/opt/larch" ]; then
-        # No point in rebuilding larch
-        :
-    else
-        ${chrootx} bash -c "( cd /.larch/tmp/larch/rebuild;
-                makepkg --asroot -i -p PKGREBUILD)"
-    fi
-
-    # larch must be rebuilt first because these change their directories:
-    ${chrootx} bash -c "( cd /.larch/tmp/larch/larch-live;
-            makepkg --asroot -i )"
-    ${chrootx} bash -c "( cd /.larch/tmp/larch/larchin;
-            makepkg --asroot -i )"
-
-    rm -r ${LARCHBUILD}/tmp/larch
 
     ############## START: copying data to boot medium image directory (CDDATA)
 

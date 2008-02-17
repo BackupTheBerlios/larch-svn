@@ -5,4 +5,4 @@ INSTALL=/tmp/install
 
 for p in $@; do
     pacman -r ${INSTALL} -R ${p} 2>/dev/null
-
+done

@@ -21,7 +21,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.13
+# 2008.02.17
 
 
 # directory to use for building the CD - the installation root
@@ -159,11 +159,35 @@ if [ -f ${PROFILE}/baseveto ]; then
     INPACSO="${INPACSO} -x ${PROFILE}/baseveto"
 fi
 
-if [ -f pacman.conf ]; then
-    PACMANCONF="--config pacman.conf"
-    INPACSO="${INPACSO} -k pacman.conf"
-else
-    PACMANCONF=""
+if ! [ -f pacman.conf ]; then
+    if [ -f ${PROFILE}/pacman.conf ]; then
+        cp ${PROFILE}/pacman.conf .
+    elif ! [ -f /etc/pacman.conf ]; then
+        echo "ERROR: Couldn't find pacman.conf"
+        exit 1
+    else
+        cp /etc/pacman.conf .
+    fi
+fi
+INPACSO="${INPACSO} -k pacman.conf"
+
+# If necessary add the larch repository to pacman.conf
+if ! grep '^[larch5]' pacman.conf &>/dev/null; then
+    if [ -d larchrepo ]; then
+        larch5path="file://$( readlink -f larchrepo )"
+    else
+        sysarch="$( uname -m )"
+        if [ "${sysarch}" != "x86_64" ]; then
+            sysarch="i686"
+        fi
+#TODO
+        # This is just a dummy!
+        larch5path=ftp://ftp.larchhost.org/larch/repository/${sysarch}
+    fi
+    sed "/\[testing\]/ i \
+[larch5]\n\
+Server = file://${larch5path}\n\
+#larch5---\n" -i pacman.conf
 fi
 
 if ! which pacman &>/dev/null; then

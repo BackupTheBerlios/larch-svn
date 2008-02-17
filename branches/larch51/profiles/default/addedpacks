@@ -1,23 +1,20 @@
 # These are needed to build a live CD
+larch-live
 squashfs-tools
 lzop
 
-# You need a kernel with 'squashfs' and 'unionfs'/'aufs'.
+syslinux
+
+# You need a kernel.
 #kernel26 is now in 'base'
 aufs
 
 # To eject a cd
 eject
 
-
-# Might be useful, but package only in AUR ...
-#xkmap
-
 # Needed by the installer
 python
-# dialog is now in basepacks!
-# If using 'abs':
-cvsup
+
 diffutils
 
 # Useful for use as installer, etc.
@@ -25,8 +22,10 @@ ntfsprogs
 parted
 mdadm
 lvm2
+ddcxinfo-knoppix
 hwd
-gparted
+
+larch
 
 # generally useful tools which don't require X
 openssh
@@ -91,6 +90,9 @@ xf86-video-vmware
 xf86-video-voodoo
 
 # X apps
+gparted
+larchin
+
 desktop-file-utils
 gimp
 

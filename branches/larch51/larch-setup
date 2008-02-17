@@ -83,8 +83,8 @@ if ! [ -f larch-*.pkg.tar.gz ]; then
     rm -rf tmp
     mkdir tmp
     cd tmp
-    fetch larch.db.tar.gz
-    tar -xzf larch.db.tar.gz
+    fetch larch5.db.tar.gz
+    tar -xzf larch5.db.tar.gz
     d=$( ls | grep "^larch-5" )
     larchpak=$( grep -A 1 -e "%FILENAME%" ${d}/desc | grep -v "%" )
     cd ${scriptdir}

@@ -1,11 +1,11 @@
 # These are needed to build a live CD
+larch-live
 squashfs-tools
 lzop
 
 syslinux
 
-# You need a kernel. At the moment the only standard Arch kernel
-# which works (because of needing 'squashfs' and 'unionfs') is 'beyond'.
+# You need a kernel.
 #kernel26 is now in 'base'
 aufs
 
@@ -13,27 +13,23 @@ aufs
 eject
 
 # Useful for use as installer, etc.
-# dialog, diffutils now in base
-# mdadm, lvm2 now in base
 ntfsprogs
 parted
-#ddcxinfo-knoppix
-#hwd
+
+ddcxinfo-knoppix
+hwd
+
 sudo
 
 lsof
 cdrkit
 dvd+rw-tools
 
-# Might be useful, but package only in AUR ...
-#xkmap
-
 # Needed by the installer
 python
 
 base-devel
-
-gparted
+larch
 
 # generally useful tools which don't require X
 openssh
@@ -96,6 +92,11 @@ xf86-video-vmware
 xf86-video-voodoo
 
 # X apps
+xkmap
+gparted
+
+larchin
+
 desktop-file-utils
 gimp
 wicd

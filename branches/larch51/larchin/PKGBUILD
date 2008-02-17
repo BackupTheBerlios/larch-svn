@@ -1,4 +1,5 @@
 # Maintainer: Michael Towers <gradgrind[at]online[dot]de>
+# 2008.02.17
 pkgname=larchin
 pkgver=5.1.0
 pkgrel=1
@@ -16,4 +17,6 @@ build() {
   cp -dr ${startdir}/syscalls ${startdir}/pkg/opt/larchin
   cp -dr ${startdir}/etc ${startdir}/pkg
   cp ${startdir}/larchin1.jpg ${startdir}/pkg/opt/larchin
+  cp ${startdir}/larchin1.png ${startdir}/pkg/opt/larchin
+  cp ${startdir}/larchin2.png ${startdir}/pkg/opt/larchin
 }

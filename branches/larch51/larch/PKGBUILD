@@ -1,0 +1,33 @@
+# Maintainer: Michael Towers <gradgrind[at]online[dot]de>
+# 2008.02.17
+pkgname=larch
+pkgver=5.1.0
+pkgrel=1
+
+# If I need the architecture, I can get it as ${CARCH}
+
+pkgdesc="Scripts for generating live Archlinux CDs and USB-sticks"
+url="http://larch.berlios.de"
+depends=()
+arch=(i686 x86_64)
+license=('GPL')
+
+build() {
+  mkdir -p ${startdir}/pkg/opt/larch
+  cp -dr ${startdir}/run ${startdir}/pkg/opt/larch
+  cp -dr ${startdir}/cd-root ${startdir}/pkg/opt/larch
+  cp -dr ${startdir}/docs ${startdir}/pkg/opt/larch
+  cp -dr ${startdir}/initcpio_files ${startdir}/pkg/opt/larch
+  cp -dr ${startdir}/live_files ${startdir}/pkg/opt/larch
+  cp -dr ${startdir}/profile0 ${startdir}/pkg/opt/larch
+  cp -dr ${startdir}/etc ${startdir}/pkg
+  cp ${startdir}/buildlive ${startdir}/pkg/opt/larch
+
+  # Compile additional initramfs utilities
+  cd ${startdir}/src
+  klcc -static -o lodel lodel.c || return 1
+  klcc -static -o rename rename.c || return 1
+  mkdir ${startdir}/pkg/opt/larch/klibc
+  cp lodel ${startdir}/pkg/opt/larch/klibc
+  cp rename ${startdir}/pkg/opt/larch/klibc
+}
