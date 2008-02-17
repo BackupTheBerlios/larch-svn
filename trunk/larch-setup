@@ -23,7 +23,8 @@
 #----------------------------------------------------------------------------
 # 2008.02.17
 
-REPO=file://$( readlink -f larchrepo )
+REPO="ftp://ftp.berlios.de/pub/larch/larch5/i686"
+#REPO=file://$( readlink -f larchrepo )
 
 if [ "$1" = "-h" ]; then
     echo "larch-setup -h"

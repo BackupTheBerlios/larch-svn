@@ -29,15 +29,17 @@ Building:
 =========
 
 Export from svn:
-   svn export svn://svn.berlios.de/larch/branches/larch51
+   svn export svn://svn.berlios.de/larch/trunk
 
 Then run 'mklarchrepo'. This will create a repository of the larch
 packages, at larchrepo.
 
 Copy this directory to an empty working directory (or make a symlink
-from 'larchrepo' in the empty directory to the repository). Then copy
-'larch-setup' to the working directory and run it, or else install the
-larch package with 'pacman -U'.
+from 'larchrepo' in the empty directory to the repository).
+
+Then copy 'larch-setup' to the working directory and edit it so that
+the local 'REPO=' entry becomes operative. Then run it.
+Alternatively, install the larch package with 'pacman -U'.
 
 
 tar / lzo:

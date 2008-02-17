@@ -9,7 +9,7 @@ arch=(i686 x86_64)
 depends=('pygtk')
 url="http://none"
 source=(xkmap xkmap.glade)
-md5sums=('16e565aa2c95326de0b591d8c9c4eafa' 'e634630e8c96baccfb6544f39537d937')
+md5sums=('c484c39277731db5634f859796fa7b24' 'e634630e8c96baccfb6544f39537d937')
 
 build() {
   cd $startdir/pkg
