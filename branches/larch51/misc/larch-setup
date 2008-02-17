@@ -21,8 +21,9 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.13
+# 2008.02.17
 
+REPO=file://$( readlink -f larchrepo )
 
 if [ "$1" = "-h" ]; then
     echo "larch-setup -h"
@@ -68,9 +69,31 @@ if [ -d larch ]; then
     exit 1
 fi
 
+fetch ()
+{
+    if [ -n "$( echo ${REPO} | grep "file://" )" ]; then
+        base="$( echo ${REPO} | sed "s|file://||" )"
+        cp ${base}/$1 .
+    else
+        wget ${REPO}/$1
+    fi
+}
+
+if ! [ -f larch-*.pkg.tar.gz ]; then
+    rm -rf tmp
+    mkdir tmp
+    cd tmp
+    fetch larch.db.tar.gz
+    tar -xzf larch.db.tar.gz
+    d=$( ls | grep "^larch-5" )
+    larchpak=$( grep -A 1 -e "%FILENAME%" ${d}/desc | grep -v "%" )
+    cd ${scriptdir}
+    fetch ${larchpak}
+fi
+
 rm -rf tmp
 mkdir tmp
-tar -xzf larch-*.pkg.tar.gz -C tmp
+tar -xzf larch-5*.pkg.tar.gz -C tmp
 mv tmp/opt/larch .
 rm -rf tmp
 
@@ -85,9 +108,9 @@ if ! which pacman &>/dev/null; then
     # in the current directory
     for serv in ${archcore}; do
         if [ -f pacman*.pkg.tar.gz ]; then break; fi
-        wget ${serv}/${sysarch}/pacman*.pkg.tar.gz
+        wget ${serv}/${sysarch}/pacman-*.pkg.tar.gz
     done
-    pf=pacman*.pkg.tar.gz
+    pf=pacman-*.pkg.tar.gz
     if ! [ -f ${pf} ]; then
         echo "ERROR: couldn't fetch pacman package"
         exit 1
