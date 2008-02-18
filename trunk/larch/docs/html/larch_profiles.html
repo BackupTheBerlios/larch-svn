@@ -23,7 +23,7 @@
 
 <h1><big>larch</big>
 &ndash;
-a do-it-yourself live Arch Linux CD</h1>
+a do-it-yourself live <em>Arch Linu</em>x CD</h1>
 
 
 <img style="border: 0px solid ; width: 320px; height: 320px;" alt="" src="larch1.jpg"
@@ -84,14 +84,14 @@ delete the old 'overlay.xpk' and run (as root)
 <pre>
         (path/to/)xpack -r overlay overlay.xpk
 </pre>
-xpack is found in the <em>larch</em> 'bin' directory.
+xpack is found in the <em>larch</em> 'run' directory.
 </p>
 
 <p>The important files within a profile are described below:
 </p>
 <ul>
   <li><strong>addedpacks</strong> - a simple list of packages (just package
-  name as supplied to 'pacman -S', e.g. 'xorg', not the file name), one per line,
+  name as supplied to 'pacman -S', e.g. 'syslinux', not the file name), one per line,
   comment lines start with '#'.
   This is the primary place for configuring which packages are installed.
   </li>
@@ -100,35 +100,32 @@ xpack is found in the <em>larch</em> 'bin' directory.
   file (if it is present) to the file '/etc/locale.gen' in the newly installed
   system and runs 'locale-gen' (using <em>chroot</em>) to deal with glibc
   locale generation.
-  So just put the locales you want in here.</li>
+  So just put the locales you want in here.
+  </li>
 
   <li><strong>rcconfx</strong> - This is a list of modifications for '/etc/rc.conf'.
   It contains those variable definitions which are different to the default
-  values. This is then merged with the original to produce a modified overlay
-  file.</li>
+  values. This is then merged with the original to produce a modified overlay file.
+  </li>
 
   <li><strong>overlay.xpk</strong> - As described above this is a self-extracting
-  archive of 'overlay files', which will form the bulk of the overlay squashfs.</li>
+  archive of 'overlay files', which will form the bulk of the overlay squashfs.
+  </li>
 
   <li><strong>mkinitcpio.conf</strong> - This file is optional. If it is present it will
   replace the version in the 'initcpio_files/lib/initcpio' folder of the
   <em>larch</em> package to produce the initramfs
   for the live CD. You should take that file as the starting point to ensure that
   the necessary larch hooks are installed, but you are free to change other hooks
-  (e.g. use 'ide' instead of 'pata') or add modules.</li>
+  (e.g. use 'ide' instead of 'pata') or add modules.
+  </li>
 
   <li><strong>basepacks</strong> - This file is optional. If it is present it
   supplies a list of packages (one package per line, as <em>addedpacks</em>) to be
-  used for the first stage of installation in
-  <em>mklarch</em>, preventing the 'packages.txt' file from the 'core' repository
-  from being downloaded and used as source for the base package list.</li>
-
-  <li><strong>extrapacks</strong> - A simple but limited alternative to creating
-  your own repository when you have custom packages. You can place your custom
-  packages in the 'larchpacks' directory and put the names (package name, not file
-  name) of those you want installed (one per line) in the 'extrapacks' file. These
-  will then be installed using 'pacman -U', so you must handle dependencies
-  yourself.</li>
+  used instead of the standard list of 'core/base' packages for the basis of the
+  installation done by <em>mklarch</em>, preventing the 'packages.txt' file from the
+  'core' repository from being downloaded and used as source for the base package list.
+  </li>
 
   <li><strong>baseveto</strong> - This file is optional. It provides a list of
   packages (one package per line) to be ignored in the base package list.</li>

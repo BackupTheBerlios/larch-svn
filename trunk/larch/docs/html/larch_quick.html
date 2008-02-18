@@ -24,7 +24,7 @@
 
 <h1><big>larch</big>
 &ndash;
-a do-it-yourself live Arch Linux CD</h1>
+a do-it-yourself live <em>Arch Linux</em> CD</h1>
 
 <img style="border: 0px solid ; width: 320px; height: 320px;" alt="" src="larch1.jpg"
   name="graphics1" align="right" hspace="10" vspace="10" />
@@ -34,29 +34,39 @@ a do-it-yourself live Arch Linux CD</h1>
 
 <br /><br />
 
-<p>A quick run through of the steps necessary to build your own larch CD.
+<p>A quick run through of the steps necessary to build your own <em>larch</em> CD.
 This should provide you with a working live CD, but to take full advantage of
-the flexibility offered by the larch build system you will probably need
+the flexibility offered by the <em>larch</em> build system you will probably need
 to consult the rest of the documentation.</p>
 
 <ul>
-   <li>  At present larch-5 is still being tested, and is only available from
-   the subversion repository. To fetch the source:
-   <pre>svn export svn://svn.berlios.de/larch/trunk</pre>
-   Then go to the 'trunk/misc' directory and run <strong>mklarchpak</strong>.
-   This will create a convenient packet for distributiong <em>larch</em>.</li>
-   <li>Unpack the 'larchpak.tar.gz' archive, enter the 'larchpak' directory
-   and run <strong>larch-setup</strong>.</li>
-   <li>  Run './mklarch -h' to get a usage description.</li>
-   <li> You can then try building one of the example profiles, by copying the
-   directory (say 'mini2') from the 'trunk/profiles' directory to the current
-   directory and then running (e.g.) './mklarch -p mini2'.
-   You can also adapt one of the example profiles to your own needs.</li>
+   <li>At present <em>larch-5</em> is still being tested, and will probably contain
+   x bugs, where x > one would wish. At present there is only a repository for 'i686',
+   as I don't have a 64-bit machine (but testers are welcome to build their own
+   repository from svn - a simple script is provided).
+   </li>
+   <li>Download <a href="ftp://ftp.berlios.de/pub/larch/larch5/i686/larch-setup"><strong>larch-setup</strong></a>
+   to an empty working directory and run it (it is a shell script). This will in
+   turn download and unpack the current larch package, setting up symlinks so that
+   the build scripts can be run from this working directory.</li>
+   <li>Run './mklarch -h' to get a usage description.
+   </li>
+   <li>From now on you must be running as root, i.e. it's potentially dangerous stuff!
+   </li>
+   <li>You can then try building one of the example profiles, for example:
+      <pre>./mklarch -p larch/profiles/xmini</pre>
+   You can also adapt one of the example profiles to your own needs.
+   </li>
    <li>  If you chose a delivered profile, the build should just run, apart from
-   asking for confirmation a few times.</li>
+   asking for confirmation a few times.
+   </li>
    <li>  For a custom build:
      <ul>
-       <li>  Edit 'locale.gen' for your glibc locale needs.</li>
+       <li>  Copy an example profile (from larch/profiles) to your working directory, giving it
+       an appropriate name.
+       </li>
+       <li>  Edit 'locale.gen' for your glibc locale needs.
+       </li>
        <li>  Edit 'rcconfx', which contains just the changes to the default
          /etc/rc.conf. Especially the locale and console
          keyboard setting may be interesting.</li>
@@ -70,10 +80,10 @@ to consult the rest of the documentation.</p>
      </ul>
      before running <em>mklarch</em>.
    <li>  Another possibility is to use <strong>larchify</strong> (run './larchify -h'
-   for a usage description) to 'livify' an existing Arch Linux installation, even
+   for a usage description) to 'livify' an existing <em>Arch Linux</em> installation, even
    the currently running one. Running './larchify path/to/installation' should be
    enough for a simple build, but see <a href="larch_overview.html#existingSystem">
-   'Making a live CD from an existing Arch installation'</a> for more details.</li>
+   'Making a live CD from an existing <em>Arch</em> installation'</a> for more details.</li>
    <li>  After a while, the iso for the CD should be ready for burning.</li>
    <li>  Alternatively, you can put it on a USB-stick, by passing the '-u' option
    to 'mklarch'.</li>
