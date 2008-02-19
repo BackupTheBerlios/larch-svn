@@ -17,10 +17,34 @@ mknod ${INSTALL}/dev/console c 5 1
 mknod ${INSTALL}/dev/null c 1 3
 mknod ${INSTALL}/dev/zero c 1 5
 
-# Remove any files and directories intended only for the live system
-if [ -f /.livesys/larch0 ]; then
-    . /.livesys/larch0
-fi
+# Test for larch-4
+if [ -f ${INSTALL}/etc/rc.sysinit0 ]; then
+# larch-4
+    # Get these files in their 'original' versions
+    cp -af /.livesys/system/etc/{rc.sysinit,rc.shutdown,inittab} ${INSTALL}/etc
+    # Remove extra larch 'rc.' scripts
+    rm -f ${INSTALL}/etc/{rc.sysinit0,rc.shutdown2,rc.shutdown3}
+    # Remove extra larch entry in PATH
+    rm -f ${INSTALL}/etc/profile.d/larch.sh
 
-# Get these files in their 'original' versions
-tar -xzf /.livesys/arch0.tar.gz -C ${INSTALL}
+    # Remove live-specific packages
+    for p in initcpio_larch initcpio_larch_aufs larchin archin klibc-larch; do
+        pacman -r ${INSTALL} -R ${p} 2>/dev/null
+    done
+
+else
+# larch-5
+    # Remove any files and directories intended only for the live system
+    if [ -f /.livesys/larch0 ]; then
+        . /.livesys/larch0
+    fi
+
+    # Get these files in their 'original' versions
+    tar -xzf /.livesys/arch0.tar.gz -C ${INSTALL}
+
+    # Remove live-specific packages
+    for p in larch-live larchin; do
+        pacman -r ${INSTALL} -R ${p} 2>/dev/null
+    done
+
+fi

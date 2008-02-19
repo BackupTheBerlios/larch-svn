@@ -23,7 +23,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.16
+# 2008.02.19
 
 from subprocess import Popen, PIPE, STDOUT
 import os, shutil, signal
@@ -433,8 +433,6 @@ class installClass:
         items, etc.
         """
         self.xcall("larch-tidy")
-        # And remove packages exclusively intended for the live system.
-        self.xcall("pacrm larch-live larchin")
 
     def get_size(self):
         """Get some estimate of the current size of the system being
