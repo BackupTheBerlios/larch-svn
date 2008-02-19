@@ -1,3 +1,5 @@
+# Contributor: Michael Towers <gradgrind[at]online[dot]de>
+
 # ddcxinfo-arch seems not to work any more, so here's the knoppix version
 # with a bit of renaming
 pkgname=ddcxinfo-knoppix
