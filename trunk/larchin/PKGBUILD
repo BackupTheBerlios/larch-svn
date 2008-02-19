@@ -2,7 +2,7 @@
 # 2008.02.19
 pkgname=larchin
 pkgver=5.1.4
-pkgrel=1
+pkgrel=2
 
 pkgdesc="larch: hard disk installer with gui"
 url="http://larch.berlios.de"
@@ -17,7 +17,8 @@ build() {
   cp -dr ${startdir}/modules ${startdir}/pkg/opt/larchin
   cp -dr ${startdir}/syscalls ${startdir}/pkg/opt/larchin
   cp -dr ${startdir}/etc ${startdir}/pkg
-  cp ${startdir}/larchin1.jpg ${startdir}/pkg/opt/larchin
-  cp ${startdir}/larchin1.png ${startdir}/pkg/opt/larchin
-  cp ${startdir}/larchin2.png ${startdir}/pkg/opt/larchin
+  mkdir -p ${startdir}/pkg/usr/share/pixmaps
+  cp ${startdir}/larchin1.jpg ${startdir}/pkg/usr/share/pixmaps
+  cp ${startdir}/larchin.png ${startdir}/pkg/usr/share/pixmaps
+  cp ${startdir}/larchin2.png ${startdir}/pkg/usr/share/pixmaps
 }
