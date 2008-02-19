@@ -1,8 +1,8 @@
 # Maintainer: Michael Towers <gradgrind[at]online[dot]de>
-# 2008.02.17
+# 2008.02.19
 pkgname=larch
-pkgver=5.1.3
-pkgrel=2
+pkgver=5.1.4
+pkgrel=1
 
 # If I need the architecture, I can get it as ${CARCH}
 
@@ -23,6 +23,11 @@ build() {
   cp -dr ${startdir}/profiles ${startdir}/pkg/opt/larch
   cp -dr ${startdir}/etc ${startdir}/pkg
   cp ${startdir}/buildlive ${startdir}/pkg/opt/larch
+
+  mkdir -p ${startdir}/pkg/usr/share/pixmaps
+  cp ${startdir}/larch.png ${startdir}/pkg/usr/share/pixmaps
+  mkdir -p ${startdir}/pkg/usr/share/applications
+  cp ${startdir}/larch.desktop ${startdir}/pkg/usr/share/applications
 
   # Compile additional initramfs utilities
   cd ${startdir}/src
