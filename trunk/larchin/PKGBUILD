@@ -21,4 +21,6 @@ build() {
   cp ${startdir}/larchin1.jpg ${startdir}/pkg/usr/share/pixmaps
   cp ${startdir}/larchin.png ${startdir}/pkg/usr/share/pixmaps
   cp ${startdir}/larchin2.png ${startdir}/pkg/usr/share/pixmaps
+  mkdir -p ${startdir}/pkg/usr/share/applications
+  cp ${startdir}/larchin.desktop ${startdir}/pkg/usr/share/applications
 }
