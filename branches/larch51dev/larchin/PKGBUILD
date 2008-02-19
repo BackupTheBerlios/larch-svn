@@ -1,0 +1,26 @@
+# Maintainer: Michael Towers <gradgrind[at]online[dot]de>
+# 2008.02.19
+pkgname=larchin
+pkgver=5.1.4
+pkgrel=2
+
+pkgdesc="larch: hard disk installer with gui"
+url="http://larch.berlios.de"
+depends=('pygtk' 'parted' 'ntfsprogs')
+# strongly recommended: gparted
+arch=(i686 x86_64)
+license=('GPL')
+
+build() {
+  mkdir -p ${startdir}/pkg/opt/larchin
+  cp -dr ${startdir}/run ${startdir}/pkg/opt/larchin
+  cp -dr ${startdir}/modules ${startdir}/pkg/opt/larchin
+  cp -dr ${startdir}/syscalls ${startdir}/pkg/opt/larchin
+  cp -dr ${startdir}/etc ${startdir}/pkg
+  mkdir -p ${startdir}/pkg/usr/share/pixmaps
+  cp ${startdir}/larchin1.jpg ${startdir}/pkg/usr/share/pixmaps
+  cp ${startdir}/larchin.png ${startdir}/pkg/usr/share/pixmaps
+  cp ${startdir}/larchin2.png ${startdir}/pkg/usr/share/pixmaps
+  mkdir -p ${startdir}/pkg/usr/share/applications
+  cp ${startdir}/larchin.desktop ${startdir}/pkg/usr/share/applications
+}

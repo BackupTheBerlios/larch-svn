@@ -1,0 +1,6 @@
+# This is a script 'sourced' from the installation script larch-tidy.
+# Its purpose is to remove custom live-only stuff from a just-installed
+# system.
+# ${INSTALL} is the path to the system root.
+
+rm "${INSTALL}/root/Desktop/Install Arch Linux.desktop"
