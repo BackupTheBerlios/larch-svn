@@ -21,7 +21,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.07
+# 2008.02.19
 
 # The new overlay will be built in memory (main tmpfs?)
 merge_base=/.livesys
@@ -80,7 +80,7 @@ merge ()
                 rm -rf "${builddir}/${d}/${n}/"*
                 rm -rf "${builddir}/${d}/${n}/".* 2>/dev/null
                 if [ -e "/.livesys/system/${d}/${n}" ]; then
-                    cp -a "${n}/${opq} ${builddir}/${d}/${n}"
+                    cp -a "${n}/${opq}" "${builddir}/${d}/${n}"
                 fi
             fi
         done
