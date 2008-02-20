@@ -21,7 +21,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.19
+# 2008.02.20
 
 # The new overlay will be built in memory (main tmpfs?)
 merge_base=/.livesys
@@ -47,110 +47,90 @@ if [ -f ${overlaypath}/larch/merge-adjust ] ; then
     . ${overlaypath}/larch/merge-adjust
 fi
 
-# Make temporary directory for new overlay
-builddir=${merge_base}/merge_overlay
-rm -rf ${builddir}
-mkdir -p ${builddir}
-echo "Copying 'mods' files to ${builddir}"
-
-# Copy existing mods layer
-cp -a /.livesys/mods/* ${builddir}
-
-# Function to merge a top-level directory
-merge ()
-{
-    d=$1
-    cd /.livesys/overlay/${d}
-
-    if [ ! -d "${builddir}/${d}" ]; then
-        mkdir "${builddir}/${d}"
-        chmod "${builddir}/${d}" --reference="/${d}"
+merge_union=${merge_base}/merge_union
+merge_dir=${merge_base}/merge_dir
+rm -rf ${merge_union}
+mkdir -p ${merge_union}
+rm -rf ${merge_dir}
+mkdir -p ${merge_dir}
+if [ "${merge_base}" = "/.livesys" ]; then
+    # if swap available, use a new tmpfs
+    mktmpfs="$( cat /proc/swaps )"
+    if [ -z "${mktmpfs}" ]; then
+        swapon -a
+        mktmpfs="$( cat /proc/swaps )"
     fi
-    # Prepare directories, checking for directory whiteouts
-    find . -type d | sed "s|^\./||" | while read n
-        do
-            if [ "${n}" = "." ]; then continue; fi
-            if $( basename "${n}" | grep "^\.wh\." &>/dev/null ); then continue; fi
-            mkdir -p "${builddir}/${d}/${n}"
-            chmod "${builddir}/${d}/${n}" --reference="${n}"
-            chown "${builddir}/${d}/${n}" --reference="${n}"
-            touch "${builddir}/${d}/${n}" --reference="${n}"
-            if [ -e "${n}/${opq}" ]; then
-                # remove existing (old) overlay files within this directory
-                rm -rf "${builddir}/${d}/${n}/"*
-                rm -rf "${builddir}/${d}/${n}/".* 2>/dev/null
-                if [ -e "/.livesys/system/${d}/${n}" ]; then
-                    cp -a "${n}/${opq}" "${builddir}/${d}/${n}"
-                fi
-            fi
-        done
+    if [ -n "${mktmpfs}" ]; then
+        mount -t tmpfs tmpfs ${merge_dir}
+    fi
+fi
 
-    # Copy files
-    find -not \( -regex '.*/\.wh\.[^/]*' -type f \) -not -type d | \
-            sed "s|^\./||" | while read n
-        do
-            # Remove existing whiteout file for this file (if there is one)
-            dn="$( dirname "${n}" )"
-            if [ "${dn}" = "." ]; then
-                dn=""
-            else
-                dn="${dn}/"
-            fi
-            rm -f "${builddir}/${d}/${dn}.wh.$( basename "${n}" )"
-            # Copy the new overlay file to build area
-            #  ... unless it is vetoed
-            if [ "${d}" = "var" ]; then
-                if [ "${dn:0:4}" = "log/" ] || \
-                        [ "${dn:0:4}" = "tmp/" ] || \
-                        [ "${dn:0:17}" = "cache/pacman/pkg/" ]; then
-                    continue
-                fi
-            fi
-            # removing any existing (old) overlay file with same name
-            rm -rf "${builddir}/${d}/${n}"
-            cp -a "${n}" "${builddir}/${d}/${n}"
-        done
+utype="$( cat /.livesys/utype )"
+if [ "${utype}" = "unionfs" ]; then
+    ovlmnt="ro"
+    bropt="dirs="
+    opq=".wh.__dir_opaque"
+else
+    if [ "${utype}" != "aufs" ]; then
+        echo "ERROR: bad union type (${utype}), trying aufs"
+        utype="aufs"
+    fi
+    ovlmnt="ro+wh"
+    bropt="br:"
+    opq=".wh..wh..opq"
+elif
 
-    # Handle whiteouts
-    find \( -regex '.*/\.wh\.[^/]*' -type f \) | \
-            sed "s|^\./||" | while read w
-        do
-            n="$( echo "${w}" | sed 's/\.wh\.//' )"
-            # Remove an existing (old) overlay file with this name
-            rm -rf "${builddir}/${d}/${n}"
-            if [ -e "/.livesys/system/${d}/${n}" ]; then
-                cp -a "./${w}" "${builddir}/${d}/${w}"
-            fi
+layers="/.livesys/overlay=${ovlmnt}:/.livesys/mods=${ovlmnt}"
+mount -t ${utype} -o ${bropt}${layers} ${utype} ${merge_union}
+
+echo "Copying 'overlay' files to ${merge_dir}"
+
+# Function to restore whiteouts, where necessary, to the merged overlay
+whiteouts ()
+{
+    d="$1"
+    cd "${merge_dir/${d}}"
+    find . -type d | sed "s|^\./||" | while read n; do
+        if [ "${n}" = "." ]; then continue; fi
+
+        # Get all whiteout files (not directories) in the branches
+        for bdir in overlay mods; do
+            cd "/.livesys/${bdir}/${d}"
+            find . -maxdepth 1 -regex '\./\.wh\..*' -type f | while read w; do
+                wf="${w#\./\.wh\.}"
+                if [ -e "/.livesys/system/${d}/${wf}" ]; then
+                    cp -a "${w}" "${merge_dir/${d}}"
+                fi
+            done
         done
 }
 
-
-# Update with files from the union writable branch
-if grep "aufs" /.livesys/utype &>/dev/null; then
-    opq=".wh..wh..opq"
-else
-    opq=".wh.__dir_opaque"
-fi
-
-echo "Copying 'overlay' files to ${builddir}"
-
 # Note that 'etc' is not included - mods.sqf has no /etc directory.
 # The following directories are ignored:
+#TODO!!!
 #      /var/log /var/tmp /var/cache/pacman/pkg
 for d in bin boot home lib mnt opt root sbin srv usr var; do
-    if [ -d /.livesys/overlay/${d} ]; then
-        merge ${d}
+    if [ -d "${merge_union}/${d}" ]; then
+        cp -a "${merge_union}/${d}" "${merge_dir}"
+        whiteouts "${d}"
     fi
 done
 
+# Discard merge union
+umount ${merge_union}
+
 echo "creating mods.sqf_"
-mksquashfs ${builddir} ${overlaypath}/mods.sqf_
+mksquashfs "${merge_dir}" "${overlaypath}/mods.sqf_"
 if [ $? -ne 0 ]; then
     echo "ERROR: Couldn't create ${overlaypath}/mods.sqf_"
     rm -f ${overlaypath}/mods.sqf_
     exit 1
 fi
-rm -rf ${builddir}
+
+if [ -n "${mktmpfs}" ]; then
+    umount ${merge_dir}
+fi
+rm -rf ${merge_dir}
 
 echo "creating overlay.ovl_"
 # Compress the overlay (with root dir 'overlay' retained)
