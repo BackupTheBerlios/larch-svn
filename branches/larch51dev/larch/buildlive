@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.16
+# 2008.02.21
 
 # Location for the CD image
 CDDATA="${LARCHBUILD}/cd"
@@ -307,7 +307,8 @@ mklive ()
     echo "// creating compressed image of remaining larch mods: overlay.ovl"
 
     # Compress the overlay (with root dir 'overlay' retained)
-    tar -cf - -C ${LARCHBUILD}/tmp overlay/etc | lzop > ${CDDATA}/overlay.ovl
+    ${chrootx} ( tar -cf - -C /.larch/tmp overlay/etc |
+            lzop > /.larch/cd/overlay.ovl )
 
     rm -rf ${LARCHBUILD}/tmp/overlay
 
