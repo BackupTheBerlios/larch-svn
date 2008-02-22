@@ -21,7 +21,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.17
+# 2008.02.22
 
 # This script should be run in place to create/update a repository for larch5.
 
@@ -57,7 +57,7 @@ mkpkg ()
     # get new package version from PKGBUILD
     . PKGBUILD
     if ! [ -f ${repodir}/${pkgname}-${pkgver}-${pkgrel}*.pkg.tar.gz ]; then
-        for p in $( ls ${repodir} | grep "^${pkgname}-[0-9]*" ); do
+        for p in $( ls ${repodir} | egrep "^${pkgname}-[0-9]+" ); do
             rm ${repodir}/${p}
         done
         makepkg -d ${asroot}
