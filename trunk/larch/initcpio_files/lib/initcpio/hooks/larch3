@@ -24,7 +24,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.17
+# 2008.02.22
 
 run_hook ()
 {
@@ -120,7 +120,7 @@ run_hook ()
 
     msg_ ":: Setting up union file system"
 
-    layers="/tfs/overlay=rw:/tfs/mods=${sqfmnt}:/tfs/system=${sqfmnt}"
+    layers="/tfs/overlay=rw:/tfs/mods=${ovlmnt}:/tfs/system=${sqfmnt}"
     /bin/mount -t ${utype} -o ${bropt}${layers} ${utype} /union
 
     echo "${utype}" > /tfs/utype
