@@ -33,8 +33,9 @@ rm -f ${INSTALL}/etc/{rc.sysinit0,rc.shutdown2,rc.shutdown3}
 rm -f ${INSTALL}/etc/profile.d/larch.sh
 
 # Remove live-specific packages
-for p in initcpio_larch initcpio_larch_aufs larchin archin klibc-larch; do
+for p in initcpio_larch initcpio_larch_aufs larchin archin; do
     pacman -r ${INSTALL} -R ${p} 2>/dev/null
+done
 
 # It would be possible to edit the initcpio configs, after which
 # the images would have to be regenerated, but it is not so easy
