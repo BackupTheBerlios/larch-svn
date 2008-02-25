@@ -65,3 +65,13 @@ TODO
   will not be disturbed by unfinished or corrupted overlays.
    The boot process should also delete any such files it finds.
    When both files have been successfully created, they can be renamed.
+
+*) larchin. Should probably remove /opt/larchin after installation if larchin
+  is not installed, as calling larchin with the -t option copies the scripts
+  across.
+
+*) larchin. Add LVM support (maybe also RAID?).
+
+*) larchin. Add comments and docstrings.
+
+*) larchin. i18n.
