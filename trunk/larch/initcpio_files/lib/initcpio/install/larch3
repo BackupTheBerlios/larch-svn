@@ -7,9 +7,6 @@ install ()
 #    add_file "/lib/initcpio/kinit" "/bin/kinit"  ##### This doesn't work, so:
     sed -i 's|.*/usr/lib/klibc/bin/kinit\.shared.*||' "${FILELIST}"
     sed -i 's|/usr/lib/klibc/bin/kinit|/lib/initcpio/kinit|' "${FILELIST}"
-
-    add_file /opt/larch/klibc/rename /bin/rename
-    add_file /opt/larch/klibc/lodel /bin/lodel
 }
 
 help ()
