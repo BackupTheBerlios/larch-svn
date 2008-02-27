@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.22
+# 2008.02.27
 
 # Location for the CD image
 CDDATA="${LARCHBUILD}/cd"
@@ -141,8 +141,6 @@ mklive ()
 
     ### Generate initcpio (using chroot if necessary) then copy it to CDDATA
 
-    # Add larch-specific hooks, etc.
-    cp -r ${LARCHDATA}/initcpio_files/lib ${INSTLDIR}/
     # If there is a mkinitcpio.conf in profile, use it
     if  [ -n "${PROFILE}" ] && [ -f ${PROFILE}/mkinitcpio.conf ]; then
         cp -f ${PROFILE}/mkinitcpio.conf ${INSTLDIR}/lib/initcpio
@@ -158,11 +156,6 @@ mklive ()
     else
         mv -f larch.img ${CDDATA}/boot
     fi
-
-    # Now remove larch-specific initcpio components
-    for f in $( cd ${LARCHDATA}/initcpio_files ; find lib -type f ); do
-        rm ${INSTLDIR}/${f}
-    done
 
     #!!!!! This can't be allowed if ${INSTLDIR} = ''
     # mkinitcpio seems to use the '/tmp' directory, so clear it out

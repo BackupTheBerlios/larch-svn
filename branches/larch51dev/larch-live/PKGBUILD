@@ -15,6 +15,7 @@ build() {
   cp -dr ${startdir}/run ${startdir}/pkg/opt/larch-live
   cp -dr ${startdir}/session-save ${startdir}/pkg/opt/larch-live
   cp -dr ${startdir}/etc ${startdir}/pkg
+  cp -dr ${startdir}/lib ${startdir}/pkg
 
   # Compile additional initramfs utilities
   cd ${startdir}/src

@@ -17,7 +17,6 @@ build() {
   cp -dr ${startdir}/run ${startdir}/pkg/opt/larch
   cp -dr ${startdir}/cd-root ${startdir}/pkg/opt/larch
   cp -dr ${startdir}/docs ${startdir}/pkg/opt/larch
-  cp -dr ${startdir}/initcpio_files ${startdir}/pkg/opt/larch
   cp -dr ${startdir}/live_files ${startdir}/pkg/opt/larch
   cp -dr ${startdir}/profile0 ${startdir}/pkg/opt/larch
   cp -dr ${startdir}/profiles ${startdir}/pkg/opt/larch
