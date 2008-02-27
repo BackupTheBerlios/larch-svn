@@ -1,0 +1,21 @@
+pre_install() {
+	/bin/true
+}
+
+post_install() {
+  /bin/true
+}
+
+post_upgrade() {
+  /bin/true
+}
+
+post_remove() {
+  # Remove generated stuff (compiled python files, *.pyc)
+  rm -rf /opt/larchin
+  /bin/true
+}
+
+op=$1
+shift
+$op $*

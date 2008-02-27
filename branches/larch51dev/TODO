@@ -69,6 +69,7 @@ TODO
 *) larchin. Should probably remove /opt/larchin after installation if larchin
   is not installed, as calling larchin with the -t option copies the scripts
   across.
+  - It might be better to separate the scripts out into a separate package
 
 *) larchin. Add LVM support (maybe also RAID?).
 

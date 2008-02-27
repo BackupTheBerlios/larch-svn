@@ -10,6 +10,7 @@ depends=('pygtk' 'parted' 'ntfsprogs')
 # strongly recommended: gparted
 arch=(i686 x86_64)
 license=('GPL')
+install=${pkgname}.install
 
 build() {
   mkdir -p ${startdir}/pkg/opt/larchin
