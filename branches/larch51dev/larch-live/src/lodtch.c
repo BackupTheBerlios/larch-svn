@@ -18,7 +18,7 @@ int main(int argc, const char ** argv)
 
     if (argc != 2)
     {
-        fprintf(stderr, "Usage: lodel <loop device>\n");
+        fprintf(stderr, "Usage: lodtch <loop device>\n");
         return 1;
     }
 
