@@ -21,7 +21,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.22
+# 2008.02.27
 
 # This script should be run in place to create/update a repository for larch5.
 
@@ -65,7 +65,7 @@ mkpkg ()
     fi
 }
 
-for ad in larch larch-live larchin; do
+for ad in larch larch-live larchin-syscalls larchin; do
     ( cd ${scriptdir}/${ad}; mkpkg )
 done
 

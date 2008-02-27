@@ -23,7 +23,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.19
+# 2008.02.27
 
 from subprocess import Popen, PIPE, STDOUT
 import os, shutil, signal
@@ -33,16 +33,8 @@ from partition import Partition
 from dialogs import PopupInfo, popupWarning, popupError
 
 class installClass:
-    def __init__(self, host=None, transfer=False):
+    def __init__(self, host=None):
         self.host = host
-        if self.host:
-            if transfer:
-                op = Popen("ssh root@%s rm -rf /opt/larchin" %
-                    self.host, shell=True,
-                    stdout=PIPE).communicate()[0]   # delete (old) larchin
-                op = Popen("scp -rpq %s root@%s:/opt/" %
-                    (basePath, self.host), shell=True,
-                    stdout=PIPE).communicate()[0]   # copy larchin over
 
         self.processes = []
         assert (self.xcall("init") == ""), (

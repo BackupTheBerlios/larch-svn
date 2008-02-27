@@ -21,7 +21,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.14
+# 2008.02.27
 
 import os, sys
 
@@ -59,22 +59,17 @@ if (len(sys.argv) == 1):
     target = None
 elif (len(sys.argv) == 2):
     target = sys.argv[1]
-elif ((len(sys.argv) == 3) and (sys.argv[1] == '-t')):
-    target = sys.argv[2]
-    transfer = True
 else:
     popupError(_("Usage:\n"
-        "          larchin.py \t\t\t\t\t # local installation\n"
-        "          larchin.py [-t] target-address \t # remote installation\n"
-        "\n              The '-t' option causes the installation scripts\n"
-        "              to be copied to the remote machine."),
+        "          larchin.py \t\t\t\t # local installation\n"
+        "          larchin.py target-address \t # remote installation\n"),
         _("Bad arguments"))
     quit()
 
 __builtin__.basePath = basedir
 __builtin__.stages = {}
 __builtin__.mainWindow = Larchin()
-__builtin__.install = installClass(target, transfer)
+__builtin__.install = installClass(target)
 initialized = True
 mainWindow.goto('welcome')
 mainWindow.mainLoop()
