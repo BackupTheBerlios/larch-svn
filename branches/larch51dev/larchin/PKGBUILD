@@ -1,7 +1,7 @@
 # Maintainer: Michael Towers <gradgrind[at]online[dot]de>
 # 2008.02.27
 pkgname=larchin
-pkgver=5.1.5
+pkgver=5.2.0
 pkgrel=1
 
 pkgdesc="Arch hard disk installer with gui for larch live media"

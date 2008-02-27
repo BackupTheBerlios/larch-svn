@@ -1,4 +1,10 @@
-2009.02.19
+2008.02.27
+Incompatible changes. WARNING!
+With version 5.2 the init system has changed, in particular a custom inittab
+is now required, which means all old profiles are likely to fail (because of
+the /etc/inittab in the overlay).
+
+2008.02.19
 added desktop stuff for documentation
 
 2008.02.18

@@ -28,7 +28,7 @@ if [ -f ${INSTALL}/etc/rc.sysinit0 ]; then
     rm -f ${INSTALL}/etc/profile.d/larch.sh
 
     # Remove live-specific packages
-    for p in initcpio_larch initcpio_larch_aufs larchin archin klibc-larch; do
+    for p in initcpio_larch larchin archin; do
         pacman -r ${INSTALL} -R ${p} 2>/dev/null
     done
 
@@ -39,11 +39,11 @@ else
         . /.livesys/larch0
     fi
 
-    # Get these files in their 'original' versions
-    tar -xzf /.livesys/arch0.tar.gz -C ${INSTALL}
+    # Get the 'original' version of /etc/inittab
+    mv -f ${INSTALL}/etc/inittab.larchsave ${INSTALL}/etc/inittab
 
     # Remove live-specific packages
-    for p in larch-live larchin; do
+    for p in larch-live larchin larchin-syscalls; do
         pacman -r ${INSTALL} -R ${p} 2>/dev/null
     done
 

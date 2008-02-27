@@ -165,6 +165,11 @@ mklive ()
 
     ### END of initcpio generation
 
+    # Save original /etc/inittab
+    if ! [ -f /etc/inittab.larchsave ]; then
+        cp /etc/inittab /etc/inittab.larchsave
+    fi
+
     ### if no saved system.sqf, squash the Arch installation at ${INSTLDIR}
     if [ ! -e "${LARCHBUILD}/tmp/system.sqf" ]; then
         ignorefiles=/.larch/ignorefiles
@@ -218,6 +223,10 @@ mklive ()
     :>${LARCHBUILD}/tmp/overlay/var/log/lastlog
     mkdir -m 1777 ${LARCHBUILD}/tmp/overlay/var/tmp
 
+    # Copy over files specific to larch system
+    mkdir -p ${LARCHBUILD}/tmp/overlay/etc
+    cp -f ${LARCHDATA}/live_files/inittab ${LARCHBUILD}/tmp/overlay/etc
+
     # Copy over the overlay from the selected profile
     if [ -n "${PROFILE}" ]; then
         if [ -d ${PROFILE}/overlay ]; then
@@ -230,31 +239,6 @@ mklive ()
             cp -af ${LARCHBUILD}/tmp/overlay/overlay/${d} ${LARCHBUILD}/tmp/overlay
         done
         rm -rf ${LARCHBUILD}/tmp/overlay/overlay
-    fi
-
-    #***** Copy over files specific to larch system
-
-    # Get list of special files for live system (possibly replacing normal ones).
-    # That list could be used to build a backup directory when not running 'live'.
-    # All directories and files handled here have default permissions
-    # and are owned by 'root'.
-    mkdir -p ${CDDATA}/larch
-    if [ -d /.livesys/arch0.tar.gz ]; then
-        cp -a /.livesys/arch0.tar.gz ${CDDATA}/larch
-    else
-        for f in $( cd ${LARCHDATA}/live_files ; find . -type f | \
-                sed "s|^\./||" ); do
-            if [ -f ${INSTLDIR}/${f} ]; then
-                d=${CDDATA}/larch/arch0/$( dirname ${f} )
-                mkdir -p ${d}
-                cp ${INSTLDIR}/${f} ${d}
-            fi
-            mkdir -p ${LARCHBUILD}/tmp/overlay/$( dirname ${f} )
-            cp ${LARCHDATA}/live_files/${f} ${LARCHBUILD}/tmp/overlay/${f}
-        done
-        # tar up the saved files
-        tar -czf ${CDDATA}/larch/arch0.tar.gz -C ${CDDATA}/larch/arch0 .
-        rm -fr ${CDDATA}/larch/arch0
     fi
 
     # Generate customized /etc/rc.conf
