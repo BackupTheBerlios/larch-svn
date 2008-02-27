@@ -12,7 +12,15 @@ post_upgrade() {
 
 post_remove() {
   # Remove generated stuff (compiled python files, *.pyc)
-  rm -rf /opt/larchin
+  if [ -d /opt/larchin/syscalls ]; then
+    for df in $( ls /opt/larchin ); do
+      if [ "${df}" != "syscalls" ]; then
+        rm -rf "/opt/larchin/${df}"
+      fi
+    done
+  else
+    rm -rf /opt/larchin
+  if 
   /bin/true
 }
 
