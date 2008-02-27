@@ -24,7 +24,7 @@ rh:06:wait:/etc/rc.shutdown-larch
 su:S:wait:/sbin/sulogin -p
 
 # -8 options fixes umlauts problem on login
-c1:2345:respawn:/sbin/agetty -8 38400 vc/1 linux -n -l /etc/loginroot
+c1:2345:respawn:/sbin/agetty -8 38400 vc/1 linux
 c2:2345:respawn:/sbin/agetty -8 38400 vc/2 linux
 c3:2345:respawn:/sbin/agetty -8 38400 vc/3 linux
 c4:2345:respawn:/sbin/agetty -8 38400 vc/4 linux
