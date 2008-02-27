@@ -1,7 +1,7 @@
-// lodel.c
+// lodtch.c
 // A utility to detach loop devices for klibc environment
 // To compile:
-// klcc -static -o lodel lodel.c
+// klcc -static -o lodtch lodtch.c
 
 /* Adapted from 'mount/lomount.c', function 'del_loop' in util-linux-ng-2.13.0.1 */
 

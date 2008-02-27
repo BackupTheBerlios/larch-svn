@@ -21,7 +21,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.14
+# 2008.02.26
 
 APP="$( basename $0 )"
 
@@ -133,11 +133,15 @@ rm -f ${stick}/syslinux/isolinux*
 umount ${stick}
 
 echo "// Running syslinux"
-mount --bind /dev ${AINSTALL}/dev
-mount --bind /proc ${AINSTALL}/proc
-chroot ${AINSTALL} syslinux ${device}
-umount ${AINSTALL}/dev
-umount ${AINSTALL}/proc
+if [ -n "${AINSTALL}" ]; then
+    mount --bind /dev ${AINSTALL}/dev
+    mount --bind /proc ${AINSTALL}/proc
+    chroot ${AINSTALL} syslinux ${device}
+    umount ${AINSTALL}/dev
+    umount ${AINSTALL}/proc
+else
+    syslinux ${device}
+fi
 
 echo "//"
 echo "// Done!"

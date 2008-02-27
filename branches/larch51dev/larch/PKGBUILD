@@ -1,7 +1,7 @@
 # Maintainer: Michael Towers <gradgrind[at]online[dot]de>
-# 2008.02.19
+# 2008.02.27
 pkgname=larch
-pkgver=5.1.4
+pkgver=5.1.5
 pkgrel=1
 
 # If I need the architecture, I can get it as ${CARCH}
@@ -28,12 +28,4 @@ build() {
   cp ${startdir}/larch.png ${startdir}/pkg/usr/share/pixmaps
   mkdir -p ${startdir}/pkg/usr/share/applications
   cp ${startdir}/larchdoc.desktop ${startdir}/pkg/usr/share/applications
-
-  # Compile additional initramfs utilities
-  cd ${startdir}/src
-  klcc -static -o lodel lodel.c || return 1
-  klcc -static -o rename rename.c || return 1
-  mkdir ${startdir}/pkg/opt/larch/klibc
-  cp lodel ${startdir}/pkg/opt/larch/klibc
-  cp rename ${startdir}/pkg/opt/larch/klibc
 }
