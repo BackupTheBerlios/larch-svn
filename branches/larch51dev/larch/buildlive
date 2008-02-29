@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.27
+# 2008.02.29
 
 # Location for the CD image
 CDDATA="${LARCHBUILD}/cd"
@@ -167,7 +167,7 @@ mklive ()
 
     # Save original /etc/inittab
     if ! [ -f /etc/inittab.larchsave ]; then
-        cp /etc/inittab /etc/inittab.larchsave
+        mv /etc/inittab /etc/inittab.larchsave
     fi
 
     ### if no saved system.sqf, squash the Arch installation at ${INSTLDIR}
@@ -189,7 +189,7 @@ mklive ()
         ignoredirs="dev mnt media proc sys tmp .larch .livesys"
 
         # add /var directories to ignoredirs
-        ignoredirs="${ignoredirs} /var/log /var/tmp /var/cache/pacman/pkg"
+        ignoredirs="${ignoredirs} var/log var/tmp var/cache/pacman/pkg"
 
         echo "// creating compressed image of linux system: system.sqf"
         mksquash "/" "/.larch/tmp/system.sqf" -ef ${ignorefiles} \
@@ -197,6 +197,20 @@ mklive ()
         if [ $? -ne 0 ]; then
             return 1
         fi
+
+        # Add missing stuff in /var
+        mkdir -p ${LARCHBUILD}/tmp/var/log/old
+        :>${LARCHBUILD}/tmp/var/log/wtmp
+        :>${LARCHBUILD}/tmp/var/log/btmp
+        :>${LARCHBUILD}/tmp/var/log/lastlog
+        mkdir -m 1777 ${LARCHBUILD}/tmp/var/tmp
+        mksquash "/.larch/tmp/var" "/.larch/tmp/system.sqf" -keep-as-directory
+        if [ $? -ne 0 ]; then
+            echo "Failed while extending /var"
+            return 1
+        fi
+        rm -rf ${LARCHBUILD}/tmp/var
+
     fi
 
     # move system.sqf to boot-medium image directory
@@ -216,16 +230,11 @@ mklive ()
     rm -rf ${LARCHBUILD}/tmp/overlay
     mkdir -p ${LARCHBUILD}/tmp/overlay
 
-    # Add missing stuff in /var
-    mkdir -p ${LARCHBUILD}/tmp/overlay/var/log/old
-    :>${LARCHBUILD}/tmp/overlay/var/log/wtmp
-    :>${LARCHBUILD}/tmp/overlay/var/log/btmp
-    :>${LARCHBUILD}/tmp/overlay/var/log/lastlog
-    mkdir -m 1777 ${LARCHBUILD}/tmp/overlay/var/tmp
-
     # Copy over files specific to larch system
-    mkdir -p ${LARCHBUILD}/tmp/overlay/etc
-    cp -f ${LARCHDATA}/live_files/inittab ${LARCHBUILD}/tmp/overlay/etc
+    if ! grep "sysinit-larch" ${INSTLDIR}/etc/inittab &>/dev/null; then
+        mkdir -p ${LARCHBUILD}/tmp/overlay/etc
+        cp ${LARCHDATA}/live_files/inittab ${LARCHBUILD}/tmp/overlay/etc
+    fi
 
     # Copy over the overlay from the selected profile
     if [ -n "${PROFILE}" ]; then
