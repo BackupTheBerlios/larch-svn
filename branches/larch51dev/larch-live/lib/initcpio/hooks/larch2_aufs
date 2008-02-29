@@ -19,14 +19,14 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2007.12.13
+# 2008.02.29
 
 run_hook ()
 {
    #!!! --- aufs specific
     # Need aufs module
     /bin/modprobe aufs
-    ovlmnt="ro+wh"
+    ovlmnt="rr+wh"
     sqfmnt="rr"
     bropt="br:"
     utype="aufs"
