@@ -1,27 +1,7 @@
-pre_install() {
-	/bin/true
-}
-
-post_install() {
-  /bin/true
-}
-
-post_upgrade() {
-  /bin/true
-}
-
-post_remove() {
+pre_remove() {
   # Remove generated stuff (compiled python files, *.pyc)
-  if [ -d /opt/larchin/syscalls ]; then
-    for df in $( ls /opt/larchin ); do
-      if [ "${df}" != "syscalls" ]; then
-        rm -rf "/opt/larchin/${df}"
-      fi
-    done
-  else
-    rm -rf /opt/larchin
-  if 
-  /bin/true
+  usr/bin/find opt/larchin -regex '.*\.pyc' -type f -exec rm '{}' \;
+  bin/true
 }
 
 op=$1

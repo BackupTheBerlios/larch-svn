@@ -2,7 +2,7 @@
 # 2008.03.01
 pkgname=larch
 pkgver=5.2.0
-pkgrel=3
+pkgrel=4
 
 # If I need the architecture, I can get it as ${CARCH}
 
@@ -11,6 +11,7 @@ url="http://larch.berlios.de"
 depends=()
 arch=(i686 x86_64)
 license=('GPL')
+install=${pkgname}.install
 
 build() {
   mkdir -p ${startdir}/pkg/opt/larch

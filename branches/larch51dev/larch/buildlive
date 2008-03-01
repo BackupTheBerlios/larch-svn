@@ -200,7 +200,9 @@ mklive ()
         mkdir -p ${LARCHBUILD}/tmp/varbld/paccache
         mkdir -p ${LARCHBUILD}/tmp/varbld/varlog/old
         :>${LARCHBUILD}/tmp/varbld/varlog/wtmp
+        :>${LARCHBUILD}/tmp/varbld/varlog/utmp
         :>${LARCHBUILD}/tmp/varbld/varlog/btmp
+        chmod 600 ${LARCHBUILD}/tmp/varbld/varlog/btmp
         :>${LARCHBUILD}/tmp/varbld/varlog/lastlog
         mkdir -m 1777 ${LARCHBUILD}/tmp/varbld/vartmp
         #    and a mount point for var, then mount it

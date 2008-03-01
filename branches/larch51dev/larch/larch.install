@@ -1,0 +1,13 @@
+pre_install() {
+  echo "WARNING: Do not use profiles from before larch-5.2 with this version of"
+  echo "larch."
+  echo "A special '/etc/inittab' is REQUIRED for larch-5.2 and later to work."
+  echo "If an old overlay in a profile contains '/etc/inittab' this will"
+  echo "overwrite the (new) default file causing the larch system to fail to"
+  echo "boot properly."  
+  bin/true
+}
+
+op=$1
+shift
+$op $*
