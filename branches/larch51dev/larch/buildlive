@@ -207,7 +207,7 @@ mklive ()
         mkdir -m 1777 ${LARCHBUILD}/tmp/varbld/vartmp
         #    and a mount point for var, then mount it
         mkdir ${LARCHBUILD}/tmp/varbld/var
-        mount --bind /var ${LARCHBUILD}/tmp/varbld/var
+        mount --bind ${INSTLDIR}/var ${LARCHBUILD}/tmp/varbld/var
         #    mount the cover-ups
         mount --bind ${LARCHBUILD}/tmp/varbld/paccache \
                 ${LARCHBUILD}/tmp/varbld/var/cache/pacman
