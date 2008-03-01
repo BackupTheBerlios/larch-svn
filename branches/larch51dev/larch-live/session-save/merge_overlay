@@ -21,7 +21,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.27
+# 2008.03.01
 
 # test if the script is started by root user. If not, exit
 if [ $UID -ne 0 ]; then
@@ -33,115 +33,182 @@ fi
 # Overlay:                  /.livesys/overlay
 
 # The overlay device (where the archives will be saved)
-if [ -d $1 ]; then
-    overlaypath=$1
+if [ -d "$1" ]; then
+    overlaypath="$1"
 else
     echo "ERROR: invalid directory ($1)"
     exit 1
 fi
 
-if [ -f ${overlaypath}/larch/merge-adjust ] ; then
-    . ${overlaypath}/larch/merge-adjust
-fi
-
-merge_union=/.livesys/merge_union
-new_overlay=/.livesys/new_overlay/overlay
-rm -rf ${merge_union}
-mkdir -p ${merge_union}
-rm -rf ${new_overlay}
-mkdir -p ${new_overlay}
-
 utype="$( cat /.livesys/utype )"
 if [ "${utype}" = "unionfs" ]; then
     sqfmnt="ro"
     ovlmnt="ro"
+    ovl2mnt="ro"
     bropt="dirs="
     opq=".wh.__dir_opaque"
+    whlink="???"
+    echo "Overlay merging is currently not implemented for unionfs"
+    exit 1
 else
     if [ "${utype}" != "aufs" ]; then
         echo "ERROR: bad union type (${utype}), trying aufs"
         utype="aufs"
     fi
     sqfmnt="rr"
-    ovlmnt="ro+wh"
+    ovlmnt="rr+wh"
+    ovl2mnt="ro+wh"
     bropt="br:"
     opq=".wh..wh..opq"
+    whlink=".wh.wh.aufs"
 fi
 
-layers="${new_overlay}=rw:/.livesys/overlay=${ovlmnt}:/.livesys/mods=${sqfmnt}"
-mount -t ${utype} -o ${bropt}${layers} ${utype} ${merge_union}
+if [ -f ${overlaypath}/larch/merge-adjust ] ; then
+    . ${overlaypath}/larch/merge-adjust
+fi
 
-# Remove stuff from var
-rm -rf ${merge_union}/var/log
-rm -rf ${merge_union}/var/tmp
-rm -rf ${merge_union}/var/cache/pacman/pkg
-# Add missing stuff in /var
-mkdir -p ${merge_union}/var/log/old
-:>${merge_union}/var/log/wtmp
-:>${merge_union}/var/log/btmp
-:>${merge_union}/var/log/lastlog
-mkdir -m 1777 ${merge_union}/var/tmp
+# Make a directory for a merged union, and one for rebuilding whiteouts
+merge_union=/.livesys/merge_union
+whiteouts=/.livesys/whiteouts
+rm -rf ${merge_union}
+mkdir -p ${merge_union}
+rm -rf ${whiteouts}
+mkdir -p ${whiteouts}
+
+layers="/.livesys/overlay=${ovl2mnt}:/.livesys/mods=${ovlmnt}"
+mount -t ${utype} -o ${bropt}${layers} ${utype} ${merge_union}
 
 echo "creating mods.sqf_"
 # Note that 'etc' is not included - mods.sqf has no /etc directory.
-savedirs=""
-for d in bin boot home lib mnt opt root sbin srv usr var; do
-    if [ -d "${merge_union}/${d}" ]; then
-        savedirs="${savedirs} ${d}"
+savedirs="bin boot home lib mnt opt root sbin srv usr"
+#NB: var probably has to be handled separately because of the excludes.
+
+:>${whiteouts}/${whlink}
+#?
+chmod 444 ${whiteouts}/${whlink}
+cd "${whiteouts}"
+
+# mkwhite will check that all leading directories exist in the whiteout
+# tree, creating them with attributes from merge_union if necessary.
+
+mkdirs ()
+{
+    echo "mkdirs $1"
+    local d0
+    d0="$1"
+    if [ ! -d "${d0}" ]; then
+        mkdirs "$( dirname "${d0}" )"
+        mkdir "${d0}"
+        chmod "${d0}" --reference="${merge_union}/${d0}"
+        chown "${d0}" --reference="${merge_union}/${d0}"
+        touch "${d0}" --reference="${merge_union}/${d0}"
     fi
+}
+
+mkwhite ()
+{
+    if [ ! -d "$1" ]; then
+        mkdirs "$1"
+    fi
+
+    ln "${whlink}" "$1/$2"
+}
+
+echo "   1) Find whiteouts"
+for d in ${savedirs} var; do
+    if [ ! -d "${merge_union}/${d}" ]; then continue; fi
+
+# Walk through the directories in merge_union, looking for whiteouts,
+# first in overlay, then in mods. Be aware that those in mods might be
+# affected by the contents of overlay.
+    find "${merge_union}/${d}" -type d -print '%P\n' | while read td; do
+
+        skipmods=""
+        find "/.livesys/overlay/${d}" -maxdepth 1 -regex '\.wh\.[^/]*' \
+                -type f -print '%P\n' | while read fw; do
+
+            if [ "${fw}" = "${opq}" ]; then
+                if [ -d "/.livesys/system/${d}" ]; then
+                    mkwhite "${d}" "${opq}"
+                fi
+                # Don't investigate this directory in mods
+                skipmods="y"
+            else
+                f="${fw#\.wh\.}"
+                if [ -e "/.livesys/system/${d}/${f}" ]; then
+                    mkwhite "${d}" "${fw}"
+                fi
+            fi
+
+        done
+
+        if [ -n "${skipmods}" ]; then continue; fi
+
+        find "/.livesys/mods/${dp}" -maxdepth 1 -regex '\.wh\.[^/]*' \
+                -type f -print '%P\n' | while read fw; do
+
+            if [ "${fw}" = "${opq}" ]; then
+                if [ -d "/.livesys/system/${d}" ]; then
+                    mkwhite "${d}" "${opq}"
+                fi
+            else
+                f="${fw#\.wh\.}"
+                if [ -e "/.livesys/system/${d}/${f}" ] && \
+                        [ ! -e "/.livesys/overlay/${d}/${f}" ]; then
+                    mkwhite "${d}" "${fw}"
+                fi
+            fi
+
+        done
+
+    done
+
 done
 
-cd ${merge_union}
-mksquashfs "${savedirs}" "${overlaypath}/mods.tmp"
+echo "   2) Build mods.tmp, just files, no whiteouts"
+cd "${merge_union}"
+# root directories which are not included in mods.sqf
+ignoredirs="dev etc media proc sys tmp .larch .livesys"
+# non-included /var directories
+vardirs="var/log var/tmp var/cache/pacman/pkg"
+mksquashfs ${savedirs} "${overlaypath}/mods.tmp" -e ${ignoredirs} ${vardirs}
 if [ $? -ne 0 ]; then
-    echo "ERROR: Couldn't create ${overlaypath}/mods.sqf_"
+    echo "ERROR: Couldn't create ${overlaypath}/mods.tmp"
     rm -f "${overlaypath}/mods.tmp"
     exit 1
 fi
 
-echo "creating overlay.ovl_"
-# Handle whiteouts and overlay
-for d in ${savedirs} etc; do
-    if [ -d "/.livesys/overlay/${d}" ]; then
-        cd "/.livesys/overlay/${d}"
-        find . -regex '.*/\.wh\.[^/]*' -type f | while read w; do
-            wb="$( basename "${w}" )"
-            wd="$( dirname "${w}" )"
-            # Copy whiteout using temporary destination name with '.x' prefix
-            cp -a "/.livesys/overlay/${d}/${wd#\./}/${wb}" \
-                    "${merge_union}/${d}/${wd#\./}/.x${wb}"
-        done
+echo "   3) Extend mods.tmp with whiteouts"
+for d in ${vardirs}; do
+    if [ -d "${whiteouts}/${d}" ]; then
+        rm -r "${whiteouts}/${d}"
     fi
 done
-
-# Discard merge union
-umount ${merge_union}
-
-# Rename whiteouts
-cd ${new_overlay}
-find . -regex '.*/\.x\.wh\.[^/]*' -type f | while read w; do
-    wb="$( basename "${w}" )"
-    wd="$( dirname "${w}" )"
-    mv "${w}" "${wd}/${wb#\.x}"
-done
-
-rm -rf ${new_overlay}/var/log
-rm -rf ${new_overlay}/var/tmp
-
-echo "Recompressing overlay"
-ovdirs=""
-for d in ${savedirs} etc; do
-    ovdirs="${ovdirs} overlay/${d}"
-done
-tar -cf - -C ${new_overlay}/.. ${ovdirs} | lzop > "${overlaypath}/overlay.tmp"
+mksquashfs "${whiteouts}" "${overlaypath}/mods.tmp"
 if [ $? -ne 0 ]; then
-    echo "ERROR: couldn't save overlay"
-    rm -f "${overlaypath}/overlay.tmp"
+    echo "ERROR: Couldn't extend ${overlaypath}/mods.tmp"
+    rm -f "${overlaypath}/mods.tmp"
     exit 1
 fi
 
-mv "${overlaypath}/overlay.tmp" "${overlaypath}/overlay.ovl_"
-mv "${overlaypath}/mods.tmp" "${overlaypath}/mods.sqf_"
+# Discard whiteouts
+rm -rf "${whiteouts}"
 
-rm -rf ${new_overlay}
+# Discard merge union
+cd /
+umount ${merge_union}
+
+echo "creating overlay.ovl_"
+# Compress the overlay (with root dir 'overlay' retained)
+tar -cf - -C /.livesys overlay/etc | lzop > ${overlaypath}/overlay.ovl_
+if [ $? -ne 0 ]; then
+    echo "ERROR: couldn't create ${overlaypath}/overlay.ovl_"
+    rm -f ${overlaypath}/overlay.ovl_
+    exit 1
+fi
+
+echo "renaming mods.tmp to mods.sqf_"
+mv "${overlaypath}/mods.tmp" "${overlaypath}/mods.sqf_"
+echo "merging finished"
+
 exit 0

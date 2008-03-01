@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.12
+# 2008.03.01
 
 
 session_save ()
@@ -68,6 +68,14 @@ session_save ()
             else
                 rm -rf ${savepath}/${modsSqf}~
                 /opt/larch-live/session-save/merge_overlay ${savepath}
+                if [ $? -ne 0 ]; then
+                    read -p "\nTry to just save overlay? [Y/n] : ", yn
+                    if [ -z "$( echo ${yn} | grep '^ *[nN]' )" ]; then
+                        saveovl ${savepath}
+                    else
+                        return 1
+                    fi
+                fi
             fi
         fi
 
