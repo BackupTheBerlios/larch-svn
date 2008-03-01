@@ -121,11 +121,11 @@ for d in ${savedirs} var; do
 # Walk through the directories in merge_union, looking for whiteouts,
 # first in overlay, then in mods. Be aware that those in mods might be
 # affected by the contents of overlay.
-    find "${merge_union}/${d}" -type d -print '%P\n' | while read td; do
+    find "${merge_union}/${d}" -type d -printf '%P\n' | while read td; do
 
         skipmods=""
         find "/.livesys/overlay/${d}" -maxdepth 1 -regex '\.wh\.[^/]*' \
-                -type f -print '%P\n' | while read fw; do
+                -type f -printf '%P\n' | while read fw; do
 
             if [ "${fw}" = "${opq}" ]; then
                 if [ -d "/.livesys/system/${d}" ]; then
@@ -145,7 +145,7 @@ for d in ${savedirs} var; do
         if [ -n "${skipmods}" ]; then continue; fi
 
         find "/.livesys/mods/${dp}" -maxdepth 1 -regex '\.wh\.[^/]*' \
-                -type f -print '%P\n' | while read fw; do
+                -type f -printf '%P\n' | while read fw; do
 
             if [ "${fw}" = "${opq}" ]; then
                 if [ -d "/.livesys/system/${d}" ]; then
@@ -166,12 +166,12 @@ for d in ${savedirs} var; do
 done
 
 echo "   2) Build mods.tmp, just files, no whiteouts"
-cd "${merge_union}"
+cd /
 # root directories which are not included in mods.sqf
 ignoredirs="dev etc media proc sys tmp .larch .livesys"
 # non-included /var directories
 vardirs="var/log var/tmp var/cache/pacman/pkg"
-mksquashfs ${savedirs} "${overlaypath}/mods.tmp" -e ${ignoredirs} ${vardirs}
+mksquashfs ${merge_union} "${overlaypath}/mods.tmp" -e ${ignoredirs} ${vardirs}
 if [ $? -ne 0 ]; then
     echo "ERROR: Couldn't create ${overlaypath}/mods.tmp"
     rm -f "${overlaypath}/mods.tmp"
@@ -195,7 +195,6 @@ fi
 rm -rf "${whiteouts}"
 
 # Discard merge union
-cd /
 umount ${merge_union}
 
 echo "creating overlay.ovl_"

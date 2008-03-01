@@ -69,7 +69,8 @@ session_save ()
                 rm -rf ${savepath}/${modsSqf}~
                 /opt/larch-live/session-save/merge_overlay ${savepath}
                 if [ $? -ne 0 ]; then
-                    read -p "\nTry to just save overlay? [Y/n] : ", yn
+                    echo
+                    read -p "Try to just save overlay? [Y/n] : " yn
                     if [ -z "$( echo ${yn} | grep '^ *[nN]' )" ]; then
                         saveovl ${savepath}
                     else
