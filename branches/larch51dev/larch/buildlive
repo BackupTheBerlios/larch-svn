@@ -186,10 +186,7 @@ mklive ()
         done
 
        # root directories which are not included in the squashed system.sqf
-        ignoredirs="dev mnt media proc sys tmp .larch .livesys"
-
-        # add /var directories to ignoredirs
-        ignoredirs="${ignoredirs} var/log var/tmp var/cache/pacman/pkg"
+        ignoredirs="dev mnt media proc sys tmp var .larch .livesys"
 
         echo "// creating compressed image of linux system: system.sqf"
         mksquash "/" "/.larch/tmp/system.sqf" -ef ${ignorefiles} \
@@ -198,18 +195,41 @@ mklive ()
             return 1
         fi
 
-        # Add missing stuff in /var
-        mkdir -p ${LARCHBUILD}/tmp/var/log/old
-        :>${LARCHBUILD}/tmp/var/log/wtmp
-        :>${LARCHBUILD}/tmp/var/log/btmp
-        :>${LARCHBUILD}/tmp/var/log/lastlog
-        mkdir -m 1777 ${LARCHBUILD}/tmp/var/tmp
-        mksquash "/.larch/tmp/var" "/.larch/tmp/system.sqf" -keep-as-directory
-        if [ $? -ne 0 ]; then
+        # Add /var, but mask out some undesirable stuff: use mount --bind
+        #    first make fresh pacman cache, log and tmp directories
+        mkdir -p ${LARCHBUILD}/tmp/varbld/paccache
+        mkdir -p ${LARCHBUILD}/tmp/varbld/varlog/old
+        :>${LARCHBUILD}/tmp/varbld/varlog/wtmp
+        :>${LARCHBUILD}/tmp/varbld/varlog/btmp
+        :>${LARCHBUILD}/tmp/varbld/varlog/lastlog
+        mkdir -m 1777 ${LARCHBUILD}/tmp/varbld/vartmp
+        #    and a mount point for var, then mount it
+        mkdir ${LARCHBUILD}/tmp/varbld/var
+        mount --bind /var ${LARCHBUILD}/tmp/varbld/var
+        #    mount the cover-ups
+        mount --bind ${LARCHBUILD}/tmp/varbld/paccache \
+                ${LARCHBUILD}/tmp/varbld/var/cache/pacman
+        mount --bind ${LARCHBUILD}/tmp/varbld/varlog \
+                ${LARCHBUILD}/tmp/varbld/var/log
+        mount --bind ${LARCHBUILD}/tmp/varbld/vartmp \
+                ${LARCHBUILD}/tmp/varbld/var/tmp
+
+        #    do the squashing
+        mksquash "/.larch/tmp/varbld/var" "/.larch/tmp/system.sqf" \
+                -keep-as-directory
+        res=$?
+
+        #    unmount all the binds
+        umount ${LARCHBUILD}/tmp/varbld/var/tmp
+        umount ${LARCHBUILD}/tmp/varbld/var/log
+        umount ${LARCHBUILD}/tmp/varbld/var/cache/pacman
+        umount ${LARCHBUILD}/tmp/varbld/var
+        rm -r ${LARCHBUILD}/tmp/varbld
+
+        if [ ${res} -ne 0 ]; then
             echo "Failed while extending /var"
             return 1
         fi
-        rm -rf ${LARCHBUILD}/tmp/var
 
     fi
 
