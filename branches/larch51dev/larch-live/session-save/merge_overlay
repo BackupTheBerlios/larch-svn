@@ -62,7 +62,7 @@ else
     ovl2mnt="ro+wh"
     bropt="br:"
     opq=".wh..wh..opq"
-    whlink=".wh.wh.aufs .wh..wh.plink"
+    whlink=".wh..wh.aufs .wh..wh.plink"
 fi
 
 if [ -f ${overlaypath}/larch/merge-adjust ] ; then
