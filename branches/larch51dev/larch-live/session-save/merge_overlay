@@ -80,17 +80,47 @@ layers="/.livesys/overlay=${ovl2mnt}:/.livesys/mods=${ovlmnt}"
 mount -t ${utype} -o ro,shwh,${bropt}${layers} ${utype} ${merge_union}
 
 echo "Rebuilding 'mods' overlay to ${overlaypath}/mods.tmp"
+# Recreate the desired layout in a new directory, using mount --bind
+# ( this is probably over-complicated, but I got annoying warnings about
+#   conflicting permissions on the mount point when I didn't use a single
+#   source for squashfs - for some reason the squashfs root was set to
+#   mode 0777.)
+# The other version was:
+## root directories which are included in mods.sqf
+#includedirs=""
+#for d in bin boot home lib mnt opt root sbin srv usr var; do
+#    if [ -d ${merge_union}/${d} ]; then
+#        includedirs="${includedirs} ${merge_union}/${d}"
+#    fi
+#done
+## non-included /var directories
+#vardirs="${merge_union}/var/log ${merge_union}/var/tmp ${merge_union}/var/cache/pacman/pkg"
+#mksquashfs ${includedirs} "${overlaypath}/mods.tmp" -e ${vardirs}
+res=$?
+#+++
+mods2=/.livesys/mods2
+rm -rf ${mods2}
+mkdir -p ${mods2}
 # root directories which are included in mods.sqf
 includedirs=""
 for d in bin boot home lib mnt opt root sbin srv usr var; do
     if [ -d ${merge_union}/${d} ]; then
-        includedirs="${includedirs} ${merge_union}/${d}"
+        includedirs="${includedirs} ${d}"
+        mkdir ${mods2}/${d}
+        mount --bind ${merge_union}/${d} ${mods2}/${d}
     fi
 done
+
 # non-included /var directories
-vardirs="${merge_union}/var/log ${merge_union}/var/tmp ${merge_union}/var/cache/pacman/pkg"
-mksquashfs ${includedirs} "${overlaypath}/mods.tmp" -e ${vardirs}
-if [ $? -ne 0 ]; then
+vardirs="var/log var/tmp var/cache/pacman/pkg"
+mksquashfs ${mods2} "${overlaypath}/mods.tmp" -e ${vardirs}
+res=$?
+for d in ${includedirs}; do
+    umount ${mods2}/${d}
+done
+rm -r ${mods2}
+#---
+if [ ${res} -ne 0 ]; then
     echo "ERROR: Couldn't create ${overlaypath}/mods.tmp"
     rm -f "${overlaypath}/mods.tmp"
     exit 1
