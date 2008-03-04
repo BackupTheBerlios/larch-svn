@@ -80,12 +80,16 @@ layers="/.livesys/overlay=${ovl2mnt}:/.livesys/mods=${ovlmnt}"
 mount -t ${utype} -o ro,shwh,${bropt}${layers} ${utype} ${merge_union}
 
 echo "Rebuilding 'mods' overlay to ${overlaypath}/mods.tmp"
-# root directories which are not included in mods.sqf
-ignoredirs="dev etc media proc sys tmp .larch .livesys"
+# root directories which are included in mods.sqf
+includedirs=""
+for d in bin boot home lib mnt opt root sbin srv usr var; do
+    if [ -d ${merge_union}/${d} ]; then
+        includedirs="${includedirs} ${merge_union}/${d}"
+    fi
+done
 # non-included /var directories
-vardirs="var/log var/tmp var/cache/pacman/pkg"
-mksquashfs ${merge_union} "${overlaypath}/mods.tmp" -e ${ignoredirs} \
-        ${vardirs} ${whlink}
+vardirs="${merge_union}/var/log ${merge_union}/var/tmp ${merge_union}/var/cache/pacman/pkg"
+mksquashfs ${includedirs} "${overlaypath}/mods.tmp" -e ${vardirs}
 if [ $? -ne 0 ]; then
     echo "ERROR: Couldn't create ${overlaypath}/mods.tmp"
     rm -f "${overlaypath}/mods.tmp"
