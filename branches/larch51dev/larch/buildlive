@@ -206,26 +206,25 @@ mklive ()
         :>${LARCHBUILD}/tmp/varbld/varlog/lastlog
         mkdir -m 1777 ${LARCHBUILD}/tmp/varbld/vartmp
         #    and a mount point for var, then mount it
-        mkdir ${LARCHBUILD}/tmp/varbld/var
-        mount --bind ${INSTLDIR}/var ${LARCHBUILD}/tmp/varbld/var
+        mkdir -p ${LARCHBUILD}/tmp/varbld/var0/var
+        mount --bind ${INSTLDIR}/var ${LARCHBUILD}/tmp/varbld/var0/var
         #    mount the cover-ups
         mount --bind ${LARCHBUILD}/tmp/varbld/paccache \
-                ${LARCHBUILD}/tmp/varbld/var/cache/pacman
+                ${LARCHBUILD}/tmp/varbld/var0/var/cache/pacman
         mount --bind ${LARCHBUILD}/tmp/varbld/varlog \
-                ${LARCHBUILD}/tmp/varbld/var/log
+                ${LARCHBUILD}/tmp/varbld/var0/var/log
         mount --bind ${LARCHBUILD}/tmp/varbld/vartmp \
-                ${LARCHBUILD}/tmp/varbld/var/tmp
+                ${LARCHBUILD}/tmp/varbld/var0/var/tmp
 
         #    do the squashing
-        mksquash "/.larch/tmp/varbld/var" "/.larch/tmp/system.sqf" \
-                -keep-as-directory
+        mksquash "/.larch/tmp/varbld/var0" "/.larch/tmp/system.sqf"
         res=$?
 
         #    unmount all the binds
-        umount ${LARCHBUILD}/tmp/varbld/var/tmp
-        umount ${LARCHBUILD}/tmp/varbld/var/log
-        umount ${LARCHBUILD}/tmp/varbld/var/cache/pacman
-        umount ${LARCHBUILD}/tmp/varbld/var
+        umount ${LARCHBUILD}/tmp/varbld/var0/var/tmp
+        umount ${LARCHBUILD}/tmp/varbld/var0/var/log
+        umount ${LARCHBUILD}/tmp/varbld/var0/var/cache/pacman
+        umount ${LARCHBUILD}/tmp/varbld/var0/var
         rm -r ${LARCHBUILD}/tmp/varbld
 
         if [ ${res} -ne 0 ]; then
