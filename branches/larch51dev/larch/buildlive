@@ -166,8 +166,8 @@ mklive ()
     ### END of initcpio generation
 
     # Save original /etc/inittab
-    if ! [ -f /etc/inittab.larchsave ]; then
-        mv /etc/inittab /etc/inittab.larchsave
+    if ! [ -f ${INSTLDIR}/etc/inittab.larchsave ]; then
+        mv ${INSTLDIR}/etc/inittab ${INSTLDIR}/etc/inittab.larchsave
     fi
 
     ### if no saved system.sqf, squash the Arch installation at ${INSTLDIR}
