@@ -1,5 +1,5 @@
 # Maintainer: Michael Towers <gradgrind[at]online[dot]de>
-# 2008.03.01
+# 2008.03.04
 pkgname=larch
 pkgver=5.2.0
 pkgrel=5
@@ -18,7 +18,6 @@ build() {
   cp -dr ${startdir}/run ${startdir}/pkg/opt/larch
   cp -dr ${startdir}/cd-root ${startdir}/pkg/opt/larch
   cp -dr ${startdir}/docs ${startdir}/pkg/opt/larch
-  cp -dr ${startdir}/live_files ${startdir}/pkg/opt/larch
   cp -dr ${startdir}/profile0 ${startdir}/pkg/opt/larch
   cp -dr ${startdir}/profiles ${startdir}/pkg/opt/larch
   cp -dr ${startdir}/etc ${startdir}/pkg

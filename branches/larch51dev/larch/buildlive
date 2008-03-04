@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.29
+# 2008.03.04
 
 # Location for the CD image
 CDDATA="${LARCHBUILD}/cd"
@@ -252,12 +252,6 @@ mklive ()
     rm -rf ${LARCHBUILD}/tmp/overlay
     mkdir -p ${LARCHBUILD}/tmp/overlay
 
-    # Copy over files specific to larch system
-    if ! grep "sysinit-larch" ${INSTLDIR}/etc/inittab &>/dev/null; then
-        mkdir -p ${LARCHBUILD}/tmp/overlay/etc
-        cp ${LARCHDATA}/live_files/inittab ${LARCHBUILD}/tmp/overlay/etc
-    fi
-
     # Copy over the overlay from the selected profile
     if [ -n "${PROFILE}" ]; then
         if [ -d ${PROFILE}/overlay ]; then
@@ -270,6 +264,28 @@ mklive ()
             cp -af ${LARCHBUILD}/tmp/overlay/overlay/${d} ${LARCHBUILD}/tmp/overlay
         done
         rm -rf ${LARCHBUILD}/tmp/overlay/overlay
+    fi
+
+    # Ensure a larch-enabled version of /etc/inittab is installed
+    if ! [ -f ${INSTLDIR}/etc/inittab.larchsave ]; then
+        echo "ERROR: No /etc/inittab.larchsave found"
+        return 1
+    fi
+    inittab=0
+    if ! [ -f ${LARCHBUILD}/tmp/overlay/etc/inittab ]; then
+        if grep "sysinit-larch" ${INSTLDIR}/etc/inittab &>/dev/null; then
+            inittab=1
+        else
+            mkdir -p ${LARCHBUILD}/tmp/overlay/etc
+            cp ${INSTLDIR}/etc/inittab.larchsave ${LARCHBUILD}/tmp/overlay/etc/inittab
+        fi
+    fi
+    if [ ${inittab} -eq 0 ] && \
+            ! grep "sysinit-larch" ${LARCHBUILD}/tmp/overlay/etc/inittab &>/dev/null; then
+        sed -i 's|^rc::sysinit.*|rc::sysinit:/etc/rc.sysinit-larch|' \
+                ${LARCHBUILD}/tmp/overlay/etc/inittab
+        sed -i 's|^rh:06.*|rh:06:wait:/etc/rc.shutdown-larch|' \
+                ${LARCHBUILD}/tmp/overlay/etc/inittab
     fi
 
     # Generate customized /etc/rc.conf
