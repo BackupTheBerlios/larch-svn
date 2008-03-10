@@ -21,12 +21,6 @@ TODO
 *) Detect kernel updates and rebuild corresponding parts of boot medium
   (offer to rebuild boot cd?).
 
-*) When creating new overlays name them first (say) mods.tmp and overlay.tmp
-  so that if an error occurs (a crash, power off, ...) the next boot attempt
-  will not be disturbed by unfinished or corrupted overlays.
-   The boot process should also delete any such files it finds. HAVE I DONE THIS?
-   When both files have been successfully created, they can be renamed.
-
 *) New package contents in 5.2 documented?
 
 *) larchin. Add LVM support (maybe also RAID?).

@@ -56,9 +56,25 @@ overlay archive into the middle <em>union</em> layer in <strong>mods.sqf</strong
 normally not copied to memory), thus restoring the rapid load and save times
 for <strong>overlay.ovl</strong>, and maximizing the available memory. I call this process
 'overlay merging', and it is offered as a shutdown option.
-It takes longer to execute than a normal session save, and it also requires extra memory
-(dependent on the amount of data to be merged), so it may require tweaking to work on
-'memory-challenged' machines (e.g. enabling swap and increasing the size of the <em>tmpfs</em>).
+It takes longer to execute than a normal session save, but in larch version 5.2
+a new <em>aufs</em> option allows the merging to be done quicker than it was
+previously and without significant extra memory requirements. In this version
+a separate <em>aufs</em> union of the two overlay layers is mounted in which
+the whiteouts are visible. This union can then be squashed directly, without
+requiring the new, merged overlay to be rebuilt in memory. As it is a feature
+of <em>aufs</em>, overlay merging is no longer supported for <em>unionfs</em>
+(note that <em>unionfs</em> is at present not actively supported in <em>larch</em>
+anyway).
+</p>
+
+<h3><a name="var_files"></a>Special places in /var</h3>
+
+<p>It was considered undesirable to include some things in the '/var' directory
+in the session saves, primarily because of the space they occupy. Firstly,
+the standard <em>pacman</em> package cache, '/var/cache/pacman/pkg' - if you
+do want to save your cache, you should either handle this manually or set
+up another location using 'CacheDir' in /etc/pacman.conf'. Also the log files
+(in '/var/log') and '/var/tmp' (temporary files, like '/tmp') are not saved.
 </p>
 
 <h3><a name="upd_packages"></a>Updating packages</h3>

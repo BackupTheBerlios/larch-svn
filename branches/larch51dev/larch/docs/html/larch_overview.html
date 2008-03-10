@@ -192,7 +192,10 @@ manage the requirements of a <em>larch</em> live system.
 available as a package in <em>Arch Linux</em>. In order to use <em>aufs</em> its
 kernel module needs to be installed (which, if using <em>mklarch</em>, can be
 achieved by placing package 'aufs' in <strong>addedpacks</strong>), the rest
-will then be handled automatically.
+will then be handled automatically. <strong>N.B.</strong> As <em>unionfs</em>
+hasn't been tested for a long time (all development work is done using
+<em>aufs</em>) and the current 'overlay merge' only works with <em>aufs</em>,
+it is strongly recommended that <em>aufs</em> be used.
 </p>
 
 <h3><a name="Partial_rebuilding"></a>Partial rebuilding</h3>
@@ -337,6 +340,13 @@ rebuilds - <em>larch</em>
 </pre>
 </p>
 
+<p>Note that some things in '/var' will not be included in the 'live' system.
+Firstly, the standard <em>pacman</em> package cache, '/var/cache/pacman/pkg'.
+Also the log files (in '/var/log') and '/var/tmp' (temporary files, like '/tmp')
+are not saved. As some files in '/var/log' are required for certain aspects of
+logging to function, these are recreated (as empty files) in the resulting
+'system.sqf'.
+</p>
 
 <table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
   <tbody>
