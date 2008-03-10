@@ -1,5 +1,5 @@
 pkgname=aufs
-pkgver=20080310
+pkgver=20080311
 pkgrel=1
 _kernver='2.6.24-ARCH'
 pkgdesc="Another Unionfs Implementation that supports NFS branches"
@@ -10,12 +10,12 @@ depends=('kernel26>=2.6.24.3-3' 'aufs-utils')
 install=$pkgname.install
 options=(!makeflags)
 
-_cvsroot=":pserver:anonymous:@aufs.cvs.sourceforge.net:/cvsroot/aufs"
+_cvsr=":pserver:anonymous:@aufs.cvs.sourceforge.net:/cvsroot/aufs"
 _cvsmod="aufs"
 
 build() {
   msg "Connecting to $_cvsmod.sourceforge.net CVS server...."
-  cvs -d$_cvsroot checkout -D $pkgver $_cvsmod
+  cvs -d$_cvsr checkout -D $pkgver $_cvsmod
 
   msg "CVS checkout done or server timeout"
   msg "Starting make..."
