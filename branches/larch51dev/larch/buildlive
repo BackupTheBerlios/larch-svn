@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.03.04
+# 2008.03.10
 
 # Location for the CD image
 CDDATA="${LARCHBUILD}/cd"
@@ -313,9 +313,11 @@ mklive ()
         )
     fi
 
+    # Handle /mnt
+    mkdir -p ${LARCHBUILD}/tmp/overlay/mnt
     for d in $( ls ${INSTLDIR}/mnt ); do
         if [ -d ${INSTLDIR}/mnt/${d} ]; then
-            mkdir -p ${LARCHBUILD}/tmp/overlay/mnt/${d}
+            mkdir ${LARCHBUILD}/tmp/overlay/mnt/${d}
         fi
     done
 
