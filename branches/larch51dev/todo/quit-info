@@ -1,0 +1,108 @@
+SHUTTING DOWN
+**************
+
+KDE
+====
+The possible values for the confirm parameter of requestShutDown().
+
+ShutdownConfirmDefault = -1
+    ShutdownConfirmNo = 0
+    ShutdownConfirmYes = 1
+    ShutdownTypeDefault = -1
+    ShutdownTypeNone = 0
+    ShutdownTypeReboot = 1
+    ShutdownTypeHalt = 2
+    ShutdownModeDefault = -1
+    ShutdownModeSchedule = 0
+    ShutdownModeTryNow = 1
+    ShutdownModeForceNow = 2
+    ShutdownModeInteractive = 3
+
+Enumerator:
+    ShutdownConfirmDefault  Obey the user's confirmation setting.
+    ShutdownConfirmNo   Don't confirm, shutdown without asking.
+    ShutdownConfirmYes  Always confirm, ask even if the user turned it off.
+
+Definition at line 264 of file kapplication.h.
+
+enum KApplication::ShutdownMode
+
+The possible values for the sdmode parameter of requestShutDown().
+
+Enumerator:
+    ShutdownModeDefault     Select previous mode or the default if it's the first time.
+    ShutdownModeSchedule    Schedule a shutdown (halt or reboot) for the time all active sessions have exited.
+    ShutdownModeTryNow  Shut down, if no sessions are active.
+
+    Otherwise do nothing.
+    ShutdownModeForceNow    Force shutdown.
+
+    Kill any possibly active sessions.
+    ShutdownModeInteractive     Pop up a dialog asking the user what to do if sessions are still active.
+
+Definition at line 304 of file kapplication.h.
+
+enum KApplication::ShutdownType
+
+The possible values for the sdtype parameter of requestShutDown().
+
+Enumerator:
+    ShutdownTypeDefault     Select previous action or the default if it's the first time.
+    ShutdownTypeNone    Only log out.
+    ShutdownTypeReboot  Log out and reboot the machine.
+    ShutdownTypeHalt    Log out and halt the machine.
+
+Definition at line 282 of file kapplication.h.
+
+
+
+
+# Otherwise, if KDE is found, try to ask it to logout.
+# If KDE is not found, just shutdown now.
+if ps -Af | grep -q '[k]desktop' && pidof dcopserver > /dev/null && test -x /usr/bin/dcop ; then
+    KDESES=`pidof dcopserver | wc -w`
+    if [ $KDESES -eq 1 ] ; then
+        # single KDE session -> ask user
+        /usr/bin/dcop --all-sessions --all-users ksmserver ksmserver logout 1 2 0
+        exit 0
+    else
+        # more than one KDE session - just send shutdown signal to all of them
+        /usr/bin/dcop --all-sessions --all-users ksmserver ksmserver logout 0 2 0 && exit 0
+    fi
+fi
+
+# If all else failed, just initiate a plain shutdown.
+/sbin/shutdown -h now "Power button pressed"
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+I just found a very simple way about a week ago: wmctrl. It's available in AUR.
+Use wmctrl -c $windowname or wmctrl -i -c $windowid to close a window as if you clicked on the close button in the title bar. I tried it on firefox, and it didn't report any crash or anything. Write a simple bash script to recursively close all windows, then power off.
+
+Edit: Just wrote and tried that myself, works well.
+Code:
+
+#!/bin/bash
+windows=`wmctrl -l | cut -d' ' -f1`
+wmctrl -i -c $windows
+while [ -n "$windows" ]; do
+    windows=`echo $windows | cut -d' ' -f1 -s --complement`
+    wmctrl -i -c $windows
+done
+halt
+
+Don't run that in a terminal, because the script would close the terminal and terminates the script before it can call halt. For example, I run it in fluxbox and I put this script in my fluxbox menu. As you use XFCE, maybe put it in your menu or launch bar.
+
+Last edited by dumas (2008-01-24 02:35:33)
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+xfce4-session-logout
+
+Doesn't provide any options, but maybe by presetting certain flags in some file
+or other and detecting when the xfce4-session ends (?) it might be possible
+to provide the necessary actions ...
+
+sessionstop_cmd in slim.conf runs on logout ...
+
