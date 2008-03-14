@@ -63,6 +63,9 @@ else
     bropt="br:"
     opq=".wh..wh..opq"
     whlink=".wh..wh.aufs .wh..wh.plink"
+
+    # flush pseudo-links (which keep track of changed hard linked files)
+    auplink / flush
 fi
 
 if [ -f ${overlaypath}/larch/merge-adjust ] ; then

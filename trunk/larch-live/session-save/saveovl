@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.03.01
+# 2008.03.14
 
 
 session_save ()
@@ -91,6 +91,12 @@ saveovl ()
         echo "Usage:"
         echo "   saveovl path/to/folder"
         return 1
+    fi
+
+    utype="$( cat /.livesys/utype )"
+    if [ "${utype}" = "aufs" ]; then
+        # flush pseudo-links (which keep track of changed hard linked files)
+        auplink / flush
     fi
 
     overlay=overlay.ovl

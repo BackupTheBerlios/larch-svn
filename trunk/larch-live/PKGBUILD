@@ -1,8 +1,8 @@
 # Maintainer: Michael Towers <gradgrind[at]online[dot]de>
-# 2008.03.04
+# 2008.03.14
 pkgname=larch-live
 pkgver=5.2.0
-pkgrel=6
+pkgrel=7
 
 pkgdesc="larch: compulsory components for the live system"
 url="http://larch.berlios.de"
