@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.03.10
+# 2008.03.15
 
 # Location for the CD image
 CDDATA="${LARCHBUILD}/cd"
@@ -384,7 +384,15 @@ buildiso ()
         if [ -n "${PROFILE}" ] && [ -d ${PROFILE}/cd-root/isolinux ]; then
             cp -rf ${PROFILE}/cd-root/isolinux ${CDDATA} 2>/dev/null
         fi
-        cp ${INSTLDIR}/usr/lib/syslinux/isolinux.bin ${CDDATA}/isolinux
+
+        isolinuxbin=${INSTLDIR}/usr/lib/syslinux/isolinux.bin
+        if [ -f ${isolinuxbin} ]; then
+            cp ${isolinuxbin} ${CDDATA}/isolinux
+        else
+            echo "ERROR: ${isolinuxbin} not found -"
+            echo "      sylinux must be installed on live system"
+            return 1
+        fi
 
         if [ -n "${USB}" ]; then
             usbboot ${INSTLDIR}

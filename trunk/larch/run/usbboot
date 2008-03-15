@@ -21,7 +21,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.26
+# 2008.03.15
 
 APP="$( basename $0 )"
 
@@ -49,6 +49,12 @@ fi
 if [ ! -f ${CDDATA}/isolinux/isolinux.cfg ]; then
     echo "ERROR: isolinux data not in ${CDDATA}/isolinux"
     exit 1
+fi
+
+if ! [ -f ${AINSTALL}/usr/bin/syslinux ]; then
+    echo "ERROR: syslinux not found -"
+    echo "      it must be installed on live system"
+    return 1
 fi
 
 echo "//"

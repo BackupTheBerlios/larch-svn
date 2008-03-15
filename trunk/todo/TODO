@@ -1,7 +1,8 @@
 TODO
 ====
 
-*) Check for syslinux package if not building grub system.
+*) Check for syslinux package if not building grub system. DONE in trunk
+  (in usbboot and in buildlive, but in the latter only when building isolinux iso).
 
 *) New init idea. Use custom /etc/inittab which uses /etc/rc.larchinit and
   /etc/rc.larchshutdown instead of /etc/rc.sysinit and /etc/rc.shutdown,
