@@ -1,6 +1,8 @@
 TODO
 ====
 
+*) Check for syslinux package if not building grub system.
+
 *) New init idea. Use custom /etc/inittab which uses /etc/rc.larchinit and
   /etc/rc.larchshutdown instead of /etc/rc.sysinit and /etc/rc.shutdown,
   thus eliminating the need for arch0.tar.gz (hopefully). Only /etc/inittab
