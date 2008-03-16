@@ -21,7 +21,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.03.15
+# 2008.03.16
 
 import os, sys, re
 import gtk
@@ -78,11 +78,11 @@ class Localed(gtk.VBox):
         abutton = gtk.Button(stock=gtk.STOCK_APPLY)
         bbox.add(abutton)
 
-
     def readlocales(self, filepath):
         self.sublistbox.clear()
         self.cleanfile = ''     # build up a fully commented-out template
-        locales = []    # list of locales for duplicate checking
+        locales = []    # list of locales, also used for duplicate checking
+        lactive = []    # list of 'active/selected' flags for locales
         mask = False    # flag used to skip over automatically generated lines
 
         rx = re.compile("[#]? *([a-z][a-z]_.*)")
@@ -103,16 +103,20 @@ class Localed(gtk.VBox):
                 val = rm.group(1)
                 if not val in locales:
                     locales.append(val)
-                    self.sublistbox.additem(val, active)
+                    lactive.append(active)
             if active:
                 l = '#' + l
             self.cleanfile += l + '\n'
         fh.close()
         #print self.cleanfile
 
+        # add locales to widget after sorting (just in case ...)
+        l0 = [(locales[i], lactive[i]) for i in range(len(locales))]
+        l0.sort()
+        for l, a in l0:
+            self.sublistbox.additem(l, a)
 
     def tidyup(self):
-        print self.sublistbox.selectedpaths()
         print "tidy up!"
 
 
@@ -168,9 +172,11 @@ class SubListBox(gtk.HBox):
         bt_sel = gtk.Button()
         larrow = gtk.Arrow(gtk.ARROW_LEFT, gtk.SHADOW_OUT)
         bt_sel.add(larrow)
+        bt_sel.connect("clicked", self.tosel)
         bt_unsel = gtk.Button()
         rarrow = gtk.Arrow(gtk.ARROW_RIGHT, gtk.SHADOW_OUT)
         bt_unsel.add(rarrow)
+        bt_unsel.connect("clicked", self.tounsel)
         vbox = gtk.VBox(False, spacing=20)
         alignment = gtk.Alignment(yalign=0.5)
         alignment.add(vbox)
@@ -205,6 +211,8 @@ class SubListBox(gtk.HBox):
 
         self.sel_selection = self.sel_view.get_selection()
         self.sel_selection.set_mode(gtk.SELECTION_MULTIPLE)
+        self.unsel_selection = self.unsel_view.get_selection()
+        self.unsel_selection.set_mode(gtk.SELECTION_MULTIPLE)
 
     def clear(self):
         self.liststore.clear()
@@ -218,9 +226,31 @@ class SubListBox(gtk.HBox):
         """
         return not model.get_value(iter, 1)
 
-    def selectedpaths(self):
-        model, pathlist = self.sel_selection.get_selected_rows()
+    def selectedpaths(self, sel):
+        model, pathlist = sel.get_selected_rows()
         return pathlist
+
+    # These two functions move entries between lists. I collect iters to
+    # all affected self.liststore entries before making any changes because
+    # I expect a change will affect the paths in the filtered stores.
+    def tosel(self, widget, data=None):
+        iters = []
+        for path in self.selectedpaths(self.unsel_selection):
+            iter = self.unsel_filter.get_iter(path)
+            iters.append(self.unsel_filter.convert_iter_to_child_iter(iter))
+
+        for i in iters:
+            self.liststore.set_value(i, 1, True)
+
+    def tounsel(self, widget, data=None):
+        iters = []
+        for path in self.selectedpaths(self.sel_selection):
+            iter = self.sel_filter.get_iter(path)
+            iters.append(self.sel_filter.convert_iter_to_child_iter(iter))
+
+        for i in iters:
+            self.liststore.set_value(i, 1, False)
+
 
 
 
