@@ -223,7 +223,10 @@ class Localed(gtk.VBox):
         fh.write(self.cleanfile)
         fh.close()
 
-        self.process = Popen(['chroot', rootdir, 'locale-gen'], stdout=PIPE)
+        if rootdir:
+            self.process = Popen(['chroot', rootdir, 'locale-gen'], stdout=PIPE)
+        else:
+            self.process = Popen(['locale-gen'], stdout=PIPE)
         fd = self.process.stdout.fileno()
 
         active = True
