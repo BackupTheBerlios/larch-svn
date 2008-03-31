@@ -1,14 +1,14 @@
 pkgname=aufs
-pkgver=20080311
+pkgver=20080401
 pkgrel=1
 _kernver='2.6.24-ARCH'
 pkgdesc="Another Unionfs Implementation that supports NFS branches"
 arch=('i686' 'x86_64')
 url="http://aufs.sourceforge.net/"
 license=('GPL2')
-depends=('kernel26>=2.6.24.3-3' 'aufs-utils')
+depends=('kernel26>=2.6.24.4-1' 'kernel26<=2.6.25-0' 'glibc' 'aufs-utils')
 install=$pkgname.install
-options=(!makeflags)
+options=(!libtool !makeflags)
 
 _cvsr=":pserver:anonymous:@aufs.cvs.sourceforge.net:/cvsroot/aufs"
 _cvsmod="aufs"
@@ -24,6 +24,9 @@ build() {
   cp -r  $startdir/src/$_cvsmod  $startdir/src/$_cvsmod-build
 
   cd $startdir/src/$_cvsmod-build
+
+  # use splice functions exported by unionfs kernel patch
+  patch -p1 < $startdir/vfs_splice_new.diff
 
   sed -i 's|.*CONFIG_AUFS_SHWH =.*|CONFIG_AUFS_SHWH = y|' \
     local.mk || return 1
