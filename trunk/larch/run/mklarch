@@ -21,7 +21,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.27
+# 2008.03.31
 
 
 # directory to use for building the CD - the installation root
@@ -86,6 +86,13 @@ usage () {
     echo "A profile is a directory containing all the necessary"
     echo "configuration details for a larch build. See documentation"
     echo "and examples."
+    echo
+    echo "If you want to rebuild a live system without reinstalling it"
+    echo "(for example if you make minor changes to the profile which"
+    echo "don't affect the packages, or if you want a USB-stick instead"
+    echo "of a CD, or if writing to the USB-stick failed for some reason)"
+    echo "you should look at the 'larchify' script - run it with the '-h'"
+    echo "option for usage notes."
     echo
     exit
 }
