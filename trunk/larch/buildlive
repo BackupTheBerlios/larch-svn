@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.03.15
+# 2008.04.01
 
 # Location for the CD image
 CDDATA="${LARCHBUILD}/cd"
@@ -390,7 +390,7 @@ buildiso ()
             cp ${isolinuxbin} ${CDDATA}/isolinux
         else
             echo "ERROR: ${isolinuxbin} not found -"
-            echo "      sylinux must be installed on live system"
+            echo "      syslinux must be installed on live system"
             return 1
         fi
 

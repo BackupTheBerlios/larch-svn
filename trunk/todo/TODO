@@ -1,6 +1,8 @@
 TODO
 ====
 
+*) add graphical shutdown/user-switch, at least to profile.
+
 *) Check for syslinux package if not building grub system. DONE in trunk
   (in usbboot and in buildlive, but in the latter only when building isolinux iso).
 

@@ -21,21 +21,21 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #-------------------------------------------------------------------
-# Version 1.4 // 18th February 2008
+# Version 1.5 // 3rd April 2008
 
 # Set this for your system (probably one of these is OK)
 base_lst = "/usr/share/X11/xkb/rules/base.lst"
 #base_lst = "/etc/X11/xkb/rules/base.lst"
 #base_lst = "/usr/lib/X11/xkb/rules/base.lst"
 
+# This file allows automatic editing of a 'setxkbmap' command - a line
+# containing 'setxkbmap' will be replaced by the new version.
+SKBPATH = "/etc/X11/xinit/xinitrc.custom"
 #-------------------------------------------------------------------
 
 import os
-import os.path
 import sys
 
-import pygtk
-pygtk.require("2.0")
 import gtk
 import gtk.glade
 
@@ -212,7 +212,7 @@ class xkbset:
         command = "setxkbmap -rules xorg -model %s -layout %s -variant %s" % (m, l, v)
         print command
         os.system (command)
-        os.system ('sed "s|.*setxkbmap.*|%s|" -i ~/.xinitrc' % command)
+        os.system ('sed "s|.*setxkbmap.*|%s|" -i %s' % (command, SKBPATH))
 
         f = open (self.configfile, "w")
         f.write ("%s|%s|%s\n" % (self.model, self.layout, self.variant))

@@ -1,15 +1,15 @@
 # Contributor: Michael Towers <gradgrind[at]online[dot]de>
 
 pkgname=xkmap
-pkgver=1.4
-pkgrel=3
+pkgver=1.5
+pkgrel=1
 pkgdesc="A keymap setter for xorg: a simple graphical front-end for setxkbmap"
 license=('GPL')
 arch=(i686 x86_64)
 depends=('pygtk')
 url="http://larch.berlios.de"
 source=(xkmap xkmap.glade xkmap.png xkmap.desktop)
-md5sums=('40a38521a9e3ec8e2bc14acbc60a3357' 'e634630e8c96baccfb6544f39537d937'
+md5sums=('edfe8ce6ae00059079f14df26f3868d5' 'e634630e8c96baccfb6544f39537d937'
          'b28edb6e8def796015a1914db1155172' '7cc435b11837bf4b495b9f2f1bc1cdaf')
 build() {
   cd $startdir/pkg

@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.03.14
+# 2008.04.02
 
 
 session_save ()
@@ -38,7 +38,13 @@ session_save ()
     if [ -n "${savedev}" ] && [ -f ${savepath}/larch/save ]; then
         if [ -f ${savepath}/larch/save-menu ]; then
             . ${savepath}/larch/save-menu
-        elif [ -z "${dontask}" ]; then
+
+    elif grep "-" /tmp/xlogout &>/dev/null; then
+        savedev=""
+    elif grep "M" /tmp/xlogout &>/dev/null; then
+        merge="yes"
+
+    elif [ -z "${dontask}" ]; then
             echo
             echo "============= Session Saving ============="
             echo
