@@ -149,3 +149,42 @@ session_save ()
     fi
 
 }
+
+saveovl ()
+{
+    savepath=$1
+    if ! [ -d "${savepath}" ]; then
+        echo "ERROR: no 'savepath' folder"
+        echo "Usage:"
+        echo "   saveovl path/to/folder"
+        return 1
+    fi
+
+    utype="$( cat /.livesys/utype )"
+    if [ "${utype}" = "aufs" ]; then
+        # flush pseudo-links (which keep track of changed hard linked files)
+        auplink / flush
+    fi
+
+    savedirs='overlay/etc'
+    for d in bin boot home lib mnt opt root sbin srv usr var; do
+        if [ -d /.livesys/overlay/${d} ]; then
+            savedirs="${savedirs} overlay/${d}"
+        fi
+    done
+
+    excludes="--exclude=/var/log --exclude=/var/tmp"
+    excludes="${excludes} --exclude=/var/cache/pacman/pkg"
+
+    echo "Recompressing overlay"
+
+    tar -cf - ${excludes} -C /.livesys ${savedirs} | \
+            lzop > ${savepath}/overlay.ovl_
+    if [ $? -ne 0 ]; then
+        echo "ERROR: couldn't save overlay"
+        rm -f ${savepath}/overlay.ovl_
+        return 1
+    fi
+
+    return 0
+}

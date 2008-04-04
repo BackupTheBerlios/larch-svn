@@ -212,7 +212,9 @@ class Actions:
 
     def logout(self, widget=None, data=None):
         # ????
-        os.system("/opt/larch-live/desktop.exit")
+        if (os.system("/opt/larch-live/session-save/desktop.exit %s" %
+                session) != 0):
+            error(_("Unsupported session type: %s") % session)
         self.exit()
 
     def shutdown(self, widget, data):
@@ -222,13 +224,24 @@ class Actions:
             os.system("echo '%s' > /tmp/newuser" % username)
         self.logout()
 
+def error(message):
+    md = gtk.MessageDialog(flags=gtk.DIALOG_MODAL |
+            gtk.DIALOG_DESTROY_WITH_PARENT, type=gtk.MESSAGE_ERROR,
+            buttons=gtk.BUTTONS_CLOSE, message_format=message)
+    md.run()
 
 if __name__ == "__main__":
+    import sys
     import __builtin__
     def tr(s):
         return s
     __builtin__._ = tr
 
-    actions = Actions()
-    gui = Logout()
-    gui.mainLoop()
+    if (len(sys.argv) != 2):
+        error(_("Invalid argument to larchquit.py"))
+    else:
+        session = sys.argv[1]
+
+        actions = Actions()
+        gui = Logout()
+        gui.mainLoop()

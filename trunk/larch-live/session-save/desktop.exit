@@ -1,0 +1,9 @@
+#!/bin/sh
+case $1 in
+    xfce )  xfce4-session-logout &
+            exit 0 ;;
+
+    * ) ;;
+esac
+echo "Invalid session type: $1"
+exit 1
