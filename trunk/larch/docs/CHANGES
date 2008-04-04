@@ -1,3 +1,10 @@
+2008.04.04
+version 5.2.1, slight reworking of overlay handling in profiles - now files
+owned by root:root do not have to be in overlay.xpk, they can be held within
+directory 'rootoverlay', and their ownership will be changed automatically.
+Files to be copied to /.livesys at boot are now in larch/copy.
+Tweaks to xmini profile.
+
 2008.02.27
 Incompatible changes. WARNING!
 With version 5.2 the init system has changed, in particular a custom inittab

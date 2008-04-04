@@ -36,15 +36,18 @@ run_hook ()
 
     # Path to compressed base system
     sysSqf=${cdmount}/system.sqf
-    # Path to compressed 'modifications' archive
-    modsSqf=${cdmount}/mods.sqf
-    # Default overlay file and directory
-    overlay=${cdmount}/overlay.ovl
+
+    ovlpath=${cdmount}
 
     # A possibility to use alternative files:
     if [ -f ${cdmount}/larch/boot-init ]; then
         . ${cdmount}/larch/boot-init
     fi
+
+    # Path to compressed 'modifications' archive
+    modsSqf=${ovlpath}/mods.sqf
+    # Default overlay file and directory
+    overlay=${ovlpath}/overlay.ovl
 
     # Make union root
     /bin/mkdir /union
@@ -111,9 +114,13 @@ run_hook ()
     /tfs/system/usr/bin/lzop -d < ${overlay} | \
             /tfs/system/bin/tar -C /tfs -xf -
 
-    # Copy the installation tidy-up script (for removing custom live-only stuff)
-    if [ -f ${cdmount}/larch/larch0 ]; then
-        cat ${cdmount}/larch/larch0 >/tfs/larch0
+    # Copy the installation tidy-up script (for removing custom live-only stuff),
+    # and any other files in 'larch/copy' directory
+    if [ -d ${ovlpath}/larch/copy ]; then
+        cd ${ovlpath}/larch/copy
+        for f in *; do
+            cat ${f} >/tfs/${f}
+        done
     fi
 
     msg_ ":: Setting up union file system"

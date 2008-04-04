@@ -129,6 +129,18 @@ session_save ()
             mount ${savedev} ${savemount}
         fi
 
+        # Save autologin user
+        mkdir -p ${savepath}/larch
+        if [ -f /tmp/newuser ]; then
+            cat /tmp/newuser >${savepath}/larch/autologin
+        else
+            :> ${savepath}/larch/autologin
+        fi
+        if [ $? -ne 0 ]; then
+            echo "ERROR: Couldn't save autologin user"
+            return 1
+        fi
+
         rm -rf ${savepath}/overlay.ovl~
 
         if [ -z "${merge}" ]; then

@@ -211,9 +211,9 @@ class Actions:
         gtk.main_quit()
 
     def logout(self, widget=None, data=None):
-        # ????
-        if (os.system("/opt/larch-live/session-save/desktop.exit %s" %
-                session) != 0):
+        if (session == "xfce"):
+            os.system("xfce4-session-logout &")
+        else:
             error(_("Unsupported session type: %s") % session)
         self.exit()
 
@@ -238,7 +238,7 @@ if __name__ == "__main__":
     __builtin__._ = tr
 
     if (len(sys.argv) != 2):
-        error(_("Invalid argument to larchquit.py"))
+        error(_("Invalid arguments to larchquit.py"))
     else:
         session = sys.argv[1]
 

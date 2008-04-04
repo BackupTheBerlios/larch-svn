@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.04.01
+# 2008.04.04
 
 # Location for the CD image
 CDDATA="${LARCHBUILD}/cd"
@@ -244,25 +244,27 @@ mklive ()
 
     ##### Prepare initial overlay
     echo "// building overlay"
-    # Note that ownership/mode of all files must be correct!
-    # This information will be preserved
 
     # Build overlay in a temporary directory
     rm -rf ${LARCHBUILD}/tmp/overlay
-    mkdir -p ${LARCHBUILD}/tmp/overlay
 
-    # Copy over the overlay from the selected profile
+    # Copy over the overlay(s) from the selected profile
     if [ -n "${PROFILE}" ]; then
+        # Note that ownership/mode of all files in overlay(.xpk) must be
+        # correct! This information will be preserved.
         if [ -d ${PROFILE}/overlay ]; then
-            cp -a ${PROFILE}/overlay ${LARCHBUILD}/tmp/overlay
+            cp -a ${PROFILE}/overlay ${LARCHBUILD}/tmp
         elif [ -f ${PROFILE}/overlay.xpk ]; then
             # deal with packed overlay
-            ${PROFILE}/overlay.xpk ${LARCHBUILD}/tmp/overlay
+            ${PROFILE}/overlay.xpk ${LARCHBUILD}/tmp
+        else
+            mkdir ${LARCHBUILD}/tmp/overlay
         fi
-        for d in $( ls ${LARCHBUILD}/tmp/overlay/overlay ); do
-            cp -af ${LARCHBUILD}/tmp/overlay/overlay/${d} ${LARCHBUILD}/tmp/overlay
-        done
-        rm -rf ${LARCHBUILD}/tmp/overlay/overlay
+
+        if [ -d ${PROFILE}/rootoverlay ]; then
+            cp -rf ${PROFILE}/rootoverlay/* ${LARCHBUILD}/tmp/overlay
+        fi
+
     fi
 
     # Ensure a larch-enabled version of /etc/inittab is installed
