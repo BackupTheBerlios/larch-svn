@@ -88,8 +88,8 @@ autocheckse ()
 
 # This is the main session saving function.
 # It determines what sort of session saving is to be done, handling the
-# simple recompression itself, and calling 'merge_overlay' to handle
-# overlay merging.
+# simple recompression by calling saveovl, and calling 'merge_overlay'
+# to handle overlay merging.
 session_save ()
 {
     if [ -f ${savepath}/larch/save-menu ]; then
