@@ -1,0 +1,12 @@
+# The following line can be edited automatically to allow setting of the keymap
+#setxkbmap
+
+case ${desktop} in
+    xfce ) exec startxfce4 ;;
+
+    gnome ) exec gnome-session ;;
+
+    kde ) exec startkde ;;
+
+    * ) ;;
+esac
