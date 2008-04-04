@@ -22,9 +22,10 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.03.05
+# 2008.04.04
 
 import gtk
+import os
 
 class Logout(gtk.Window):
 
@@ -42,7 +43,7 @@ class Logout(gtk.Window):
 
         self.quitmenu = QuitMenu()
         notebook.append_page(self.quitmenu, gtk.Label(_("Quit Menu")))
-        notebook.append_page(Configure(), gtk.Label(_("Configure")))
+        #notebook.append_page(Configure(), gtk.Label(_("Configure")))
         notebook.append_page(Help(), gtk.Label(_("Help")))
         notebook.append_page(About(), gtk.Label(_("About")))
 
@@ -85,7 +86,7 @@ class About(gtk.Frame):
                 ' designed for <i>larch</i> \'live\' systems.\n'
                 'In addition to the normal quit options, it will - on'
                 ' suitably configured boot media - present'
-                ' \session-saving\' options to save the current state'
+                ' \'session-saving\' options to save the current state'
                 ' back to the boot medium.\n\n'
                 'This program was written for the <i>larch</i> project:\n'
                 '       http://larch.berlios.de\n'
@@ -110,19 +111,18 @@ class QuitMenu(gtk.VBox):
     def __init__(self):
         gtk.VBox.__init__(self, spacing=20)
         self.set_border_width(10)
+
+        # A separate frame for shutdown functions
         frame = gtk.Frame()
+        fvbox = gtk.VBox(spacing=10)
+
+        # A layout box for session saving stuff
         fhbox = gtk.HBox(spacing=20)
         fhbox.set_border_width(10)
-        fqbox = gtk.VBox(spacing=10)
 
-        b_reboot = gtk.Button(_("Reboot"))
-        fqbox.pack_start(b_reboot)
-        b_reboot.connect("clicked", actions.reboot)
+        self.relogin = gtk.CheckButton(_("Login this user at next system start"))
 
-        b_shutdown = gtk.Button(_("Shut down"))
-        fqbox.pack_start(b_shutdown)
-        b_shutdown.connect("clicked", actions.shutdown)
-
+        # a sub-box for the session-saving options
         fobox = gtk.VBox()
 
         self.b_save = gtk.RadioButton(None, _("Save state"))
@@ -136,10 +136,46 @@ class QuitMenu(gtk.VBox):
 
         self.b_save.set_active(True)
 
-        fhbox.pack_start(fqbox, False)
+        fhbox.pack_start(self.relogin, False)
         fhbox.pack_end(fobox, False)
-        frame.add(fhbox)
 
+        # Try to discover whether session-saving is possible
+        if (os.system("/opt/larch-live/session-save/checksave") == 0):
+            self.b_save.set_active(True)
+            self.relogin.set_active(True)
+        else:
+            fhbox.set_sensitive(False)
+            self.b_forget.set_active(True)
+            self.relogin.set_active(False)
+
+        finfo = gtk.Label()
+        finfo.set_line_wrap(True)
+        #finfo.set_alignment(0.0, 0.5)
+        finfo.set_markup(_('Note that the data persistence options will only'
+                ' be available when the system has been configured to support'
+                ' saving information from the current session.\n'
+                'This is the default for <i>larch</i> systems running from'
+                ' USB-sticks, but not for CD/DVD devices (as these are'
+                ' not normally writable).'))
+
+        # Layout box with reboot and halt buttons
+        fbbox = gtk.HBox(spacing=0)
+
+        b_reboot = gtk.Button(_("Reboot"))
+        fbbox.pack_start(b_reboot, False, padding=5)
+        b_reboot.connect("clicked", actions.shutdown, "r")
+
+        b_shutdown = gtk.Button(_("Shut down"))
+        fbbox.pack_start(b_shutdown, False, padding=5)
+        b_shutdown.connect("clicked", actions.shutdown, "h")
+
+        # Pack the shutdown frame
+        fvbox.pack_start(finfo)
+        fvbox.pack_start(fhbox)
+        fvbox.pack_end(fbbox, padding=5)
+        frame.add(fvbox)
+
+        # Add logout and cancel buttons
         hbox = gtk.HBox(spacing=10)
 
         b_logout = gtk.Button(_("Logout"))
@@ -154,37 +190,40 @@ class QuitMenu(gtk.VBox):
         self.pack_end(hbox, False)
 
     def get_save(self):
-        if self.b_forget.get_active():
-            return "forget"
-        elif self.b_merge.get_active():
-            return "merge"
+        if self.relogin.get_active():
+            relogin = os.environ["LOGNAME"]
         else:
-            return "save"
+            relogin = ""
+        if self.b_forget.get_active():
+            return ("-", relogin)
+        elif self.b_merge.get_active():
+            return ("M", relogin)
+        else:
+            return ("", relogin)
 
 
 class Actions:
     def __init__(self):
-        self.logout_cmd = "echo LOGOUT"
-        self.reboot_cmd = "echo REBOOT"
-        self.shutdown_cmd = "echo SHUTDOWN"
+        self.reboot_cmd = "r"
+        self.shutdown_cmd = "h"
 
     def exit(self, widget=None, data=None):
         gtk.main_quit()
 
     def logout(self, widget=None, data=None):
-        os.system(self.logout_cmd)
+        # ????
+        os.system("/opt/larch-live/desktop.exit")
+        self.exit()
 
-    def reboot(self, widget=None, data=None):
-        os.system(self.reboot_cmd)
-        print gui.get_save()
-
-    def shutdown(self, widget=None, data=None):
-        os.system(self.shutdown_cmd)
-        print gui.get_save()
+    def shutdown(self, widget, data):
+        sesssionsave, username = gui.get_save()
+        os.system("echo '%s%s' > /tmp/xlogout" % (data, sesssionsave))
+        if username:
+            os.system("echo '%s' > /tmp/newuser" % username)
+        self.logout()
 
 
 if __name__ == "__main__":
-    import os
     import __builtin__
     def tr(s):
         return s

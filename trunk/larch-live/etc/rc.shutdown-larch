@@ -4,7 +4,7 @@
 #
 # based on the version in 'initscripts-2008.03-4'
 #
-# 2008.04.03
+# 2008.04.04
 
 . /etc/rc.conf
 . /etc/rc.d/functions
@@ -18,28 +18,28 @@ echo " "
 
 # avoid NIS hanging syslog-ng on shutdown by unsetting the domainname
 if [ -x /bin/domainname ]; then
-	/bin/domainname ""
+    /bin/domainname ""
 fi
 
 if [ -x /etc/rc.local.shutdown ]; then
-	/etc/rc.local.shutdown
+    /etc/rc.local.shutdown
 fi
 
 if [ "$PREVLEVEL" = "3" -o "$PREVLEVEL" = "5" ]; then
-	# Shutdown daemons
-	let i=${#DAEMONS[@]}
-	while [ $i -ge 0 ]; do
-		if [ "${DAEMONS[$i]:0:1}" != '!' ]; then
-			ck_daemon ${DAEMONS[$i]#@} || /etc/rc.d/${DAEMONS[$i]#@} stop
-		fi
-		let i=i-1
-	done
-	# find any leftover daemons and shut them down in reverse order
-	if [ -d /var/run/daemons ]; then
-		for daemon in $(/bin/ls -1t /var/run/daemons); do
-			/etc/rc.d/$daemon stop
-		done
-	fi
+    # Shutdown daemons
+    let i=${#DAEMONS[@]}
+    while [ $i -ge 0 ]; do
+        if [ "${DAEMONS[$i]:0:1}" != '!' ]; then
+            ck_daemon ${DAEMONS[$i]#@} || /etc/rc.d/${DAEMONS[$i]#@} stop
+        fi
+        let i=i-1
+    done
+    # find any leftover daemons and shut them down in reverse order
+    if [ -d /var/run/daemons ]; then
+        for daemon in $(/bin/ls -1t /var/run/daemons); do
+            /etc/rc.d/$daemon stop
+        done
+    fi
 fi
 
 # Terminate all processes
@@ -66,34 +66,15 @@ stat_done
 # Write to wtmp file before unmounting
 /sbin/halt -w
 
-############################# Deal with ejecting
-# See if boot device still mounted and ejectable (CD/DVD)
-bootdev=$( cat /.livesys/bootdevice )
-ejectdev=''
-savedev=${bootdev}
-cdroms=$( cat /proc/sys/dev/cdrom/info | { while read a b c; do
-        if [ "${a}" = "drive" -a "${b}" = "name:" ]; then
-            echo "${c}"
-            break
-        fi
-    done
-} )
-for d in ${cdroms}; do
-    if [ "/dev/${d}" = "${bootdev}" ]; then
-        # booted from CD/DVD, by default no session-save possible
-        savedev=''
-        if grep "^${bootdev} " /proc/mounts &>/dev/null; then
-            # it needs to be ejected
-            ejectdev=${bootdev}
-        fi
-        break
-    fi
-done
+############################# Include session saving functions
+. /opt/larch-live/session-save/shutdown2
+if [ -f /tmp/checkse ]; then
+    . /tmp/checkse
+else
+    checkse
+fi
 
-############################# Deal with session saving
-. /opt/larch-live/session-save/saveovl
-
-if ! session_save; then
+if [ -n "${saving}" ] && ! session_save; then
     echo
     echo "If you know what you are doing, you may be able to recover"
     echo "something from this unpleasant situation."
@@ -117,31 +98,31 @@ stat_done
 
 # Kill non-root encrypted partition mappings
 if [ -f /etc/crypttab -a -n "$(/bin/grep -v ^# /etc/crypttab | /bin/grep -v ^$)" ]; then
-	stat_busy "Deactivating encrypted volumes:"
-	CS=/sbin/cryptsetup.static
-	do_uncrypt() {
-		if [ $# -ge 3 ]; then
-			stat_append "${1}.."
-			$CS remove $1 >/dev/null 2>&1
-			if [ $? -ne 0 ]; then
-				stat_append "failed "
-			else
-				stat_append "ok "
-			fi
-		fi
-	}
-	while read line; do
-		eval do_uncrypt "$line"
-	done </etc/crypttab
-	stat_done
+    stat_busy "Deactivating encrypted volumes:"
+    CS=/sbin/cryptsetup.static
+    do_uncrypt() {
+        if [ $# -ge 3 ]; then
+            stat_append "${1}.."
+            $CS remove $1 >/dev/null 2>&1
+            if [ $? -ne 0 ]; then
+                stat_append "failed "
+            else
+                stat_append "ok "
+            fi
+        fi
+    }
+    while read line; do
+        eval do_uncrypt "$line"
+    done </etc/crypttab
+    stat_done
 fi
 
 if [ "$USELVM" = "yes" -o "$USELVM" = "YES" ]; then
-	if [ -x /sbin/lvm -a -d /sys/block ]; then
-		stat_busy "Deactivating LVM2 groups"
-		/sbin/lvm vgchange --ignorelockingfailure -an >/dev/null 2>&1
-		stat_done
-	fi
+    if [ -x /sbin/lvm -a -d /sys/block ]; then
+        stat_busy "Deactivating LVM2 groups"
+        /sbin/lvm vgchange --ignorelockingfailure -an >/dev/null 2>&1
+        stat_done
+    fi
 fi
 
 if [ -n "${ejectdev}" ]; then
@@ -155,13 +136,13 @@ fi
 
 # Power off or reboot
 if [ "$RUNLEVEL" = "0" ]; then
-	printsep
-	printhl "${C_H2}POWER OFF"
-	/sbin/poweroff -d -f -h -i
+    printsep
+    printhl "${C_H2}POWER OFF"
+    /sbin/poweroff -d -f -h -i
 else
-	printsep
-	printhl "${C_H2}REBOOTING"
-	# if kexec is installed and a kernel is loaded, use it
-	[ -x /sbin/kexec ] && /sbin/kexec -e > /dev/null 2>&1
-	/sbin/reboot -d -f -i
+    printsep
+    printhl "${C_H2}REBOOTING"
+    # if kexec is installed and a kernel is loaded, use it
+    [ -x /sbin/kexec ] && /sbin/kexec -e > /dev/null 2>&1
+    /sbin/reboot -d -f -i
 fi

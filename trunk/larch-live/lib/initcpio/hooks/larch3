@@ -24,7 +24,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.28
+# 2008.04.04
 
 run_hook ()
 {
@@ -52,12 +52,12 @@ run_hook ()
     # Deal with new archives
     if [ -f ${overlay}_ ]; then
         /bin/mount -o remount,rw ${LDEV} ${cdmount}
-        /bin/rename ${overlay} ${overlay}~
-        /bin/rename ${overlay}_ ${overlay}
+        /bin/mv ${overlay} ${overlay}~
+        /bin/mv ${overlay}_ ${overlay}
 
         if [ -f ${modsSqf}_ ]; then
-            /bin/rename ${modsSqf} ${modsSqf}~
-            /bin/rename ${modsSqf}_ ${modsSqf}
+            /bin/mv ${modsSqf} ${modsSqf}~
+            /bin/mv ${modsSqf}_ ${modsSqf}
         fi
         /bin/mount -o remount,ro ${LDEV} ${cdmount}
     fi

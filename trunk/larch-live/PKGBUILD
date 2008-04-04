@@ -1,8 +1,8 @@
 # Maintainer: Michael Towers <gradgrind[at]online[dot]de>
-# 2008.04.03
+# 2008.04.04
 pkgname=larch-live
-pkgver=5.2.0
-pkgrel=8
+pkgver=5.2.1
+pkgrel=1
 
 pkgdesc="larch: compulsory components for the live system"
 url="http://larch.berlios.de"
@@ -16,12 +16,4 @@ build() {
   cp -dr ${startdir}/session-save ${startdir}/pkg/opt/larch-live
   cp -dr ${startdir}/etc ${startdir}/pkg
   cp -dr ${startdir}/lib ${startdir}/pkg
-
-  # Compile additional initramfs utilities
-  cd ${startdir}/src
-  klcc -static -o lodtch lodtch.c || return 1
-  klcc -static -o rename rename.c || return 1
-  mkdir -p ${startdir}/pkg/usr/lib/klibc/bin
-  cp lodtch ${startdir}/pkg/usr/lib/klibc/bin
-  cp rename ${startdir}/pkg/usr/lib/klibc/bin
 }

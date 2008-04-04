@@ -1,6 +1,8 @@
 TODO
 ====
 
+*) Use new mv in klibc-extras
+
 *) add graphical shutdown/user-switch, at least to profile.
 
 *) Check for syslinux package if not building grub system. DONE in trunk
