@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.04.04
+# 2008.04.05
 
 
 # This function can be called before the proper shutdown, in order to
@@ -130,11 +130,11 @@ session_save ()
         fi
 
         # Save autologin user
-        mkdir -p ${savepath}/larch
+        mkdir -p ${savepath}/larch/copy
         if [ -f /tmp/newuser ]; then
-            cat /tmp/newuser >${savepath}/larch/autologin
+            cat /tmp/newuser >${savepath}/larch/copy/autologin
         else
-            :> ${savepath}/larch/autologin
+            :> ${savepath}/larch/copy/autologin
         fi
         if [ $? -ne 0 ]; then
             echo "ERROR: Couldn't save autologin user"
