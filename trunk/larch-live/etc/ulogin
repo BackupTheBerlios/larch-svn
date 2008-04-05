@@ -13,7 +13,7 @@ if [ -n "${user}" ]; then
     login -f ${user}
 else
     # offer choice of user
-    ulist="$(cat /etc/passwd | grep ':/home/.*sh$' )"
+    ulist="$( cat /etc/passwd | grep ':/home/.*sh$' )"
     echo -e "\nLogin a user or quit:"
     echo "   0 : root"
     echo "   1 : REBOOT"
