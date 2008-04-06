@@ -25,7 +25,7 @@
 # 2008.04.06
 
 import gtk
-import os, pwd
+import os, pwd, grp
 from subprocess import Popen, PIPE
 
 
@@ -70,25 +70,18 @@ class Luser(gtk.Window):
         """Return a list of 'normal' users, i.e. those with a home
         directory in /home and a login shell (ending with 'sh').
         """
-        ulist = Popen(['grep', ':/home/.*sh$', '/etc/passwd'],
-                stdout=PIPE).communicate()[0]
-        return [u.split(':')[0] for u in ulist.split()]
+        return [u[0] for u in pwd.getpwall()
+                if (u[5].startswith('/home/') and u[6].endswith('sh'))]
 
     def getGroups(self):
         """Return a list of 'normal' groups, i.e. those with ... ?
         """
-        glist = Popen(['cat', '/etc/group'], stdout=PIPE).communicate()[0]
-        return [g.split(':', 1)[0] for g in glist.split()]
+        return [g[0] for g in grp.getgrall()]
 
     def getUserGroups(self, user):
         """Return the list of groups for the given user.
         """
-        gulist = Popen(['cat', '/etc/group'], stdout=PIPE).communicate()[0]
-        glist = []
-        for gu in gulist.split():
-            ulist = gu.rsplit(':', 1)[1].split(',')
-            if user in ulist:
-                glist.append(gu.split(':', 1)[0])
+        return [gu[0] for gu in grp.getgrall() if user in gu[3]]
 
     def getUserInfo(self, user):
         """Return (uid, gid) for the given user.
@@ -178,15 +171,16 @@ class CheckList(gtk.ScrolledWindow):
         self.set_size_request(columnwidth, -1)
 
         self.treeview = gtk.TreeView()
-        self.liststore = gtk.ListStore(str, bool)
+        self.liststore = gtk.ListStore(str, bool, bool)
         # create CellRenderers to render the data
         celltoggle = gtk.CellRendererToggle()
-        celltoggle.set_property('activatable', True)
+        #celltoggle.set_property('activatable', True)
         celltext = gtk.CellRendererText()
         # create the TreeViewColumn to display the data
         self.tvcolumn = gtk.TreeViewColumn(_("Groups"))
         self.tvcolumn.pack_start(celltoggle, expand=False)
         self.tvcolumn.add_attribute(celltoggle, 'active', 1)
+        self.tvcolumn.add_attribute(celltoggle, 'activatable', 2)
         self.tvcolumn.pack_start(celltext, expand=True)
         self.tvcolumn.add_attribute(celltext, 'text', 0)
         # add column to treeview
@@ -202,12 +196,13 @@ class CheckList(gtk.ScrolledWindow):
         """
         groups = gui.getGroups()
         usergroups = gui.getUserGroups(user)
+        uid, gid = gui.getUserInfo(user)
         self.liststore.clear()
         for g in groups:
-            self.liststore.append(g, g in usergroups)
+            enable = (g != gid) and (g not in ('root', 'bin', 'daemon',
+                    'sys', 'adm'))
+            self.liststore.append(g, g in usergroups, enable)
 
-# One might like an extra column in the liststore to desensitize
-# certain groups, say the gid ...
 
 
 
