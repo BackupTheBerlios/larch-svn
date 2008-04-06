@@ -2,7 +2,7 @@
 
 # ulogin  - A script for autologin of a selected user (and more)
 #-----------------------------------------------------------------
-# 2008.04.03
+# 2008.04.06
 
 user=$( cat /tmp/newuser 2>/dev/null )
 
@@ -50,3 +50,6 @@ if grep "r" /tmp/xlogout &>/dev/null; then
 elif grep "h" /tmp/xlogout &>/dev/null; then
     halt
 fi
+
+# This file is only needed for shutting down
+rm -f /tmp/checkse

@@ -22,10 +22,10 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.04.05
+# 2008.04.06
 
 import gtk
-import os
+import os, pwd
 from subprocess import Popen, PIPE
 
 
@@ -70,28 +70,30 @@ class Luser(gtk.Window):
         """Return a list of 'normal' users, i.e. those with a home
         directory in /home and a login shell (ending with 'sh').
         """
-        ulist = Popen("cat /etc/passwd | grep ':/home/.*sh$'", shell=True,
+        ulist = Popen(['grep', ':/home/.*sh$', '/etc/passwd'],
                 stdout=PIPE).communicate()[0]
         return [u.split(':')[0] for u in ulist.split()]
 
     def getGroups(self):
         """Return a list of 'normal' groups, i.e. those with ... ?
         """
-        glist = Popen("cat /etc/group", shell=True,
-                stdout=PIPE).communicate()[0]
+        glist = Popen(['cat', '/etc/group'], stdout=PIPE).communicate()[0]
         return [g.split(':', 1)[0] for g in glist.split()]
 
     def getUserGroups(self, user):
         """Return the list of groups for the given user.
         """
-        gulist = Popen("cat /etc/group", shell=True,
-                stdout=PIPE).communicate()[0]
+        gulist = Popen(['cat', '/etc/group'], stdout=PIPE).communicate()[0]
         glist = []
         for gu in gulist.split():
             ulist = gu.rsplit(':', 1)[1].split(',')
             if user in ulist:
                 glist.append(gu.split(':', 1)[0])
 
+    def getUserInfo(self, user):
+        """Return (uid, gid) for the given user.
+        """
+        return pwd.getpwnam(user)[2:4]
 
 #WHat about the primary group????
 # uid and gid are 3rd and 4th fields in passwd

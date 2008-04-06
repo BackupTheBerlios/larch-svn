@@ -22,7 +22,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.04.04
+# 2008.04.06
 
 import gtk
 import os
@@ -199,18 +199,15 @@ class QuitMenu(gtk.VBox):
         elif self.b_merge.get_active():
             return ("M", relogin)
         else:
-            return ("", relogin)
+            return ("S", relogin)
 
 
 class Actions:
-    def __init__(self):
-        self.reboot_cmd = "r"
-        self.shutdown_cmd = "h"
-
     def exit(self, widget=None, data=None):
         gtk.main_quit()
 
-    def logout(self, widget=None, data=None):
+    def logout(self, widget=None, data="0"):
+        os.system("echo '%s' > /tmp/xlogout" % data)
         if (session == "xfce"):
             os.system("xfce4-session-logout &")
         else:
@@ -219,10 +216,9 @@ class Actions:
 
     def shutdown(self, widget, data):
         sesssionsave, username = gui.get_save()
-        os.system("echo '%s%s' > /tmp/xlogout" % (data, sesssionsave))
         if username:
             os.system("echo '%s' > /tmp/newuser" % username)
-        self.logout()
+        self.logout(data=data+sesssionsave)
 
 def error(message):
     md = gtk.MessageDialog(flags=gtk.DIALOG_MODAL |

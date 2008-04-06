@@ -4,3 +4,19 @@
 # ${INSTALL} is the path to the system root.
 
 rm "${INSTALL}/root/Desktop/Install Arch Linux.desktop"
+
+# One would need to call this function for all users, root and /etc/skel
+xfceactions ()
+{
+    for f in $1/.config/xfce4/panel/*; do
+        if grep "^Exec=larchquit" ${f}; then
+            n=$( echo ${f} | sed "s|^.*-\([0-9]\+\).*|\1|"
+            cp /.livesys/actions.rc $1/.config/xfce4/panel/actions-${n}.rc
+            rm ${f}
+
+            sed -i "s|=\"launcher\" id=\"${n}\"|=\"actions\" id=\"${n}\"|" \
+                    $1/.config/xfce4/panel/panels.xml
+
+            sed -i "s|<app .*cmd=\"larchquit.*/>|<builtin name="Quit" cmd=Quit icon="gnome-logout"/>|"
+                    $1/.config/xfce4/desktop/menu.xml
+}
