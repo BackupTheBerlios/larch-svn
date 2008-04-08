@@ -26,18 +26,15 @@
 
 import gtk
 import os, pwd, grp
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, STDOUT
 
+# For switching to root.
+import pexpect
 
-# Not at all ready yet ...
+# Not quite ready yet ...
 
-# If not started as root, it should probably only show the groups and
-# allow the password to be changed, but it might be reasonable for it
-# to allow everything, but ask for the root password if anything other
-# than changing the current user's password is to be done (using pexpect
-# to run shell stuff as root).
-
-
+# If not started as root, it will ask for the root password if necessary
+# (NYI!)
 
 class Luser(gtk.Window):
 
@@ -48,6 +45,7 @@ class Luser(gtk.Window):
         self.set_border_width(3)
 
         self.currentUser = None
+        self.password = None
 
         notebook = gtk.Notebook()
         self.add(notebook)
@@ -69,16 +67,30 @@ class Luser(gtk.Window):
 
     def rootrun(self, cmd):
         """Run the given command as 'root'.
-        Return a triple (completion code, output, error output).
+        Return a pair (completion code, output).
         """
         # If not running as 'root', use pexpect to do su and run the command
-        return (1, "", "rootrun NYI")
+        if (os.getuid() == 0):
+            p = Popen(cmd, shell=True, stdout=PIPE, stderr=STDOUT)
+            o = p.communicate()[0]
+            return (p.returncode, o)
+        else:
+            if not self.password:
+                self.password = popupRootPassword()
+            child = pexpect.spawn("su -c '%s'" % cmd)
+            child.expect(':')
+            child.sendline(self.password)
+            child.expect(pexpect.EOF)
+            o = child.before.strip()
+            return (0 if (o == '') else 1, o)
 
     def changeUser(self, user):
-        self.pending(user)
-        self.currentUser = user
-        self.users.setRoot(user == 'root')
-        self.users.grouplist.setGroups(user)
+        if self.pending(user):
+            self.currentUser = user
+            self.users.setRoot(user == 'root')
+            self.users.grouplist.setGroups(user)
+        else:
+            self.users.resetUser(self.currentUser)
 
     def pending(self, user=None):
         """Handle pending changes to group membership for the current user.
@@ -98,12 +110,14 @@ class Luser(gtk.Window):
                          % self.currentUser):
 
                     glist = reduce((lambda a,b: a+','+b if a else b), nglist)
-                    ccode, op, op2 = self.rootrun('usermod -G %s %s' %
+                    ccode, op = self.rootrun('usermod -G %s %s' %
                             (glist, self.currentUser))
                     if (ccode != 0):
                         error(_("The group memberships of user '%s'"
                                 " could not be changed. Here is the system"
-                                " message:\n\n %s") % (self.currentUser, op2))
+                                " message:\n\n %s") % (self.currentUser, op))
+                        return False
+        return True
 
     def getUsers(self):
         """Return a list of 'normal' users, i.e. those with a home
@@ -118,7 +132,7 @@ class Luser(gtk.Window):
         return [g[0] for g in grp.getgrall()]
 
     def getUserGroups(self, user):
-        """Return the list of groups for the given user.
+        """Return the list of supplemental groups for the given user.
         """
         return [gu[0] for gu in grp.getgrall() if user in gu[3]]
 
@@ -193,9 +207,9 @@ class Users(gtk.HBox):
 
         # leftbox:
         #    user select combobox
-        usel = SelectUser()
-        usel.setUsers(userlist)
-        leftbox.pack_start(usel, False)
+        self.usel = SelectUser()
+        self.usel.setUsers(userlist)
+        leftbox.pack_start(self.usel, False)
 
         #    add user button -> user name + password popup
         newuser = gtk.Button(_("New user"))
@@ -223,6 +237,9 @@ class Users(gtk.HBox):
         self.grouplist.setEnabled(not root)
         self.delete.set_sensitive(not root)
 
+    def resetUser(self, user):
+        self.usel.select(user)
+
     def newUser(self, widget, data=None):
         print "newUser NYI"
 
@@ -232,13 +249,23 @@ class Users(gtk.HBox):
 
 
     def removeUser(self, widget, data=None):
-        print "removeUser NYI"
+        if confirm(_("Do you really want to remove user '%s', including"
+                " the home directory, i.e. losing all the data contained"
+                " therein?")
+                 % self.currentUser):
+
+            ccode, op, op2 = self.rootrun('userdel -r %s' % self.currentUser)
+            if (ccode != 0):
+                error(_("User '%s' could not be removed. Here is the system"
+                        " message:\n\n %s") % (self.currentUser, op2))
+
 
 
 
 class SelectUser(gtk.ComboBox):
     def __init__(self):
         gtk.ComboBox.__init__(self)
+        self.blocked = False
         self.list = gtk.ListStore(str)
         self.set_model(self.list)
         cell = gtk.CellRendererText()
@@ -252,13 +279,21 @@ class SelectUser(gtk.ComboBox):
             self.list.append([u])
 
     def changed_cb(self, widget, data=None):
-        print "changed user"
+        if self.blocked:
+            self.blocked = False
+            return
         i = self.get_active()
         u = self.list[i][0]
         gui.changeUser(u)
 
-
-
+    def select(self, user):
+        i = 0
+        for u in self.list:
+            if (u[0] == user):
+                self.blocked = True
+                self.set_active(i)
+                break
+            i += 1
 
 
 # This should only be enabled(sensitive) when run as root and selecteduser!=root
@@ -302,17 +337,22 @@ class CheckList(gtk.ScrolledWindow):
         groups = gui.getGroups()
         usergroups = gui.getUserGroups(user)
         uid, gid = gui.getUserInfo(user)
+        self.gidnm = grp.getgrgid(gid)[0]
         self.liststore.clear()
         for g in groups:
-            enable = (g != gid) and (g not in ('root', 'bin', 'daemon',
-                    'sys', 'adm'))
-            self.liststore.append([g, g in usergroups, enable])
+            if (g == self.gidnm):
+                self.liststore.append([g, True, False])
+            else:
+                enable = (g not in ('root', 'bin', 'daemon',
+                        'sys', 'adm'))
+                self.liststore.append([g, g in usergroups, enable])
 
     def getNewGroups(self):
         """Return the list of groups for the present user according to
         the checklist.
         """
-        return [ r[0] for r in self.liststore if r[1] ]
+        return [ r[0] for r in self.liststore
+                        if (r[1] and (r[0] != self.gidnm))]
 
 
 
@@ -344,6 +384,10 @@ class Actions:
         gui.pending()
         gtk.main_quit()
 
+def popupRootPassword():
+    # Maybe once it has been received it should be tested before returning it?
+    print "root password NYI"
+    return ""
 
 def error(message):
     md = gtk.MessageDialog(flags=gtk.DIALOG_MODAL |
