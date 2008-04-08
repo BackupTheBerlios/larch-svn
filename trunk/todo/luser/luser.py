@@ -22,7 +22,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.04.06
+# 2008.04.08
 
 import gtk
 import os, pwd, grp
@@ -160,9 +160,27 @@ class Users(gtk.VBox):
         mainbox.pack_start(leftbox)
         mainbox.pack_start(grouplist)
 
+        # leftbox:
+        #    user select combobox
+        #    add user button -> user name + password popup
+        #    change password button -> password popup
+        #    remove user button -> are you sure confirmation
+
+
+        #    separator
+        #    quit button
+        #    apply button?
+# How to handle application of group changes? One possibility would be an
+# explicit apply button, but that could be confusing. Another would be to
+# popup a dialog whenever a different user is selected or quitting WHEN
+# group changes have been made to the present user. That would require
+# a comparison of the old state with the new.
 
 
 
+
+
+# This should only be enabled(sensitive) when run as root and selecteduser!=root
 class CheckList(gtk.ScrolledWindow):
     def __init__(self, columnwidth=100):
         gtk.ScrolledWindow.__init__(self)
@@ -203,7 +221,11 @@ class CheckList(gtk.ScrolledWindow):
                     'sys', 'adm'))
             self.liststore.append(g, g in usergroups, enable)
 
-
+    def getNewGroups(self):
+        """Return the list of groups for the present user according to
+        the checklist.
+        """
+        return [ r[0] for r in self.liststore if r[1] ]
 
 
 
