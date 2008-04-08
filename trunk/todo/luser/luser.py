@@ -29,8 +29,7 @@ import os, pwd, grp
 from subprocess import Popen, PIPE
 
 
-# Not at all ready yet, I'm just modifying the larchquit code first to
-# get a gui framework ...
+# Not at all ready yet ...
 
 # If not started as root, it should probably only show the groups and
 # allow the password to be changed, but it might be reasonable for it
@@ -48,13 +47,15 @@ class Luser(gtk.Window):
         self.connect("destroy", actions.exit)
         self.set_border_width(3)
 
+        self.currentUser = None
+
         notebook = gtk.Notebook()
         self.add(notebook)
         notebook.set_tab_pos(gtk.POS_TOP)
         notebook.show_tabs = True
         notebook.show_border = False
 
-        self.users = Users()
+        self.users = Users(self.getUsers() + ['root'])
         notebook.append_page(self.users, gtk.Label(_("Users")))
         #notebook.append_page(Configure(), gtk.Label(_("Configure")))
         notebook.append_page(Help(), gtk.Label(_("Help")))
@@ -65,6 +66,44 @@ class Luser(gtk.Window):
     def mainLoop(self):
         self.show_all()
         gtk.main()
+
+    def rootrun(self, cmd):
+        """Run the given command as 'root'.
+        Return a triple (completion code, output, error output).
+        """
+        # If not running as 'root', use pexpect to do su and run the command
+        return (1, "", "rootrun NYI")
+
+    def changeUser(self, user):
+        self.pending(user)
+        self.currentUser = user
+        self.users.setRoot(user == 'root')
+        self.users.grouplist.setGroups(user)
+
+    def pending(self, user=None):
+        """Handle pending changes to group membership for the current user.
+        Should be called when the user is switched and when quitting the
+        program.
+        """
+        if ((self.currentUser in self.getUsers()) and
+                (self.currentUser != user)):
+
+            nglist = self.users.grouplist.getNewGroups()
+            if (self.getUserGroups(self.currentUser) != nglist):
+                # Changes were requested, popup an apply confirmation dialog
+
+                if confirm(_("You have specified changes to the group"
+                        " memberships of user '%s'.\n\n"
+                        "Should these be applied?")
+                         % self.currentUser):
+
+                    glist = reduce((lambda a,b: a+','+b if a else b), nglist)
+                    ccode, op, op2 = self.rootrun('usermod -G %s %s' %
+                            (glist, self.currentUser))
+                    if (ccode != 0):
+                        error(_("The group memberships of user '%s'"
+                                " could not be changed. Here is the system"
+                                " message:\n\n %s") % (self.currentUser, op2))
 
     def getUsers(self):
         """Return a list of 'normal' users, i.e. those with a home
@@ -87,11 +126,6 @@ class Luser(gtk.Window):
         """Return (uid, gid) for the given user.
         """
         return pwd.getpwnam(user)[2:4]
-
-#WHat about the primary group????
-# uid and gid are 3rd and 4th fields in passwd
-# root is also a special case: can only set password
-
 
 
 class Help(gtk.Frame):
@@ -144,37 +178,84 @@ class Configure(gtk.Frame):
         label.set_markup(_('<b>Not Yet implemented</b>'))
         self.add(label)
 
---------------------------------------------------------------------
-class Users(gtk.VBox):
-    def __init__(self):
-        gtk.VBox.__init__(self, spacing=20)
-        self.set_border_width(10)
 
-        mainbox = gtk.HBox(spacing=5)
-        buttonbox = gtk.HBox(spacing=5)
+class Users(gtk.HBox):
+    def __init__(self, userlist):
+        gtk.HBox.__init__(self, spacing=20)
+        self.set_border_width(10)
 
         leftbox = gtk.VBox(spacing=5)
 
-        grouplist = CheckList()
+        self.grouplist = CheckList()
 
-        mainbox.pack_start(leftbox)
-        mainbox.pack_start(grouplist)
+        self.pack_start(leftbox)
+        self.pack_end(self.grouplist)
 
         # leftbox:
         #    user select combobox
+        usel = SelectUser()
+        usel.setUsers(userlist)
+        leftbox.pack_start(usel, False)
+
         #    add user button -> user name + password popup
+        newuser = gtk.Button(_("New user"))
+        newuser.connect('clicked', self.newUser)
+        leftbox.pack_start(newuser, False)
+
         #    change password button -> password popup
+        newpw = gtk.Button(_("Change password"))
+        newpw.connect('clicked', self.newPass)
+        leftbox.pack_start(newpw, False)
+
         #    remove user button -> are you sure confirmation
+        self.delete = gtk.Button(_("Remove this user"))
+        self.delete.connect('clicked', self.removeUser)
+        leftbox.pack_start(self.delete, False)
+
+        quit = gtk.Button(stock=gtk.STOCK_QUIT)
+        quit.connect('clicked', actions.exit)
+        leftbox.pack_end(quit, False)
+
+    def setRoot(self, root):
+        """If the selected user is 'root', editing of the groups and
+        deleting the user should be diabled.
+        """
+        self.grouplist.setEnabled(not root)
+        self.delete.set_sensitive(not root)
+
+    def newUser(self, widget, data=None):
+        print "newUser NYI"
 
 
-        #    separator
-        #    quit button
-        #    apply button?
-# How to handle application of group changes? One possibility would be an
-# explicit apply button, but that could be confusing. Another would be to
-# popup a dialog whenever a different user is selected or quitting WHEN
-# group changes have been made to the present user. That would require
-# a comparison of the old state with the new.
+    def newPass(self, widget, data=None):
+        print "newPass NYI"
+
+
+    def removeUser(self, widget, data=None):
+        print "removeUser NYI"
+
+
+
+class SelectUser(gtk.ComboBox):
+    def __init__(self):
+        gtk.ComboBox.__init__(self)
+        self.list = gtk.ListStore(str)
+        self.set_model(self.list)
+        cell = gtk.CellRendererText()
+        self.pack_start(cell)
+        self.add_attribute(cell, 'text', 0)
+        self.connect('changed', self.changed_cb)
+
+    def setUsers(self, ulist):
+        self.list.clear()
+        for u in ulist:
+            self.list.append([u])
+
+    def changed_cb(self, widget, data=None):
+        print "changed user"
+        i = self.get_active()
+        u = self.list[i][0]
+        gui.changeUser(u)
 
 
 
@@ -190,9 +271,11 @@ class CheckList(gtk.ScrolledWindow):
 
         self.treeview = gtk.TreeView()
         self.liststore = gtk.ListStore(str, bool, bool)
+        self.treeview.set_model(self.liststore)
         # create CellRenderers to render the data
         celltoggle = gtk.CellRendererToggle()
         #celltoggle.set_property('activatable', True)
+        celltoggle.connect( 'toggled', self.toggled_cb)
         celltext = gtk.CellRendererText()
         # create the TreeViewColumn to display the data
         self.tvcolumn = gtk.TreeViewColumn(_("Groups"))
@@ -206,7 +289,11 @@ class CheckList(gtk.ScrolledWindow):
         # place treeview in scrolled window
         self.add(self.treeview)
 
+    def toggled_cb(self, widget, path, data=None):
+        self.liststore[path][1] = not self.liststore[path][1]
 
+    def setEnabled(self, enable):
+        self.treeview.set_sensitive(enable)
 
     def setGroups(self, user):
         """Write the list of groups to the list, and set toggles
@@ -219,7 +306,7 @@ class CheckList(gtk.ScrolledWindow):
         for g in groups:
             enable = (g != gid) and (g not in ('root', 'bin', 'daemon',
                     'sys', 'adm'))
-            self.liststore.append(g, g in usergroups, enable)
+            self.liststore.append([g, g in usergroups, enable])
 
     def getNewGroups(self):
         """Return the list of groups for the present user according to
@@ -231,30 +318,30 @@ class CheckList(gtk.ScrolledWindow):
 
 
 ###############
-GROUPS:
-Mitglieder hinzufügen
+#GROUPS:
+#Mitglieder hinzufuegen
 
-root@sonne> gpasswd -a user fibel
-Adding user user to group fibel
+#root@sonne> gpasswd -a user fibel
+#Adding user user to group fibel
 
-Mitglieder entfernen
+#Mitglieder entfernen
 
-root@sonne> gpasswd -d user fibel
-Removing user user from group fibel
+#root@sonne> gpasswd -d user fibel
+#Removing user user from group fibel
 
 
-But usermod can also set / add user's groups
+#But usermod can also set / add user's groups
 ######################
 
 
 
--------------------------------------------------------------
 
 class Actions:
     def __init__(self):
-        print "NYI"
+        print "Actions NYI"
 
     def exit(self, widget=None, data=None):
+        gui.pending()
         gtk.main_quit()
 
 
@@ -263,6 +350,15 @@ def error(message):
             gtk.DIALOG_DESTROY_WITH_PARENT, type=gtk.MESSAGE_ERROR,
             buttons=gtk.BUTTONS_CLOSE, message_format=message)
     md.run()
+    md.destroy()
+
+def confirm(message):
+    md = gtk.MessageDialog(flags=gtk.DIALOG_MODAL |
+            gtk.DIALOG_DESTROY_WITH_PARENT, type=gtk.MESSAGE_QUESTION,
+            buttons=gtk.BUTTONS_YES_NO, message_format=message)
+    val = md.run()
+    md.destroy()
+    return (val == gtk.RESPONSE_YES)
 
 if __name__ == "__main__":
     import sys
