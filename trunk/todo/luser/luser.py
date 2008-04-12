@@ -24,20 +24,24 @@
 #----------------------------------------------------------------------------
 # 2008.04.13
 
-# Note that at present there is no support for passwd, so a user can
-# only change his password if he knows the root password, which is not so
-# good!
-
-
 import gtk
 import os, pwd, grp, crypt, random
 from subprocess import Popen, PIPE, STDOUT
 
-# If not started as root, it will ask for the root password if necessary.
-# For switching to root:
+# For running utilities as root:
 import pexpect
 
 helptext = """LUSER:
+
+If not started as root (administrator), this program
+will ask for the root password before it tries to make
+any changes.
+
+This program does not allow a normal user to change
+his password unless he knows the root (administrator)
+password. If you are running as a normal user and want
+to change your password, open a terminal and run
+'passwd'.
 
 If you need more advanced user/group management
 take a look at the man pages for 'useradd', 'usermod',
@@ -627,7 +631,6 @@ def confirm(message):
     val = md.run()
     md.destroy()
     return (val == gtk.RESPONSE_YES)
-
 
 def asroot(cmd, pw):
     """Run a command as root, using the given password.
