@@ -22,19 +22,54 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.04.08
+# 2008.04.13
+
+# Note that at present there is no support for passwd, so a user can
+# only change his password if he knows the root password, which is not so
+# good!
+
 
 import gtk
-import os, pwd, grp
+import os, pwd, grp, crypt, random
 from subprocess import Popen, PIPE, STDOUT
 
-# For switching to root.
+# If not started as root, it will ask for the root password if necessary.
+# For switching to root:
 import pexpect
 
-# Not quite ready yet ...
+helptext = """LUSER:
 
-# If not started as root, it will ask for the root password if necessary
-# (NYI!)
+If you need more advanced user/group management
+take a look at the man pages for 'useradd', 'usermod',
+'userdel', 'groupadd', 'groupmod', 'groupdel', etc.
+There are also tools with graphical front-ends (e.g.
+'kuser' for kde).
+
+Here is a list of common groups and their function in Arch.
+
+    * audio = sound
+    * camera = access to cameras.
+    * disk = block devices not affected by other groups such as optical,floppy,storage.
+    * floppy = access to floppy drives.
+    * kmem = rights to /dev/mem, /dev/port, /dev/kmem
+    * log = access to log files in /var/log.
+    * lp = printers
+    * optical = access to dvd/cd drives.
+    * network = right to use Networkmanager (if you want to use NM-Applet or KNetworkmanager you need to be in this group)
+    * power = right to suspend etc
+    * root = root/admin power (security warning: don't add your user to this unless you know what you're doing!)
+    * scanner = scanners
+    * locate = access to command updatedb
+    * storage = access to external drives (hard drives, flash/jump drives, mp3 players, etc)
+    * thinkpad = for thinkpad users accessing /dev/misc/nvram through e.g. tpb
+    * tty = access to serial/USB devices like modems or handhelds
+    * users = default users group (recommended)
+    * vboxusers = right to use virtualbox
+    * video = DRI/3D acceleration
+    * vmware = right to execute vmware
+    * wheel = right to use sudo (setup with visudo) (PAM also affects this)
+"""
+
 
 class Luser(gtk.Window):
 
@@ -53,7 +88,7 @@ class Luser(gtk.Window):
         notebook.show_tabs = True
         notebook.show_border = False
 
-        self.users = Users(self.getUsers() + ['root'])
+        self.users = Users()
         notebook.append_page(self.users, gtk.Label(_("Users")))
         #notebook.append_page(Configure(), gtk.Label(_("Configure")))
         notebook.append_page(Help(), gtk.Label(_("Help")))
@@ -65,47 +100,55 @@ class Luser(gtk.Window):
         self.show_all()
         gtk.main()
 
+    def setUsers(self):
+        self.users.setUsers()
+
     def rootrun(self, cmd):
         """Run the given command as 'root'.
         Return a pair (completion code, output).
         """
-        # If not running as 'root', use pexpect to do su and run the command
-        if (os.getuid() == 0):
+        # If not running as 'root' use pexpect to use 'su' to run the command
+        if (runninguser == 'root'):
             p = Popen(cmd, shell=True, stdout=PIPE, stderr=STDOUT)
             o = p.communicate()[0]
             return (p.returncode, o)
         else:
             if not self.password:
-                self.password = popupRootPassword()
-            child = pexpect.spawn("su -c '%s'" % cmd)
-            child.expect(':')
-            child.sendline(self.password)
-            child.expect(pexpect.EOF)
-            o = child.before.strip()
-            return (0 if (o == '') else 1, o)
+                pw = popupRootPassword()
+                if (pw == None):
+                    return (1, _("You cancelled the operation."))
+                cc, mess = asroot('true', pw)
+                if (cc != 0):
+                    return (cc, mess)
+                self.password = pw
+            return asroot(cmd, self.password)
+
+    def enableApply(self, on):
+        self.users.enableApply(on)
 
     def changeUser(self, user):
         if self.pending(user):
             self.currentUser = user
-            self.users.setRoot(user == 'root')
-            self.users.grouplist.setGroups(user)
+            self.users.displayUser(user)
+            self.users.setGroups(user)
         else:
             self.users.resetUser(self.currentUser)
 
-    def pending(self, user=None):
+    def pending(self, user=None, force=False):
         """Handle pending changes to group membership for the current user.
         Should be called when the user is switched and when quitting the
-        program.
+        program. Can also be called by clicking the 'Apply' button.
+        If 'force' is not True, a confirmation dialog will pop up.
         """
         if ((self.currentUser in self.getUsers()) and
                 (self.currentUser != user)):
 
-            nglist = self.users.grouplist.getNewGroups()
-            if (self.getUserGroups(self.currentUser) != nglist):
+            nglist = self.users.grouplist.groupsChanged()
+            if (nglist != None):
                 # Changes were requested, popup an apply confirmation dialog
 
-                if confirm(_("You have specified changes to the group"
-                        " memberships of user '%s'.\n\n"
+                if force or confirm(_("You have specified changes to the"
+                        " group memberships of user '%s'.\n\n"
                         "Should these be applied?")
                          % self.currentUser):
 
@@ -117,6 +160,8 @@ class Luser(gtk.Window):
                                 " could not be changed. Here is the system"
                                 " message:\n\n %s") % (self.currentUser, op))
                         return False
+
+        self.enableApply(False)
         return True
 
     def getUsers(self):
@@ -156,6 +201,7 @@ class Help(gtk.Frame):
         self.view.show()
 
         self.reportbuf = self.view.get_buffer()
+        self.reportbuf.set_text(helptext)
 
 
 class About(gtk.Frame):
@@ -194,7 +240,7 @@ class Configure(gtk.Frame):
 
 
 class Users(gtk.HBox):
-    def __init__(self, userlist):
+    def __init__(self):
         gtk.HBox.__init__(self, spacing=20)
         self.set_border_width(10)
 
@@ -208,7 +254,6 @@ class Users(gtk.HBox):
         # leftbox:
         #    user select combobox
         self.usel = SelectUser()
-        self.usel.setUsers(userlist)
         leftbox.pack_start(self.usel, False)
 
         #    add user button -> user name + password popup
@@ -226,77 +271,151 @@ class Users(gtk.HBox):
         self.delete.connect('clicked', self.removeUser)
         leftbox.pack_start(self.delete, False)
 
+        aqbox = gtk.HBox()
+        leftbox.pack_end(aqbox, False)
+
         quit = gtk.Button(stock=gtk.STOCK_QUIT)
         quit.connect('clicked', actions.exit)
-        leftbox.pack_end(quit, False)
+        aqbox.pack_start(quit)
 
-    def setRoot(self, root):
+        self.apply = gtk.Button(stock=gtk.STOCK_APPLY)
+        self.apply.connect('clicked', actions.apply)
+        aqbox.pack_end(self.apply)
+
+    def enableApply(self, on):
+        self.apply.set_sensitive(on)
+
+    def setUsers(self, user=None):
+        if not user:
+            user = runninguser
+        self.usel.setUsers(user)
+
+    def setUser(self, user):
+        self.usel.select(user)
+
+    def displayUser(self, user):
         """If the selected user is 'root', editing of the groups and
-        deleting the user should be diabled.
+        deleting the user should be disabled.
+        If the user is the running user, deleting the user should be
+        disabled.
         """
+        root = (user == 'root')
         self.grouplist.setEnabled(not root)
-        self.delete.set_sensitive(not root)
+        self.delete.set_sensitive((not root) and (user != runninguser))
+
+    def setGroups(self, user):
+        """Set up the group display widget for the given user.
+        """
+        self.grouplist.setGroups(user)
 
     def resetUser(self, user):
         self.usel.select(user)
 
     def newUser(self, widget, data=None):
-        print "newUser NYI"
-
+        user, pw = popupNewUser()
+        if user:
+            if (pw == ''):
+                # Passwordless login
+                pwcrypt = ''
+            else:
+                # Normal MD5 password
+                pwcrypt = encryptPW(pw)
+            ccode, op = gui.rootrun("useradd -m -g users -p '%s' %s" %
+                    (pwcrypt, user))
+            if (ccode != 0):
+                error(_("It was not possible to add  user '%s'."
+                        " Here is the system message:\n\n %s") %
+                        (user, op))
+            else:
+                self.usel.setUsers(user)
 
     def newPass(self, widget, data=None):
-        print "newPass NYI"
+        pw = popupNewPassword()
+        if (pw == ''):
+            # Passwordless login
+            pwcrypt = ''
+        elif (pw != None):
+            # Normal MD5 password
+            pwcrypt = encryptPW(pw)
+        else:
+            # 'Cancelled'
+            return
+        ccode, op = gui.rootrun("usermod -p '%s' %s" %
+                (pwcrypt, gui.currentUser))
+        if (ccode != 0):
+            error(_("The password for user '%s' could not be changed."
+                    " Here is the system message:\n\n %s") %
+                    (gui.currentUser, op))
 
 
     def removeUser(self, widget, data=None):
         if confirm(_("Do you really want to remove user '%s', including"
                 " the home directory, i.e. losing all the data contained"
                 " therein?")
-                 % self.currentUser):
+                 % gui.currentUser):
 
-            ccode, op, op2 = self.rootrun('userdel -r %s' % self.currentUser)
+            ccode, op = gui.rootrun('userdel -r %s' % gui.currentUser)
             if (ccode != 0):
                 error(_("User '%s' could not be removed. Here is the system"
-                        " message:\n\n %s") % (self.currentUser, op2))
+                        " message:\n\n %s") % (gui.currentUser, op))
+
+            else:
+                self.usel.setUsers(runninguser)
 
 
-
-
-class SelectUser(gtk.ComboBox):
+class SelectUser(gtk.Frame):
     def __init__(self):
-        gtk.ComboBox.__init__(self)
-        self.blocked = False
-        self.list = gtk.ListStore(str)
-        self.set_model(self.list)
-        cell = gtk.CellRendererText()
-        self.pack_start(cell)
-        self.add_attribute(cell, 'text', 0)
-        self.connect('changed', self.changed_cb)
+        gtk.Frame.__init__(self, _("Select user"))
+        self.combo = gtk.ComboBox()
 
-    def setUsers(self, ulist):
+        # Need some space around the combo box. The only way I've found
+        # of doing this (so far) is to add an extra layout widget ...
+        border = gtk.Table(rows=2, columns=2, homogeneous=True)
+        border.attach(self.combo, 0, 2, 0, 1, xpadding=3, ypadding=3)
+
+        # Add a label to display the uid
+        self.uid = gtk.Label()
+        border.attach(self.uid, 1, 2, 1, 2, xpadding=3, ypadding=3)
+        self.add(border)
+
+        self.list = gtk.ListStore(str)
+        self.combo.set_model(self.list)
+        cell = gtk.CellRendererText()
+        self.combo.pack_start(cell)
+        self.combo.add_attribute(cell, 'text', 0)
+        self.blocked = False
+        self.combo.connect('changed', self.changed_cb)
+
+    def setUsers(self, user):
+        self.blocked = True
         self.list.clear()
-        for u in ulist:
+        for u in (gui.getUsers() + ['root']):
             self.list.append([u])
+        while gtk.events_pending():
+            gtk.main_iteration(False)
+        self.blocked = False
+        self.select(user)
+
 
     def changed_cb(self, widget, data=None):
         if self.blocked:
-            self.blocked = False
             return
-        i = self.get_active()
+        i = self.combo.get_active()
         u = self.list[i][0]
+        self.uid.set_text("uid: %5d" % pwd.getpwnam(u)[2])
         gui.changeUser(u)
 
     def select(self, user):
+        """Programmatically set the currently selected user.
+        """
         i = 0
         for u in self.list:
             if (u[0] == user):
-                self.blocked = True
-                self.set_active(i)
+                self.combo.set_active(i)
                 break
             i += 1
 
 
-# This should only be enabled(sensitive) when run as root and selecteduser!=root
 class CheckList(gtk.ScrolledWindow):
     def __init__(self, columnwidth=100):
         gtk.ScrolledWindow.__init__(self)
@@ -305,14 +424,14 @@ class CheckList(gtk.ScrolledWindow):
         self.set_size_request(columnwidth, -1)
 
         self.treeview = gtk.TreeView()
-        self.liststore = gtk.ListStore(str, bool, bool)
+        self.liststore = gtk.ListStore(str, bool, bool, str)
         self.treeview.set_model(self.liststore)
         # create CellRenderers to render the data
         celltoggle = gtk.CellRendererToggle()
         #celltoggle.set_property('activatable', True)
         celltoggle.connect( 'toggled', self.toggled_cb)
         celltext = gtk.CellRendererText()
-        # create the TreeViewColumn to display the data
+        # create the TreeViewColumn to display the groups
         self.tvcolumn = gtk.TreeViewColumn(_("Groups"))
         self.tvcolumn.pack_start(celltoggle, expand=False)
         self.tvcolumn.add_attribute(celltoggle, 'active', 1)
@@ -321,11 +440,17 @@ class CheckList(gtk.ScrolledWindow):
         self.tvcolumn.add_attribute(celltext, 'text', 0)
         # add column to treeview
         self.treeview.append_column(self.tvcolumn)
+        # create and add gid column
+        cellnum = gtk.CellRendererText()
+        cellnum.set_property('xalign', 1.0)
+        gidcol = gtk.TreeViewColumn('gid', cellnum, text=3)
+        self.treeview.append_column(gidcol)
         # place treeview in scrolled window
         self.add(self.treeview)
 
     def toggled_cb(self, widget, path, data=None):
         self.liststore[path][1] = not self.liststore[path][1]
+        gui.enableApply(self.groupsChanged() != None)
 
     def setEnabled(self, enable):
         self.treeview.set_sensitive(enable)
@@ -340,69 +465,180 @@ class CheckList(gtk.ScrolledWindow):
         self.gidnm = grp.getgrgid(gid)[0]
         self.liststore.clear()
         for g in groups:
+            gn = grp.getgrnam(g)[2]
             if (g == self.gidnm):
-                self.liststore.append([g, True, False])
+                self.liststore.append([g, True, False, gn])
             else:
-                enable = (g not in ('root', 'bin', 'daemon',
-                        'sys', 'adm'))
-                self.liststore.append([g, g in usergroups, enable])
+                enable = (user != 'root') and (g not in ('root', 'bin',
+                        'daemon', 'sys', 'adm'))
+                self.liststore.append([g, g in usergroups, enable, gn])
 
-    def getNewGroups(self):
-        """Return the list of groups for the present user according to
-        the checklist.
+    def groupsChanged(self):
+        """If the displayed group memberships differ from those set in
+        the system, return the list of displayed group memberships,
+        otherwise <None>.
         """
-        return [ r[0] for r in self.liststore
-                        if (r[1] and (r[0] != self.gidnm))]
-
-
-
-
-###############
-#GROUPS:
-#Mitglieder hinzufuegen
-
-#root@sonne> gpasswd -a user fibel
-#Adding user user to group fibel
-
-#Mitglieder entfernen
-
-#root@sonne> gpasswd -d user fibel
-#Removing user user from group fibel
-
-
-#But usermod can also set / add user's groups
-######################
-
-
+        # Get the list of groups for the present user according to
+        # the checklist.
+        nglist = []
+        for r in self.liststore:
+            if (r[1] and (r[0] != self.gidnm)):
+                nglist.append(r[0])
+        if (gui.getUserGroups(gui.currentUser) != nglist):
+            return nglist
+        else:
+            return None
 
 
 class Actions:
-    def __init__(self):
-        print "Actions NYI"
+    def apply(self, widget=None, data=None):
+        gui.pending(force=True)
 
     def exit(self, widget=None, data=None):
         gui.pending()
         gtk.main_quit()
 
 def popupRootPassword():
-    # Maybe once it has been received it should be tested before returning it?
-    print "root password NYI"
-    return ""
+    dialog = gtk.Dialog(parent=gui,
+            flags=gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
+            buttons=(gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
+                    gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
+    label = gtk.Label(_("To complete this operation you must enter"
+            " the root (administrator) password:"))
+    label.set_line_wrap(True)
+    label.set_alignment(0.0, 0.5)
+    dialog.vbox.pack_start(label)
+    label.show()
+    entry = gtk.Entry(max=20)
+    entry.set_visibility(False)
+    dialog.vbox.pack_start(entry)
+    entry.show()
+    entry.connect('activate', enterKey_cb, dialog)
+    if (dialog.run() == gtk.RESPONSE_ACCEPT):
+        val = entry.get_text()
+    else:
+        val = None
+    dialog.destroy()
+    return val
+
+def enterKey_cb(widget, dialog):
+    """A callback for the Enter key in dialogs.
+    """
+    dialog.response(gtk.RESPONSE_ACCEPT)
+
+def popupNewPassword():
+    """Dialog for entering a new password, which may be empty. Returns
+    <None> if cancelled.
+    """
+    dialog = gtk.Dialog(parent=gui,
+            flags=gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
+            buttons=(gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
+                    gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
+    label = gtk.Label(_("Enter new password:"))
+    label.set_alignment(0.0, 0.5)
+    dialog.vbox.pack_start(label)
+    label.show()
+    entry = gtk.Entry(max=20)
+    entry.set_visibility(False)
+    dialog.vbox.pack_start(entry)
+    entry.show()
+    label2 = gtk.Label(_("Reenter new password:"))
+    label2.set_alignment(0.0, 0.5)
+    dialog.vbox.pack_start(label2)
+    label2.show()
+    entry2 = gtk.Entry(max=20)
+    entry2.set_visibility(False)
+    dialog.vbox.pack_start(entry2)
+    entry2.show()
+    val = None
+    while (dialog.run() == gtk.RESPONSE_ACCEPT):
+        v = entry.get_text()
+        if (v == entry2.get_text()):
+            val = v
+            break
+        error(_("The passwords do not match."))
+    dialog.destroy()
+    return val
+
+def popupNewUser():
+    """Dialog for entering a new user, complete with password, which may
+    be empty. Returns a pair (user, password), or (<None>, <None>) if
+    cancelled.
+    """
+    dialog = gtk.Dialog(parent=gui,
+            flags=gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
+            buttons=(gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
+                    gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
+    labelu = gtk.Label(_("Enter user ('login') name:"))
+    labelu.set_alignment(0.0, 0.5)
+    dialog.vbox.pack_start(labelu)
+    labelu.show()
+    entryu = gtk.Entry(max=20)
+    dialog.vbox.pack_start(entryu)
+    entryu.show()
+    label = gtk.Label(_("Enter new password:"))
+    label.set_alignment(0.0, 0.5)
+    dialog.vbox.pack_start(label)
+    label.show()
+    entry = gtk.Entry(max=20)
+    entry.set_visibility(False)
+    dialog.vbox.pack_start(entry)
+    entry.show()
+    label2 = gtk.Label(_("Reenter new password:"))
+    label2.set_alignment(0.0, 0.5)
+    dialog.vbox.pack_start(label2)
+    label2.show()
+    entry2 = gtk.Entry(max=20)
+    entry2.set_visibility(False)
+    dialog.vbox.pack_start(entry2)
+    entry2.show()
+    pw = None
+    user = None
+    while (dialog.run() == gtk.RESPONSE_ACCEPT):
+        v = entry.get_text()
+        if (v == entry2.get_text()):
+            pw = v
+            user = entryu.get_text()
+            break
+        error(_("The passwords do not match."))
+    dialog.destroy()
+    return (user, pw)
+
+def encryptPW(pw):
+    salt = '$1$'
+    for i in range(8):
+        salt += random.choice("./0123456789abcdefghijklmnopqrstuvwxyz"
+                "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+    return crypt.crypt(pw, salt)
 
 def error(message):
-    md = gtk.MessageDialog(flags=gtk.DIALOG_MODAL |
-            gtk.DIALOG_DESTROY_WITH_PARENT, type=gtk.MESSAGE_ERROR,
+    md = gtk.MessageDialog(parent=gui,
+            flags=gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
+            type=gtk.MESSAGE_ERROR,
             buttons=gtk.BUTTONS_CLOSE, message_format=message)
     md.run()
     md.destroy()
 
 def confirm(message):
-    md = gtk.MessageDialog(flags=gtk.DIALOG_MODAL |
-            gtk.DIALOG_DESTROY_WITH_PARENT, type=gtk.MESSAGE_QUESTION,
+    md = gtk.MessageDialog(parent=gui,
+            flags=gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
+            type=gtk.MESSAGE_QUESTION,
             buttons=gtk.BUTTONS_YES_NO, message_format=message)
     val = md.run()
     md.destroy()
     return (val == gtk.RESPONSE_YES)
+
+
+def asroot(cmd, pw):
+    """Run a command as root, using the given password.
+    """
+    child = pexpect.spawn('su -c "%s"' % cmd)
+    child.expect(':')
+    child.sendline(pw)
+    child.expect(pexpect.EOF)
+    o = child.before.strip()
+    return (0 if (o == '') else 1, o)
+
 
 if __name__ == "__main__":
     import sys
@@ -413,4 +649,7 @@ if __name__ == "__main__":
 
     actions = Actions()
     gui = Luser()
+    # Start with the current effective user
+    runninguser = pwd.getpwuid(os.getuid())[0]
+    gui.setUsers()
     gui.mainLoop()
