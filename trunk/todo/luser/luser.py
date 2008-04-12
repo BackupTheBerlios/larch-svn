@@ -76,7 +76,6 @@ Here is a list of common groups and their function in Arch.
 
 
 class Luser(gtk.Window):
-
     def __init__(self):
         gtk.Window.__init__(self)
         #self.set_default_size(400,300)
@@ -351,7 +350,6 @@ class Users(gtk.HBox):
                     " Here is the system message:\n\n %s") %
                     (gui.currentUser, op))
 
-
     def removeUser(self, widget, data=None):
         if confirm(_("Do you really want to remove user '%s', including"
                 " the home directory, i.e. losing all the data contained"
@@ -399,7 +397,6 @@ class SelectUser(gtk.Frame):
             gtk.main_iteration(False)
         self.blocked = False
         self.select(user)
-
 
     def changed_cb(self, widget, data=None):
         if self.blocked:
@@ -501,6 +498,7 @@ class Actions:
     def exit(self, widget=None, data=None):
         gui.pending()
         gtk.main_quit()
+
 
 def popupRootPassword():
     dialog = gtk.Dialog(parent=gui,
