@@ -22,16 +22,29 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.04.13
+# 2008.04.14
+
+### Possible TODOs:
+###  *) Configuration tab: On user creation use 'users' group or group
+###    with same name as user.
+###  *) Configuration tab: On user creation set default group memberships.
+###  *) Gui for 'passwd' - but I actually don't see how this can be easier
+###    than typing passwd at a terminal and following the instructions!
 
 import gtk
-import os, pwd, grp, crypt, random
+import os, sys, pwd, grp, crypt, random
 from subprocess import Popen, PIPE, STDOUT
 
 # For running utilities as root:
 import pexpect
 
-helptext = """LUSER:
+# The not yet implemented i18n bit ...
+import __builtin__
+def tr(s):
+    return s
+__builtin__._ = tr
+
+helptext = _("""LUSER:
 
 If not started as root (administrator), this program
 will ask for the root password before it tries to make
@@ -72,39 +85,58 @@ Here is a list of common groups and their function in Arch.
     * video = DRI/3D acceleration
     * vmware = right to execute vmware
     * wheel = right to use sudo (setup with visudo) (PAM also affects this)
-"""
+""")
+
+
+abouttext = _('<i>luser</i> is a simple gui front-end for'
+                ' the command line user management programs. It was'
+                ' designed for <i>larch</i> \'live\' systems but should'
+                ' work on most linux systems.\n'
+                'To keep it simple it only allows adding and deleting users,'
+                ' changing their passwords, and changing their group'
+                ' memberships.\n\n'
+                'This program was written for the <i>larch</i> project:\n'
+                '       http://larch.berlios.de\n'
+                '\nIt is free software,'
+                ' released under the GNU General Public License.\n')
 
 
 class Luser(gtk.Window):
     def __init__(self):
         gtk.Window.__init__(self)
         #self.set_default_size(400,300)
-        self.connect("destroy", actions.exit)
+        self.connect("destroy", self.exit)
         self.set_border_width(3)
 
-        self.currentUser = None
         self.password = None
 
-        notebook = gtk.Notebook()
-        self.add(notebook)
-        notebook.set_tab_pos(gtk.POS_TOP)
-        notebook.show_tabs = True
-        notebook.show_border = False
+        self.notebook = gtk.Notebook()
+        self.add(self.notebook)
+        self.notebook.set_tab_pos(gtk.POS_TOP)
+        self.notebook.show_tabs = True
+        self.notebook.show_border = False
 
+        self.setup()
+
+    def init(self):
         self.users = Users()
-        notebook.append_page(self.users, gtk.Label(_("Users")))
-        #notebook.append_page(Configure(), gtk.Label(_("Configure")))
-        notebook.append_page(Help(), gtk.Label(_("Help")))
-        notebook.append_page(About(), gtk.Label(_("About")))
+        self.notebook.append_page(self.users, gtk.Label(_("Users")))
+        #self.notebook.append_page(Configure(), gtk.Label(_("Configure")))
+        self.notebook.append_page(Help(), gtk.Label(_("Help")))
+        self.notebook.append_page(About(), gtk.Label(_("About")))
 
-        notebook.set_current_page(0)
+        self.notebook.set_current_page(0)
+
+    def setup(self):
+        self.currentUser = None
 
     def mainLoop(self):
         self.show_all()
         gtk.main()
 
-    def setUsers(self):
-        self.users.setUsers()
+    def exit(self, widget=None, data=None):
+        self.pending()
+        gtk.main_quit()
 
     def rootrun(self, cmd):
         """Run the given command as 'root'.
@@ -125,17 +157,6 @@ class Luser(gtk.Window):
                     return (cc, mess)
                 self.password = pw
             return asroot(cmd, self.password)
-
-    def enableApply(self, on):
-        self.users.enableApply(on)
-
-    def changeUser(self, user):
-        if self.pending(user):
-            self.currentUser = user
-            self.users.displayUser(user)
-            self.users.setGroups(user)
-        else:
-            self.users.resetUser(self.currentUser)
 
     def pending(self, user=None, force=False):
         """Handle pending changes to group membership for the current user.
@@ -166,6 +187,24 @@ class Luser(gtk.Window):
 
         self.enableApply(False)
         return True
+
+    def apply(self, widget=None, data=None):
+        self.pending(force=True)
+
+    def setUsers(self):
+        self.users.setUsers()
+
+    def enableApply(self, on):
+        self.users.enableApply(on)
+
+    def changeUser(self, user):
+        if self.pending(user):
+            self.currentUser = user
+            self.users.displayUser(user)
+            self.users.setGroups(user)
+        else:
+            self.users.resetUser(self.currentUser)
+
 
     def getUsers(self):
         """Return a list of 'normal' users, i.e. those with a home
@@ -216,18 +255,7 @@ class About(gtk.Frame):
         label = gtk.Label()
         label.set_line_wrap(True)
         #label.set_alignment(0.0, 0.5)
-        label.set_markup(_('<i>luser</i> is a simple gui front-end for'
-                ' the command line user management programs. It was'
-                ' designed for <i>larch</i> \'live\' systems but should'
-                ' work on most linux systems.\n'
-                'To keep it simple it only allows adding and deleting users,'
-                ' changing their passwords, and changing their group'
-                ' memberships.\n\n'
-                'This program was written for the <i>larch</i> project:\n'
-                '       http://larch.berlios.de\n'
-                '\nIt is free software,'
-                ' released under the GNU General Public License.\n\n') +
-                'Copyright (c) 2008   Michael Towers')
+        label.set_markup(abouttext + '\nCopyright (c) 2008   Michael Towers')
         box.pack_start(label)
         self.add(box)
 
@@ -278,11 +306,11 @@ class Users(gtk.HBox):
         leftbox.pack_end(aqbox, False)
 
         quit = gtk.Button(stock=gtk.STOCK_QUIT)
-        quit.connect('clicked', actions.exit)
+        quit.connect('clicked', gui.exit)
         aqbox.pack_start(quit)
 
         self.apply = gtk.Button(stock=gtk.STOCK_APPLY)
-        self.apply.connect('clicked', actions.apply)
+        self.apply.connect('clicked', gui.apply)
         aqbox.pack_end(self.apply)
 
     def enableApply(self, on):
@@ -491,15 +519,6 @@ class CheckList(gtk.ScrolledWindow):
             return None
 
 
-class Actions:
-    def apply(self, widget=None, data=None):
-        gui.pending(force=True)
-
-    def exit(self, widget=None, data=None):
-        gui.pending()
-        gtk.main_quit()
-
-
 def popupRootPassword():
     dialog = gtk.Dialog(parent=gui,
             flags=gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
@@ -642,14 +661,8 @@ def asroot(cmd, pw):
 
 
 if __name__ == "__main__":
-    import sys
-    import __builtin__
-    def tr(s):
-        return s
-    __builtin__._ = tr
-
-    actions = Actions()
     gui = Luser()
+    gui.init()
     # Start with the current effective user
     runninguser = pwd.getpwuid(os.getuid())[0]
     gui.setUsers()
