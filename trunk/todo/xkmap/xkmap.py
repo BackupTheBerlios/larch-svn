@@ -19,7 +19,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #-------------------------------------------------------------------
-# Version 2.0 // 14th April 2008
+# Version 2.0 // 15th April 2008
 
 # Set this for your system (probably one of these is OK)
 base_lst = "/usr/share/X11/xkb/rules/base.lst"
@@ -81,15 +81,16 @@ class MainWindow(gtk.Window):
 
         self.setup()
 
-    def init(self, maintabtitle, configure=False):
+    def init(self, maintabtitle):
         self.maintab = MainTab()
-        self.notebook.append_page(self.maintab, gtk.Label(maintabtitle))
-        if configure:
-            self.notebook.append_page(Configure(), gtk.Label(_("Configure")))
-        self.notebook.append_page(Help(), gtk.Label(_("Help")))
-        self.notebook.append_page(About(), gtk.Label(_("About")))
+        self.addPage(self.maintab, gtk.Label(maintabtitle))
+        self.addPage(Help(), gtk.Label(_("Help")))
+        self.addPage(About(), gtk.Label(_("About")))
 
         self.notebook.set_current_page(0)
+
+    def addPage(self, widget, label):
+        self.notebook.append_page(widget, label)
 
     def mainLoop(self):
         self.show_all()
@@ -130,7 +131,6 @@ class MainWindow(gtk.Window):
         It can be used to do tidying up.
         """
         pass
-
 
 def popupRootPassword():
     dialog = gtk.Dialog(parent=gui,
@@ -202,21 +202,11 @@ class About(gtk.Frame):
         self.add(box)
 
 
-class Configure(gtk.Frame):
-    def __init__(self):
-        gtk.Frame.__init__(self)
-        self.set_border_width(10)
-        label = gtk.Label()
-        label.set_line_wrap(True)
-        label.set_markup(_('<b>Not Yet implemented</b>'))
-        self.add(label)
-
-
-
 class MainTab(gtk.VBox):
-
     def __init__ (self):
         gtk.VBox.__init__(self, spacing=5)
+        self.block_cb = True
+
         title = gtk.Label()
         title.set_markup('<span size="xx-large">%s</span>' %
                 _("Set Keyboard Mapping"))
@@ -224,13 +214,13 @@ class MainTab(gtk.VBox):
 
         self.pack_start(gtk.HSeparator(), False)
 
-        self.modelframe = XCombo(_("Model"))
+        self.modelframe = XCombo(_("Model"), callback=self.model_cb)
         self.pack_start(self.modelframe, False)
 
-        self.layoutframe = XCombo(_("Layout"))
+        self.layoutframe = XCombo(_("Layout"), callback=self.layout_cb)
         self.pack_start(self.layoutframe, False)
 
-        self.variantframe = XCombo(_("Variant"))
+        self.variantframe = XCombo(_("Variant"), callback=self.variant_cb)
         self.pack_start(self.variantframe, False)
 
         buttons = gtk.HButtonBox()
@@ -247,145 +237,51 @@ class MainTab(gtk.VBox):
         buttons.add(but_quit)
         but_quit.connect('clicked', gui.exit)
 
-        self.init_combos()
-
-
-
-
-
-        return
-
-    def init_combos(self):
         self.modelframe.set_list(i_xkbset.models)
-        self.modelframe.select(i_xkbset.model)
-        return
+        self.iModel = self.modelframe.select(i_xkbset.model)
 
-        # Read the glade file
-        self.wTree = gtk.glade.XML("/usr/share/xkmap.glade")
+        self.layoutframe.set_list(i_xkbset.layouts)
+        self.iLayout = self.layoutframe.select(i_xkbset.layout)
 
-        # Create a dictionay of connections, then autoconnect
-        dic = { "on_window1_destroy"  : gtk.main_quit,
-                "on_btCancel_clicked" : gtk.main_quit,
-                "on_btApply_clicked"  : self.change,
-                "on_btOK_clicked"     : self.changeq,
-                "on_cbModel_changed"  : self.model,
-                "on_cbLayout_changed" : self.layout,
-                "on_cbVariant_changed": self.variant
-              }
-        self.wTree.signal_autoconnect(dic)
+        self.showVariants()
 
-        # To prevent error message
-        self.cbVariant = None
-
-        # Set up comboboxes
-        # Model
-        cellm = gtk.CellRendererText()
-        self.modelModel = gtk.ListStore(str)
-        self.cbModel = self.wTree.get_widget("cbModel")
-        self.cbModel.set_model(self.modelModel)
-        self.cbModel.pack_start(cellm, True)
-        self.cbModel.set_attributes(cellm, text=0)
-
-        i = 0
-        for item in i_xkbset.models:   # item list is a list of strings
-            self.modelModel.append([item])
-            if item.split(None , 1)[0] == i_xkbset.model:
-                self.iModel = i
-            i += 1
-        self.cbModel.set_active(self.iModel)
-
-        # Layout
-        celll = gtk.CellRendererText()
-        self.modelLayout = gtk.ListStore(str)
-        self.cbLayout = self.wTree.get_widget("cbLayout")
-        self.cbLayout.set_model(self.modelLayout)
-        self.cbLayout.pack_start(celll, True)
-        self.cbLayout.set_attributes(celll, text=0)
-
-        i = 0
-        for item in self.i_xkbset.layouts:   # item list is a list of strings
-            self.modelLayout.append([item])
-            if item.split(None , 1)[0] == self.i_xkbset.layout:
-                self.iLayout = i
-            i += 1
-        self.cbLayout.set_active(self.iLayout)
-
-        # Variant -- this depends on the chosen Layout!
-        cellv = gtk.CellRendererText()
-        self.modelVariant = gtk.ListStore(str)
-        self.cbVariant = self.wTree.get_widget("cbVariant")
-        self.cbVariant.set_model(self.modelVariant)
-        self.cbVariant.pack_start(cellv, True)
-        self.cbVariant.set_attributes(cellv, text=0)
-
-        self.showVariants ()
+        self.block_cb = False
 
     def showVariants (self):
-        self.modelVariant.clear ()
-        layout = self.i_xkbset.layouts[self.iLayout].split ()[0]
-        self.variants = self.i_xkbset.allVariants[layout]
-        self.iVariant = 0
-        i = 0
-        for item in self.variants:   # item list is a list of strings
-            self.modelVariant.append([item])
-            if item.split(None , 1)[0] == self.i_xkbset.variant:
-                self.iVariant = i
-            i += 1
-        self.cbVariant.set_active(self.iVariant)
-
-
+        layout = i_xkbset.layouts[self.iLayout].split()[0]
+        self.variants = i_xkbset.getVariants(layout)
+        self.variantframe.set_list(self.variants)
+        self.iVariant = self.variantframe.select(i_xkbset.variant)
 
     def apply(self, widget, data=None):
-        print "NYI"
+        i_xkbset.new()
 
+    def model_cb(self, i, val):
+        self.iModel = i
+        i_xkbset.model = val
 
-    def change (self, widget):
-        self.i_xkbset.new ()
-
-    def changeq (self, widget):
-        self.change (widget)
-        gtk.main_quit ()
-
-    def model (self, widget):
-        i = self.cbModel.get_active()
-        if i != self.iModel:
-            self.iModel = i
-            self.i_xkbset.model = self.i_xkbset.models[i].split(None , 1)[0]
-
-    def layout (self, widget):
-        i = self.cbLayout.get_active()
-        if i != self.iLayout:
+    def layout_cb(self, i, val):
+        if (not self.block_cb) and i != self.iLayout:
             self.iLayout = i
-            self.i_xkbset.layout = self.i_xkbset.layouts[i].split(None , 1)[0]
-            self.showVariants ()
-        self.variant(None)
+            i_xkbset.layout = val
+            self.showVariants()
 
-    def variant (self, widget):
-        if not self.cbVariant:
-            # To prevent error message
-            return
-        i = self.cbVariant.get_active()
-        if (i != self.iVariant) or (widget == None):
-            self.iVariant = i
-            self.i_xkbset.variant = self.variants[i].split(None , 1)[0]
+    def variant_cb(self, i, val):
+        self.iVariant = i
+        i_xkbset.variant = val
 
 
-    def mainloop (self):
-        gtk.main ()
-
-
-
-class xkbset:
-    def __init__ (self):
+class Xkbset:
+    def __init__(self):
         self.configfile = os.path.expanduser("~/.xkmap")
         # default values
         self.model = "pc101"
         self.layout = "us"
         self.variant = "Standard"
-        if os.path.isfile (self.configfile):
-            f = open (self.configfile)
-            self.model, self.layout, self.variant = f.readline ().strip ().split ("|")
-            f.close ()
+        if os.path.isfile(self.configfile):
+            f = open(self.configfile)
+            self.model, self.layout, self.variant = f.readline().strip().split("|")
+            f.close()
 
         # Read 'base.lst'
         blf = open(base_lst)
@@ -396,14 +292,14 @@ class xkbset:
             line = blf.readline().strip()
             if not line: continue
             if line == "! layout": break
-            self.models.append (line)
+            self.models.append(line)
 
         self.layouts = []
         while True:
             line = blf.readline().strip()
             if not line: continue
             if line == "! variant": break
-            self.layouts.append (line)
+            self.layouts.append(line)
 
         self.layouts.sort()
 
@@ -413,16 +309,21 @@ class xkbset:
             if not line: continue
             if line == "! option": break
             parts = line.split (None, 2)
-            line = parts[0] + " - " + parts[2]
+            line = parts[0] + " " + parts[2]
             layout = parts[1].rstrip (":")
-            if not self.allVariants.has_key (layout):
+            if not self.allVariants.has_key(layout):
                 self.allVariants[layout] = [ "Standard" ]
-            self.allVariants[layout].append (line)
+            self.allVariants[layout].append(line)
 
         blf.close()
 
+    def getVariants(self, layout):
+        if not self.allVariants.has_key(layout):
+            return [ "Standard" ]
+        else:
+            return self.allVariants[layout]
 
-    def new (self):
+    def new(self):
         m = self.model
         l = self.layout
         v = self.variant
@@ -440,7 +341,7 @@ class xkbset:
 
 
 class XCombo(gtk.Frame):
-    def __init__(self, label=None):
+    def __init__(self, label=None, callback=None):
         gtk.Frame.__init__(self, label)
         self.combo = gtk.ComboBox()
         # Need some space around the combo box. The only way I've found
@@ -459,29 +360,33 @@ class XCombo(gtk.Frame):
         self.combo.pack_start(cell1, expand=False)
         self.combo.add_attribute(cell1, 'text', 0)
         cell2 = gtk.CellRendererText()
-        cell2.set_property('foreground', '#00a080')
+        cell2.set_property('foreground', '#a08000')
         self.combo.pack_start(cell2)
         self.combo.add_attribute(cell2, 'text', 1)
 
-#        self.blocked = False
-#        self.combo.connect('changed', self.changed_cb)
+        self.blocked = False
+        self.combo.connect('changed', self.changed_cb, callback)
 
     def set_list(self, values):
         self.blocked = True
         self.list.clear()
         for v in values:
-            a, b = v.split(None, 1)
+            ab = v.split(None, 1)
+            if (len(ab) == 1):
+                a, b = v, ''
+            else:
+                a, b = ab
             self.list.append([a, b])
         while gtk.events_pending():
             gtk.main_iteration(False)
         self.blocked = False
 
-# Maybe I don't need a callback?
-    def changed_cb(self, widget, data=None):
-        if self.blocked:
+    def changed_cb(self, widget, callback=None):
+        if self.blocked or not callback:
             return
         i = self.combo.get_active()
         v = self.list[i][0]
+        callback(i, v)
 
     def getval(self):
         """Return the selected value (first column only).
@@ -490,24 +395,21 @@ class XCombo(gtk.Frame):
 
     def select(self, val):
         """Programmatically set the currently selected entry.
+        Return the selected index.
         """
         i = 0
         for u in self.list:
             if (u[0] == val):
                 self.combo.set_active(i)
-                break
+                return i
             i += 1
-
+        self.combo.set_active(0)
+        return 0
 
 
 
 if __name__ == "__main__":
-    i_xkbset = xkbset ()
-#    i_gui = gui (i_xkbset)
-#    i_gui.mainloop ()
-
-
-
+    i_xkbset = Xkbset ()
     gui = MainWindow()
     gui.init(_("Key Maps"))
     gui.mainLoop()
