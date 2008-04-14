@@ -37,7 +37,7 @@ from subprocess import Popen, PIPE, STDOUT
 # For running utilities as root:
 import pexpect
 
-import gtk
+import gtk, pango
 
 # The not yet implemented i18n bit ...
 import __builtin__
@@ -224,14 +224,14 @@ class MainTab(gtk.VBox):
 
         self.pack_start(gtk.HSeparator(), False)
 
-        modelframe = XCombo(_("Model"))
-        self.pack_start(modelframe, False)
+        self.modelframe = XCombo(_("Model"))
+        self.pack_start(self.modelframe, False)
 
-        layoutframe = XCombo(_("Layout"))
-        self.pack_start(layoutframe, False)
+        self.layoutframe = XCombo(_("Layout"))
+        self.pack_start(self.layoutframe, False)
 
-        variantframe = XCombo(_("Variant"))
-        self.pack_start(variantframe, False)
+        self.variantframe = XCombo(_("Variant"))
+        self.pack_start(self.variantframe, False)
 
         buttons = gtk.HButtonBox()
         buttons.set_direction(gtk.TEXT_DIR_NONE)
@@ -247,7 +247,7 @@ class MainTab(gtk.VBox):
         buttons.add(but_quit)
         but_quit.connect('clicked', gui.exit)
 
-
+        self.init_combos()
 
 
 
@@ -255,7 +255,10 @@ class MainTab(gtk.VBox):
 
         return
 
-
+    def init_combos(self):
+        self.modelframe.set_list(i_xkbset.models)
+        self.modelframe.select(i_xkbset.model)
+        return
 
         # Read the glade file
         self.wTree = gtk.glade.XML("/usr/share/xkmap.glade")
@@ -284,9 +287,9 @@ class MainTab(gtk.VBox):
         self.cbModel.set_attributes(cellm, text=0)
 
         i = 0
-        for item in self.i_xkbset.models:   # item list is a list of strings
+        for item in i_xkbset.models:   # item list is a list of strings
             self.modelModel.append([item])
-            if item.split(None , 1)[0] == self.i_xkbset.model:
+            if item.split(None , 1)[0] == i_xkbset.model:
                 self.iModel = i
             i += 1
         self.cbModel.set_active(self.iModel)
@@ -446,12 +449,56 @@ class XCombo(gtk.Frame):
         border.attach(self.combo, 0, 1, 0, 1, xpadding=3, ypadding=3)
         self.add(border)
 
-        self.list = gtk.ListStore(str)
+        self.list = gtk.ListStore(str, str)
         self.combo.set_model(self.list)
-        cell = gtk.CellRendererText()
-        self.combo.pack_start(cell)
-        self.combo.add_attribute(cell, 'text', 0)
-        #self.combo.connect('changed', self.changed_cb)
+        cell1 = gtk.CellRendererText()
+        #cell1.set_fixed_size(80, -1)
+        cell1.set_property('width-chars', 15)
+        #cell1.set_property('cell-background', 'red')
+        cell1.set_property('ellipsize', pango.ELLIPSIZE_END)
+        self.combo.pack_start(cell1, expand=False)
+        self.combo.add_attribute(cell1, 'text', 0)
+        cell2 = gtk.CellRendererText()
+        cell2.set_property('foreground', '#00a080')
+        self.combo.pack_start(cell2)
+        self.combo.add_attribute(cell2, 'text', 1)
+
+#        self.blocked = False
+#        self.combo.connect('changed', self.changed_cb)
+
+    def set_list(self, values):
+        self.blocked = True
+        self.list.clear()
+        for v in values:
+            a, b = v.split(None, 1)
+            self.list.append([a, b])
+        while gtk.events_pending():
+            gtk.main_iteration(False)
+        self.blocked = False
+
+# Maybe I don't need a callback?
+    def changed_cb(self, widget, data=None):
+        if self.blocked:
+            return
+        i = self.combo.get_active()
+        v = self.list[i][0]
+
+    def getval(self):
+        """Return the selected value (first column only).
+        """
+        return self.list[self.combo.get_active()][0]
+
+    def select(self, val):
+        """Programmatically set the currently selected entry.
+        """
+        i = 0
+        for u in self.list:
+            if (u[0] == val):
+                self.combo.set_active(i)
+                break
+            i += 1
+
+
 
 
 if __name__ == "__main__":
