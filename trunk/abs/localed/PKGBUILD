@@ -1,0 +1,16 @@
+# Contributor: Michael Towers <gradgrind[at]online[dot]de>
+
+pkgname=localed
+pkgver=1.0
+pkgrel=1
+pkgdesc="A simple graphical utility for managing glibc locales in Arch"
+license=('GPL')
+arch=(i686 x86_64)
+depends=('pygtk')
+url="http://larch.berlios.de"
+source=(localed.py)
+build() {
+  cd $startdir/pkg
+  mkdir -p usr/bin
+  cp $startdir/src/localed.py usr/bin
+}
