@@ -1,5 +1,5 @@
-# The following line can be edited automatically to allow setting of the keymap
-#setxkbmap
+# Set the keymap
+xkmap-set
 
 case ${desktop} in
     xfce ) exec startxfce4 ;;

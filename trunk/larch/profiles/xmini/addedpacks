@@ -92,6 +92,8 @@ xf86-video-vmware
 xf86-video-voodoo
 
 # X apps
+luser
+localed
 xkmap
 gparted
 
