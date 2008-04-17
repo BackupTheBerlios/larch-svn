@@ -23,11 +23,12 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.27
+# 2008.04.17
 
 from subprocess import Popen, PIPE, STDOUT
 import os, shutil, signal
 import re
+import crypt, random
 
 from partition import Partition
 from dialogs import PopupInfo, popupWarning, popupError
@@ -671,3 +672,22 @@ class installClass:
             self.xcall("mount1 %s" % d)
             self.xsendfile("/tmp/larchin/menulst", "/tmp/mnt%s" % p)
             self.xcall("unmount1")
+
+
+    def set_rootpw(self, pw):
+        if (pw == ''):
+            # Passwordless login
+            pwcrypt = ''
+        else:
+            # Normal MD5 password
+            salt = '$1$'
+            for i in range(8):
+                salt += random.choice("./0123456789abcdefghijklmnopqrstuvwxyz"
+                        "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+            pwcrypt = crypt.crypt(pw, salt)
+
+        op = self.xcall("setpw root %s" % pwcrypt)
+        if op:
+            popupError(op, _("Couldn't set root password:"))
+            return False
+        return True

@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.12
+# 2008.04.17
 
 
 class Grub(Stage):
@@ -203,7 +203,7 @@ class Grub(Stage):
 
         install.setup_grub(device, path, text)
 
-        mainWindow.goto('end')
+        mainWindow.goto('rootpw')
 
 
 #################################################################
