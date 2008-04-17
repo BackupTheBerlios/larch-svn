@@ -22,7 +22,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.04.06
+# 2008.04.17
 
 import gtk
 import os
@@ -209,7 +209,7 @@ class Actions:
     def logout(self, widget=None, data="0"):
         os.system("echo '%s' > /tmp/xlogout" % data)
         if (session == "xfce"):
-            os.system("xfce4-session-logout &")
+            os.system("sh -c 'sleep 0.5; xfce4-session-logout' &")
         else:
             error(_("Unsupported session type: %s") % session)
         self.exit()
