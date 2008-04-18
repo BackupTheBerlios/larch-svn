@@ -30,15 +30,33 @@ class Rootpw(Stage):
 
     def __init__(self):
         Stage.__init__(self)
-        self.addLabel(_("Enter new root password:"), align='left')
+
+        layout = gtk.Table(2, 2)
+        layout.set_row_spacings(10)
+
+        l1 = gtk.Label(_("Enter new root password:"))
+        l1.set_alignment(1.0, 0.5)
+        layout.attach(l1, 0, 1, 0, 1,
+                xoptions=gtk.FILL, yoptions=gtk.FILL,
+                xpadding=5, ypadding=5)
         self.pw1 = gtk.Entry()
         self.pw1.set_visibility(False)
-        self.addWidget(self.pw1)
+        layout.attach(self.pw1, 1, 2, 0, 1,
+                xoptions=gtk.FILL|gtk.EXPAND, yoptions=gtk.FILL|gtk.EXPAND,
+                xpadding=5, ypadding=5)
 
-        self.addLabel(_("Reenter new root password:"), align='left')
+        l2 = gtk.Label(_("Reenter new root password:"))
+        l2.set_alignment(1.0, 0.5)
+        layout.attach(l1, 0, 1, 1, 2,
+                xoptions=gtk.FILL, yoptions=gtk.FILL,
+                xpadding=5, ypadding=5)
         self.pw2 = gtk.Entry()
         self.pw2.set_visibility(False)
-        self.addWidget(self.pw2)
+        layout.attach(self.pw2, 1, 2, 1, 2,
+                xoptions=gtk.FILL|gtk.EXPAND, yoptions=gtk.FILL|gtk.EXPAND,
+                xpadding=5, ypadding=5)
+
+        self.addWidget(layout)
 
     def getHelp(self):
         return _("You should enter a hard-to-guess password for the root"
