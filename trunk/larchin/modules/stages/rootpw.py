@@ -19,11 +19,11 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.04.17
+# 2008.04.18
 
 class Rootpw(Stage):
     def stageTitle(self):
-        return _("Set root password"))
+        return _("Set root password")
 
     def labelR(self):
         return gtk.STOCK_OK
@@ -47,7 +47,7 @@ class Rootpw(Stage):
 
         l2 = gtk.Label(_("Reenter new root password:"))
         l2.set_alignment(1.0, 0.5)
-        layout.attach(l1, 0, 1, 1, 2,
+        layout.attach(l2, 0, 1, 1, 2,
                 xoptions=gtk.FILL, yoptions=gtk.FILL,
                 xpadding=5, ypadding=5)
         self.pw2 = gtk.Entry()
@@ -73,7 +73,7 @@ class Rootpw(Stage):
         pw = self.pw1.get_text()
         if (pw != self.pw2.get_text()):
             popupMessage(_("The passwords are not identical,\n"
-                    "  Please try again.")):
+                    "  Please try again."))
 
         # Set the password
         elif install.set_rootpw(pw):
