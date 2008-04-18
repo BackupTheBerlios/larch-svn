@@ -5,6 +5,8 @@
 
 rm "${INSTALL}/root/Desktop/Install Arch Linux.desktop"
 
+mv ${INSTALL}/etc/rc.local.orig ${INSTALL}/etc/rc.local
+
 #***************************************************#
 # Replace uses of larchquit in xfce panels and menu.#
 #***************************************************#

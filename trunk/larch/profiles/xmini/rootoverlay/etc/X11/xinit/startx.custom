@@ -1,5 +1,10 @@
-if [ -z "$DISPLAY" ] && [ -n "`echo $(tty) | grep /vc/1`" ]; then
-    startx
+if grep -v nox /proc/cmdline &>/dev/null && \
+        [ -z "$DISPLAY" ] && echo $(tty) | grep /vc/1 &>/dev/null; then
+    if grep i810 /proc/cmdline &>/dev/null; then
+        startx -- -config xorg.conf.i810
+    else
+        startx
+    fi
 
     # Maybe there should be some code here to handle a failed startx?
     
