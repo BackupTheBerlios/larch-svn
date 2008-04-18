@@ -57,6 +57,10 @@ class Rootpw(Stage):
                 xpadding=5, ypadding=5)
 
         self.addWidget(layout)
+        self.reinit()
+
+    def reinit(self):
+        self.pw1.grab_focus()
 
     def getHelp(self):
         return _("You should enter a hard-to-guess password for the root"
@@ -69,7 +73,6 @@ class Rootpw(Stage):
 
     def forward(self):
         # Check entered passwords are identical
-
         pw = self.pw1.get_text()
         if (pw != self.pw2.get_text()):
             popupMessage(_("The passwords are not identical,\n"

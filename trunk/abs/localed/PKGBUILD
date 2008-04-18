@@ -2,7 +2,7 @@
 
 pkgname=localed
 pkgver=1.0
-pkgrel=1
+pkgrel=2
 pkgdesc="A simple graphical utility for managing glibc locales in Arch"
 license=('GPL')
 arch=(i686 x86_64)
@@ -12,5 +12,10 @@ source=(localed.py)
 build() {
   cd $startdir/pkg
   mkdir -p usr/bin
+  mkdir -p usr/share/pixmaps
+  mkdir -p usr/share/applications
+
   cp $startdir/src/localed.py usr/bin
+  cp $startdir/src/localed.png usr/share/pixmaps
+  cp $startdir/src/localed.desktop usr/share/applications
 }

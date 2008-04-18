@@ -19,7 +19,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #-------------------------------------------------------------------
-# Version 2.0 // 16th April 2008
+# Version 2.1 // 18th April 2008
 
 
 ### xkmap-set:
@@ -176,6 +176,16 @@ class MainWindow(gtk.Window):
     def get_savemode(self):
         return self.maintab.get_savemode()
 
+
+def popupMessage(text, title=""):
+    dialog = gtk.MessageDialog(parent=gui,
+            gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
+            gtk.MESSAGE_INFO, gtk.BUTTONS_OK,
+            title)
+    dialog.format_secondary_markup(text)
+    dialog.set_title(_("xkmap"))
+    dialog.run()
+    dialog.destroy()
 
 def popupRootPassword():
     dialog = gtk.Dialog(parent=gui,
@@ -404,7 +414,6 @@ class Xkbset:
 
         command = ("setxkbmap -rules xorg -model %s -layout %s -variant %s"
                 % (m, l, v))
-        print command
         os.system(command)
 
         savemode = gui.get_savemode()
@@ -424,6 +433,11 @@ class Xkbset:
         f = open(configfile, "w")
         f.write("%s %s %s\n" % (self.model, self.layout, self.variant))
         f.close()
+
+        popupMessage(_("Keyboard set to:\n"
+                "  model %s\n"
+                "  layout %s\n"
+                "  variant %s") % (m, l, v))
 
 
 class XCombo(gtk.Frame):
