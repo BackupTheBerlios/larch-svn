@@ -2,13 +2,13 @@
 
 pkgname=localed
 pkgver=1.0
-pkgrel=2
+pkgrel=3
 pkgdesc="A simple graphical utility for managing glibc locales in Arch"
 license=('GPL')
 arch=(i686 x86_64)
 depends=('pygtk')
 url="http://larch.berlios.de"
-source=(localed.py)
+source=(localed.py localed.png localed.desktop)
 build() {
   cd $startdir/pkg
   mkdir -p usr/bin
