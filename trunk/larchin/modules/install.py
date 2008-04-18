@@ -23,7 +23,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.04.17
+# 2008.04.18
 
 from subprocess import Popen, PIPE, STDOUT
 import os, shutil, signal
@@ -686,7 +686,9 @@ class installClass:
                         "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
             pwcrypt = crypt.crypt(pw, salt)
 
+        self.remount()
         op = self.xcall("setpw root %s" % pwcrypt)
+        self.unmount()
         if op:
             popupError(op, _("Couldn't set root password:"))
             return False
