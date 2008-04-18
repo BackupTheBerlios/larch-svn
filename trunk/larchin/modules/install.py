@@ -687,7 +687,7 @@ class installClass:
             pwcrypt = crypt.crypt(pw, salt)
 
         self.remount()
-        op = self.xcall("setpw root %s" % pwcrypt)
+        op = self.xcall("setpw root '%s'" % pwcrypt)
         self.unmount()
         if op:
             popupError(op, _("Couldn't set root password:"))
