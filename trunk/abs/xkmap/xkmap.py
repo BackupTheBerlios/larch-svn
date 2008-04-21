@@ -19,7 +19,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #-------------------------------------------------------------------
-# Version 2.1 // 18th April 2008
+# 2008.04.21
 
 
 ### xkmap-set:
@@ -178,7 +178,7 @@ class MainWindow(gtk.Window):
 
 
 def popupMessage(text, title=""):
-    dialog = gtk.MessageDialog(parent=gui,
+    dialog = gtk.MessageDialog(gui,
             gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
             gtk.MESSAGE_INFO, gtk.BUTTONS_OK,
             title)
