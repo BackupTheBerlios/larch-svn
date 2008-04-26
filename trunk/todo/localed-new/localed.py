@@ -24,7 +24,7 @@
 # 2008.04.26
 
 import os, sys, re, time
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, STDOUT
 import gtk
 
 # For running utilities as root:
