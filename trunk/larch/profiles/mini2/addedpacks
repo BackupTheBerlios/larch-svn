@@ -13,8 +13,6 @@ aufs
 eject
 
 # Useful for use as installer, etc.
-# dialog, diffutils now in base
-# mdadm, lvm2 now in base
 ntfsprogs
 parted
 #ddcxinfo-knoppix

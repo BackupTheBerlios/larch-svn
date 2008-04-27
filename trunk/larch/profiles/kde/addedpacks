@@ -15,13 +15,9 @@ eject
 # Needed by the installer
 python
 
-diffutils
-
 # Useful for use as installer, etc.
 ntfsprogs
 parted
-mdadm
-lvm2
 ddcxinfo-knoppix
 hwd
 
