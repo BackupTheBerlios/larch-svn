@@ -40,10 +40,10 @@ the USB-stick.
 <strong>mods.sqf</strong></h3>
 
 <p>In <em>larch</em> the <em>overlay</em> file-system (in the
-<em>compressed</em> file 'overlay.ovl' can be rebuilt
+<em>compressed</em> file 'overlay.ovl') can be rebuilt
 from the state of the live system when it shuts down.
 This is handled primarily by the script <strong>/opt/larch-live/session-save/saveovl</strong>, which is
-called from the customized shutdown script <strong>/etc/rc.shutdown-larch</strong>.
+called from the customized shutdown function.
 If the medium is writable and contains a file 'larch/save', the user is offered the possibility of
 rewriting the overlay archive, thus saving the current state.
 </p>
@@ -56,7 +56,7 @@ overlay archive into the middle <em>union</em> layer in <strong>mods.sqf</strong
 normally not copied to memory), thus restoring the rapid load and save times
 for <strong>overlay.ovl</strong>, and maximizing the available memory. I call this process
 'overlay merging', and it is offered as a shutdown option.
-It takes longer to execute than a normal session save, but in larch version 5.2
+It takes longer to execute than a normal session save, but from larch version 5.2
 a new <em>aufs</em> option allows the merging to be done quicker than it was
 previously and without significant extra memory requirements. In this version
 a separate <em>aufs</em> union of the two overlay layers is mounted in which

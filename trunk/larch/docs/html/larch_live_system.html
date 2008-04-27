@@ -42,10 +42,11 @@ the actual changes being made only in a RAM-based filesystem (but see
 <a href="larch_sessionsave.html">"Session saving"</a>).
 </p>
 
-<h3><a name="Squashfs_and_Unionfs"></a>Squashfs and Unionfs/Aufs</h3>
+<h3><a name="Squashfs_and_Unionfs"></a>squashfs and aufs</h3>
 
-<p>In <em>larch</em>, as in many (most?) other live CD/USB systems, the ability to (apparently)
-write to a read-only file-system is provided by <em>unionfs</em> (or <em>aufs</em>).
+<p>In <em>larch</em>, as in many other live CD/USB systems, the ability to (apparently)
+write to a read-only file-system is provided by <em>aufs</em> (originally
+derived from <em>unionfs</em>).
 The file-system is also compressed, using <em>squashfs</em>, so as to fit more data
 onto the storage device (normally about 2GB of uncompressed code and data
 can be squeezed onto a 700MB CDROM using this approach). A custom
@@ -88,22 +89,27 @@ advantage of it, although some additions need to be made to boot live CD/USB sys
 
 <h3><a name="rc_files"></a>/etc/inittab, /etc/rc.sysinit and /etc/rc.shutdown</h3>
 
-<p>These are the other main files which must be customized for use in a larch live
-environment. From larch version 5.2, a custom <em>inittab</em> is used which calls special
-versions of the initialization and shutdown scripts, '/etc/rc.sysinit-larch'
-and '/etc/rc.shutdown-larch' (these are supplied in the 'larch-live' package).
+<p>The initial boot script and the shutdown script must be customized for use
+in a larch live environment. From larch version 5.3, this is done by providing
+modified versions of certain functions in the '/etc/rc.d/functions.d' directory
+(these functions are in the 'larch-live' package).
+At the time of writing this requires a modified 'initscripts' package, but I
+hope the official package will sometime contain suitable versions of the
+'/etc/rc.sysinit' and '/etc/rc.shutdown' files which separate out the
+relevant functions to files in '/etc/rc.d/functions.d'.
+</p>
+
+<p>It is possible to use a customized version of '/etc/inittab', by
+putting the new version in the <em>profile</em> (in 'rootoverlay') - for
+example one could customize the handling of the first terminal, e.g. to
+allow automatic login.
 The original <em>inittab</em> is saved as '/etc/inittab.larchsave',
 so that it can be restored if the system is installed using <em>larchin</em>.
 </p>
 
-<p>It is possible to use further customized versions of <em>inittab</em>, by
-putting the new version in the <em>profile</em> used to build the larch system.
-The example profiles add the automatic login of root on the first terminal, though
-of course this may be undesirable in many cases.
-</p>
-
-<p>One addition in '/etc/rc.sysinit-larch' is the automatic generation of a new
-'/etc/fstab' (using the script <strong>gen_fstab</strong>, which
+<p>One addition in the <em>larch</em> version of the initscripts is the
+automatic generation of a new '/etc/fstab' (using the script
+<strong>gen_fstab</strong>, which
 bases the result on the devices which are detected in the system). Otherwise
 it behaves much the same as the version in
 a normal <em>Arch Linux</em> system. However, the remount of the root-filessystem and
@@ -114,14 +120,9 @@ to have any partitions mounted, because it is quite likely that the partitions
 will be edited in preparation for the installation. Passing boot parameter
 'swap' will enable swap if there is a suitable partition (or it can be done
 manually using 'swapon -a').
-I removed the 'depmod' call because that is done during CD preparation,
-so it serves no purpose here.
-Quite a bit of the standard rc.sysinit will not be relevant in a live CD situation.
-I have cut some bits out, but I dare say the whole thing could be tidied up
-by someone who knows what he is doing!
 </p>
 
-<p>'/etc/rc.shutdown' is adapted (in the form of '/etc/rc.shutdown-larch') by
+<p>'/etc/rc.shutdown' is adapted by
 adding code to deal with session-saving (writing changes back to the boot medium)
 and to eject the live-CD. Unlike in the normal version, the hardware clock is not reset.
 </p>

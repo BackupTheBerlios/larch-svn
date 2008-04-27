@@ -1,3 +1,8 @@
+2008.04.27
+Version 5.3.0, new initscripts approach, replacing functions in /etc/rc.d/functions
+rather than replacing /etc/rc.sysinit and /etc/rc.shutdown. At present this
+requires a custom initscripts package.
+
 2008.04.21
 Version 5.2.2, added usb2iso, a fairly primitive script to make an iso from
 a larch usb-stick. It also works from a running larch system, but only on

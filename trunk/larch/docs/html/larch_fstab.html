@@ -45,11 +45,13 @@ get an entry in '/etc/fstab' and a corresponding mount point in '/mnt'. Thus the
 can be mounted using 'mount /mnt/DEVICE' (or by using, say, KwikDisk in KDE).
 </p>
 
-<p>If using the session-saving feature in conjunction with a single computer, it
-may be desirable to have a persistent '/etc/fstab'. This can be achieved by placing
-"#KEEP" (without the quotation marks) at the beginning of a line in '/etc/fstab'
-(and then saving the session, of course!). This could also be done when making the
-original CD by putting the desired '/etc/fstab' file in the <em>overlay</em>.
+<p>It may however, under certain circumstances, be desirable to have a persistent
+'/etc/fstab'. This can be achieved by placing "#KEEP" (without the quotation marks)
+at the beginning of a line in '/etc/fstab'. This could be done when making the
+original CD by putting the desired '/etc/fstab' file in the <em>overlay</em>,
+or else - in the case of a rewritable boot medium (e.g. USB-stick) - by
+editing '/etc/fstab' while running the live system and then performing a session
+saving reboot.
 A new '/etc/fstab' (and the associated mount points in '/mnt') can be generated
 at any time while running <em>larch</em>, by executing '<strong>gen_fstab -l</strong>'.
 This might be useful after repartitioning, for example. When the '-l' option is

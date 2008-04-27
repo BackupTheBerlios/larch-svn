@@ -40,8 +40,7 @@ the flexibility offered by the <em>larch</em> build system you will probably nee
 to consult the rest of the documentation.</p>
 
 <ul>
-   <li>At present <em>larch-5</em> is still being tested, and will probably contain
-   x bugs, where x > one would wish. At present there is only a repository for 'i686',
+   <li>At present there is only a repository for 'i686',
    as I don't have a 64-bit machine (but testers are welcome to build their own
    repository from svn - a simple script is provided).
    </li>
@@ -71,8 +70,8 @@ to consult the rest of the documentation.</p>
          /etc/rc.conf. Especially the locale and console
          keyboard setting may be interesting.</li>
        <li>  Editing the overlay (the set of files which are changed from the default
-         installation) is a bit trickier, as permissions and ownerships must be
-         preserved. Please read the relevant
+         installation) might be a bit trickier, as permissions and ownerships must be
+         correct. Please read the relevant
          <a href="larch_profiles.html">documentation</a>
          before attempting this.</li>
        <li>  OPTIONAL: If you want ssh access to your live system,
@@ -81,8 +80,9 @@ to consult the rest of the documentation.</p>
      before running <em>mklarch</em>.
    <li>  Another possibility is to use <strong>larchify</strong> (run './larchify -h'
    for a usage description) to 'livify' an existing <em>Arch Linux</em> installation, even
-   the currently running one. Running './larchify path/to/installation' should be
-   enough for a simple build, but see <a href="larch_overview.html#existingSystem">
+   the currently running one. Certain packages must be installed, but then running
+   './larchify path/to/installation' should be
+   enough for a simple build. See <a href="larch_overview.html#existingSystem">
    'Making a live CD from an existing <em>Arch</em> installation'</a> for more details.</li>
    <li>  After a while, the iso for the CD should be ready for burning.</li>
    <li>  Alternatively, you can put it on a USB-stick, by passing the '-u' option

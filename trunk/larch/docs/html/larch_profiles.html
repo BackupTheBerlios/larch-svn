@@ -41,21 +41,21 @@ which have been changed from their initial fresh state after installation
 and those which have simply been added.
 </p>
 
-<p>In order to allow more flexibility with the overlay, <em>larch</em> requires that
-everything in this overlay directory has the correct permissions and ownerships.
-That means you have to be quite careful when editing this area manually.
-It is however intended that most of the tweaking will be done <em>in situ</em>
-(i.e. within a running live USB system), using a utility - see
+<p>In order to allow more flexibility with the overlay, <em>larch</em> now
+provides two mechanisms for providing overlay files. The simplest is by
+means of the directory 'rootoverlay' - everything in this directory will be
+copied to the live system overlay and its ownership will be changed to
+'root:root'. In case it is desired to include files with other ownerships,
+these must be packed up with the correct ownerships into the file 'overlay.xpk'
+using the <em>xpack</em> packing utility (supplied with <em>larch</em>, see
+below). This requires some care, but is a little safer than, say, a 'tar.gz'
+archive because it has an option to pack so that only root can unpack the
+archive.
+In general however the 'rootoverlay' directory should be adequate, and
+much of the tweaking may be done <em>in situ</em> (i.e. within a running
+live USB system), using a utility - see
 <a href="larch_sessionsave.html">'Session saving'</a> - to recreate
 the compressed overlay file-system (<strong>overlay.ovl</strong>).
-</p>
-
-<p>To make it a little more difficult to make a mess while editing the initial
-overlays, e.g. by unpacking a profile (well, the overlay part) as a normal user,
-I have included a little self-extracting archive utility, <em>xpack</em>, which enables
-archives to be so packed that only root can unpack them. The overlays in the
-supplied example profiles are packed with this utility to <strong>overlay.xpk</strong>
-archives.
 </p>
 
 <p>If you would like to have a look at a profile, look in the 'profiles'
@@ -63,13 +63,6 @@ directory in the distribution. Each of its subdirectories is a profile, the
 subdirectory name is also the profile name. If you want to make your own
 profile, it is probably easiest to start with one of the examples. Copy it to a
 working directory and rename it appropriately.
-If you want to unpack the overlay archive, you need to be root, go to the directory
-and run
-<pre>
-        ./overlay.xpk .
-</pre>
-(don't miss the final '.', the unpacker needs an existing
-directory as parameter).
 </p>
 
 <p>After editing to your heart's content, you can build the corresponding live
@@ -77,14 +70,7 @@ CD system with the call:
 <pre>
         (path/to/)mklarch -p directory
 </pre>
-where 'directory' is your profile directory. You don't need to bother about
-repacking your 'overlay' directory, as an unpacked 'overlay' directory has
-precedence over an 'overlay.xpk' archive. But if you do want to repack it,
-delete the old 'overlay.xpk' and run (as root)
-<pre>
-        (path/to/)xpack -r overlay overlay.xpk
-</pre>
-xpack is found in the <em>larch</em> 'run' directory.
+where 'directory' is your profile directory.
 </p>
 
 <p>The important files within a profile are described below:
@@ -108,13 +94,19 @@ xpack is found in the <em>larch</em> 'run' directory.
   values. This is then merged with the original to produce a modified overlay file.
   </li>
 
+  <li><strong>rootoverlay</strong> - The files in this directory are effectively
+  copied on top of the original system - as an overlay. They (potentially)
+  form the bulk of the customization for the live system.
+  </li>
+
   <li><strong>overlay.xpk</strong> - As described above this is a self-extracting
-  archive of 'overlay files', which will form the bulk of the overlay squashfs.
+  archive of 'overlay files', which can be used as an alternative to 'rootoverlay'
+  for non-root owned files.
   </li>
 
   <li><strong>mkinitcpio.conf</strong> - This file is optional. If it is present it will
-  replace the version in the 'initcpio_files/lib/initcpio' folder of the
-  <em>larch</em> package to produce the initramfs
+  replace the version in the 'lib/initcpio' folder of the
+  <em>larch-live</em> package to produce the initramfs
   for the live CD. You should take that file as the starting point to ensure that
   the necessary larch hooks are installed, but you are free to change other hooks
   (e.g. use 'ide' instead of 'pata') or add modules.
@@ -140,6 +132,24 @@ xpack is found in the <em>larch</em> 'run' directory.
   if there is anything else you want on your medium, you can put it in here.
   </li>
 </ul>
+
+<h3><a name="xpack"></a><em>xpack</em> and non-root owned overlay files</h3>
+To include non 'root:root' owned files in an overlay, create a directory
+somewhere called 'overlay' and place all the desired files therein with the
+correct paths, ownerships and permissions. Then run
+<pre>
+        xpath -r overlay overlay.xpk
+</pre>
+(from within the directory containing 'overlay'). The resulting 'overlay.xpk'
+file should then be placed in your profile directory.
+If you want to unpack such an overlay archive, you need to be root, go to the
+directory containing it and run
+<pre>
+        ./overlay.xpk .
+</pre>
+(don't miss the final '.', the unpacker needs an existing
+directory as parameter).
+</p>
 
 <table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
   <tbody>

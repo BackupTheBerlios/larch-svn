@@ -132,7 +132,7 @@ using <strong>mklarch</strong>, you might want to build another with the same pa
 but with a changed overlay - maybe an alteration to rc.conf. In that case you
 could make the necessary changes to the profile and call:
 <pre style="margin-left: 80px;">./larchify -rp myprofile</pre>
-The '-r' option causes the old squashed images to be used, which can save a lot
+The '-r' option causes the old squashed image to be used, which can save a lot
 time. To see all the options run './larchify -h'.
 </p>
 
@@ -143,7 +143,7 @@ demands on the build system. Although they have been developed under <em>Arch Li
 they should run on other <em>GNU/Linux</em> systems. The required software has been
 kept to a minimum by means of a sort of bootstrapping - some of the build
 functions are carried out on the newly installed <em>Arch</em> system using <em>chroot</em>.
-For example, you do not need support for <em>squashfs</em> or <em>unionfs</em> on
+For example, you do not need support for <em>squashfs</em> or <em>aufs</em> on
 the build system. <em>bash</em>, <em>mkisofs</em> and <em>wget</em>
 are assumed to be available. If you are not running <em>Arch Linux</em> you will need to
 fetch the pacman package from an <em>Arch</em> mirror (core repository, for your processor
@@ -160,11 +160,11 @@ On an <em>Arch</em> system it is assumed that you have already configured your
 mirrors appropriately.
 </p>
 
-<h3><a name="Squashfs_and_Unionfs"></a>squashfs and unionfs/aufs</h3>
+<h3><a name="Squashfs_and_Unionfs"></a>squashfs and aufs</h3>
 
 <p>The newly installed system is made into a <em>squashed</em> file-system in the
 file <strong>system.sqf</strong>. This is mounted as the lower layer of a <em>union</em>
-(<em>aufs</em> or <em>unionfs</em>) file-system. On top of that there is a writable
+(<em>aufs</em>) file-system. On top of that there is a writable
 <em>tmpfs</em> so that the file-system as a whole appears writable. An 'overlay'
 archive is copied into the writable layer. As this top layer is compressed using
 <em>lsop</em>, this package must be installed in the target.

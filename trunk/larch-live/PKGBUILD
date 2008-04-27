@@ -1,7 +1,7 @@
 # Maintainer: Michael Towers <gradgrind[at]online[dot]de>
 # 2008.04.27
 pkgname=larch-live
-pkgver=5.2.3
+pkgver=5.3.0
 pkgrel=1
 
 pkgdesc="larch: compulsory components for the live system"

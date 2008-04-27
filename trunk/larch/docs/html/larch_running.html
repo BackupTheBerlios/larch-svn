@@ -47,7 +47,8 @@ as an <em>Arch</em>-installation-and-rescue medium. For this, you need root acce
 However, if you want to use the system in other ways, e.g. for text or image editing,
 or for internet browsing or e-mail writing, it might be safer to do this as an
 unprivileged user. Such a user is easily created with the 'adduser' command, or
-in KDE with 'kuser'. If you have a writable boot medium, such changes can be
+in KDE with 'kuser' (or using the 'luser.py' script in the <em>larch</em>
+'<em>luser</em>' package). If you have a writable boot medium, such changes can be
 'remembered' by saving the session when you shut the system down (the possibility
 will normally be offered automatically).
 </p>
@@ -63,7 +64,11 @@ very fast and frees up the boot device (e.g. the boot CD can be ejected and the
 drive used for another CD), but it does require a lot of memory (significantly
 more than the size of the boot medium), and the boot process is rather slow
 because so much data must be copied. Because of the high memory usage, I have
-arranged it so that 'c2r' also implies 'swap'.
+arranged it so that 'c2r' also implies 'swap'. With A USB-stick as boot medium,
+the 'c2r' parameter should generally not really be needed, performance is normally
+pretty good and it doesn't occupy the CD-drive (if an extra boot CD is needed, on
+a machine that can't boot directly from USB, that can be removed after
+booting even without 'c2r').
 </p>
 
 <h4><a name="config"></a>Configuration</h4>
@@ -79,6 +84,12 @@ also work in many cases, but you can also try 'X -configure', 'xorgconfig' or
 'hwd -xa'. Start X with <em>startx</em>.
 </p>
 
+<p>The 'xmini' profile uses a slightly more elaborate login approach on
+the first terminal, with a simple menu as well as automatic login. It also
+includes a logout gui for xfce, which together with the login script can
+trigger session saving directly, bypassing the console prompt.
+</p>
+
 <p>If you are stuck with the console, there is still hope. It's not as pretty or
 newbie friendly as an X11 desktop, but still quite capable. I always like to have
 <em>mc</em> available, it's a real godsend for non-geeks (you should also install
@@ -88,7 +99,7 @@ package in the Arch 'extra' repository is not UTF-8 enabled, but in the
 community repo there is <em>mc-utf8</em>, which seems to work pretty well).
 </p>
 
-<p> If your console keyboard map is
+<p>If your console keyboard map is
 wrong, try running <i>km</i> (I stole this from the
 standard Arch install CD and modified it a bit to work in <em>larch</em>).
 It also modifies '/etc/rc.conf', so the change can be retained for subsequent
@@ -135,9 +146,12 @@ should be very straightforward - just run 'larchin.py', as root).
 <p>As mentioned above the main approach to <em>Arch</em> installation covered by
 <em>larchin</em> is to copy the contents of the live system to a hard drive. Those
 (few) bits peculiar to the needs of a live system are removed and the result is a
-completely normal <em>Arch Linux</em> installation. It is also planned to include
-the possibility of performing a completely fresh installation using ftp to fetch
-the latest packages, but that is not yet implemented.
+completely normal <em>Arch Linux</em> installation. I should perhaps mention
+the file 'larch0' in the '/.livesys' directory (copied there from the 'larch/copy'
+directory on the boot medium). This script is run at the end of the installation
+(if it exists) and allows custom installation actions to be performed.
+The possibility of doing a completely fresh installation using ftp to
+fetch the latest packages may be added at some point, but that is not yet certain.
 </p>
 
 <table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
