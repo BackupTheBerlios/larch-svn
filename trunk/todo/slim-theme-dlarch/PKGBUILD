@@ -3,17 +3,16 @@
 
 pkgname=slim-theme-dlarch
 pkgver=1.0
-pkgrel=1
+pkgrel=2
 pkgdesc="Slim theme for ArchLinux/larch"
 license=('custom')
 arch=('i686' 'x86_64')
 url="http://larch.berlios.de"
 depends=('slim')
 install=dlarch.install
-source=(dlarch.tar.gz)
 
 build() {
-  cd $startdir/src/dlarch
+  cd $startdir/dlarch
   
   install -m 644 -D background.png $startdir/pkg/usr/share/slim/themes/dlarch/background.png
   install -m 644 -D panel.png $startdir/pkg/usr/share/slim/themes/dlarch/panel.png
