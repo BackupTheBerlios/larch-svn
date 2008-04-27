@@ -17,10 +17,10 @@ id:3:initdefault:
 # Boot to X11
 #id:5:initdefault:
 
-rc::sysinit:/etc/rc.sysinit-larch
+rc::sysinit:/etc/rc.sysinit
 rs:S1:wait:/etc/rc.single
 rm:2345:wait:/etc/rc.multi
-rh:06:wait:/etc/rc.shutdown-larch
+rh:06:wait:/etc/rc.shutdown
 su:S:wait:/sbin/sulogin -p
 
 # -8 options fixes umlauts problem on login

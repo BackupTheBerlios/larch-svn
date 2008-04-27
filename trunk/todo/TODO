@@ -1,6 +1,8 @@
 TODO
 ====
 
+*) IMPORTANT: In trunk only xmini profile has been updated for new initscripts!!!
+
 *) add graphical shutdown/user-switch, at least to profile. Done in trunk,
   used in xmini profile, but removing it after installation (from panel/menu)
   has not yet been completed ...
