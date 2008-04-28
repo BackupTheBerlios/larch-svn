@@ -1,0 +1,8 @@
+[Entry 0]
+Name=Mail Reader
+Exec=exo-open --launch MailReader
+Terminal=false
+StartupNotify=true
+Comment=Read and Write Mail
+Icon=xfce-mail.png
+

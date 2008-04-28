@@ -3,11 +3,35 @@
 <panels>
 	<panel>
 		<properties>
-			<property name="size" value="30"/>
+			<property name="size" value="24"/>
 			<property name="monitor" value="0"/>
-			<property name="screen-position" value="1"/>
+			<property name="screen-position" value="11"/>
 			<property name="fullwidth" value="1"/>
 			<property name="xoffset" value="0"/>
+			<property name="yoffset" value="743"/>
+			<property name="handlestyle" value="0"/>
+			<property name="autohide" value="0"/>
+			<property name="transparency" value="20"/>
+			<property name="activetrans" value="0"/>
+		</properties>
+		<items>
+			<item name="xfce4-menu" id="14"/>
+			<item name="showdesktop" id="1"/>
+			<item name="pager" id="2"/>
+			<item name="tasklist" id="3"/>
+			<item name="datetime" id="16"/>
+			<item name="cpugraph" id="15"/>
+			<item name="xfce4-mixer" id="17"/>
+			<item name="systray" id="4"/>
+		</items>
+	</panel>
+	<panel>
+		<properties>
+			<property name="size" value="30"/>
+			<property name="monitor" value="0"/>
+			<property name="screen-position" value="7"/>
+			<property name="fullwidth" value="0"/>
+			<property name="xoffset" value="993"/>
 			<property name="yoffset" value="0"/>
 			<property name="handlestyle" value="0"/>
 			<property name="autohide" value="0"/>
@@ -15,36 +39,13 @@
 			<property name="activetrans" value="0"/>
 		</properties>
 		<items>
-			<item name="showdesktop" id="1"/>
-			<item name="pager" id="2"/>
-			<item name="tasklist" id="3"/>
-			<item name="systray" id="4"/>
-		</items>
-	</panel>
-	<panel>
-		<properties>
-			<property name="size" value="36"/>
-			<property name="monitor" value="0"/>
-			<property name="screen-position" value="9"/>
-			<property name="fullwidth" value="0"/>
-			<property name="xoffset" value="977"/>
-			<property name="yoffset" value="494"/>
-			<property name="handlestyle" value="0"/>
-			<property name="autohide" value="0"/>
-			<property name="transparency" value="20"/>
-			<property name="activetrans" value="0"/>
-		</properties>
-		<items>
-			<item name="xfce4-menu" id="5"/>
-			<item name="separator" id="6"/>
 			<item name="launcher" id="7"/>
 			<item name="launcher" id="8"/>
 			<item name="launcher" id="9"/>
 			<item name="launcher" id="10"/>
+			<item name="launcher" id="13"/>
 			<item name="separator" id="11"/>
 			<item name="launcher" id="12"/>
-			<item name="separator" id="13"/>
-			<item name="clock" id="14"/>
 		</items>
 	</panel>
 </panels>
