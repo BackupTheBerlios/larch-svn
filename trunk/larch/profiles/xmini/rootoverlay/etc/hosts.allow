@@ -8,6 +8,6 @@ ALL: 127.0.0.1
 #sshd: ALL
 
 # To allow ssh in from local net (example)
-sshd: 192.168.178.0/255.255.255.0
+#sshd: 192.168.178.0/255.255.255.0
 
 # End of file

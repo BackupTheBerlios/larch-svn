@@ -4,10 +4,10 @@
 
 LOCALE="en_US.utf8"
 HARDWARECLOCK="UTC"
-TIMEZONE="Europe/Berlin"
-KEYMAP="de-latin1-nodeadkeys"
+TIMEZONE="UTC"
+KEYMAP="us"
 
-MODULES=()
+MODULES=(floppy)
 
 HOSTNAME="larch5"
 
@@ -15,4 +15,4 @@ USELVM="yes"
 
 eth0="dhcp"
 
-DAEMONS=(syslog-ng network sshd)
+DAEMONS=(syslog-ng network dbus hal !slim sshd)

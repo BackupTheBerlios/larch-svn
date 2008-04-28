@@ -5,7 +5,14 @@
 
 rm "${INSTALL}/root/Desktop/Install Arch Linux.desktop"
 
-mv ${INSTALL}/etc/rc.local.orig ${INSTALL}/etc/rc.local
+if [ -f ${INSTALL}/etc/rc.local.orig ]; then
+    mv ${INSTALL}/etc/rc.local.orig ${INSTALL}/etc/rc.local
+fi
+if [ -f ${INSTALL}/etc/rc.local.shutdown.orig ]; then
+    mv ${INSTALL}/etc/rc.local.shutdown.orig ${INSTALL}/etc/rc.local.shutdown
+fi
+
+sed -i '/^DAEMONS=/ s|!slim|@slim|' ${INSTALL}/etc/rc.conf
 
 #***************************************************#
 # Replace uses of larchquit in xfce panels and menu.#

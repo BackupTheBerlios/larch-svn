@@ -32,6 +32,7 @@ base-devel
 larch
 
 # generally useful tools which don't require X
+#mtools is required by syslinux
 openssh
 dosfstools
 lynx
@@ -99,17 +100,26 @@ gparted
 
 larchin
 
-desktop-file-utils
-gimp
-wicd
-
 firefox
 thunderbird
 
 # xfce
 xfce4
 thunar-volman
+xfce4-systemload-plugin
+xfce4-cpugraph-plugin
+xfce4-screenshooter-plugin
+xfce4-fsguard-plugin
+xfce4-datetime-plugin
+xfce4-mount-plugin
+
+#desktop-file-utils is required by thunar, etc.
+gimp
+wicd
 
 geany
 
 ttf-dejavu
+
+slim
+slim-theme-dlarch
