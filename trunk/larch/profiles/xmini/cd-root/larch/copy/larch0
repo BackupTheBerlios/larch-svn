@@ -12,7 +12,8 @@ if [ -f ${INSTALL}/etc/rc.local.shutdown.orig ]; then
     mv ${INSTALL}/etc/rc.local.shutdown.orig ${INSTALL}/etc/rc.local.shutdown
 fi
 
-sed -i '/^DAEMONS=/ s|!slim|@slim|' ${INSTALL}/etc/rc.conf
+# slim is currently started in inittab
+#sed -i '/^DAEMONS=/ s|!slim|@slim|' ${INSTALL}/etc/rc.conf
 
 #***************************************************#
 # Replace uses of larchquit in xfce panels and menu.#
@@ -41,6 +42,9 @@ replacequit ()
 
     sed -i "s|<app .*cmd=\"larchquit.*/>|${defaultquit}|" \
             ${INSTALL}$1/.config/xfce4/desktop/menu.xml
+
+    cp /.livesys/xfce-session.rc ${INSTALL}$1/.config/xfce4-session
+    cp /.livesys/.bash_profile ${INSTALL}$1
 }
 
 for hd in $( cat ${INSTALL}/etc/passwd | cut -d':' -f6 | grep '^/home/' ) \
