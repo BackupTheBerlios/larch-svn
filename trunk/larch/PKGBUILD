@@ -2,7 +2,7 @@
 # 2008.04.29
 pkgname=larch
 pkgver=5.3.1
-pkgrel=3
+pkgrel=4
 
 # If I need the architecture, I can get it as ${CARCH}
 

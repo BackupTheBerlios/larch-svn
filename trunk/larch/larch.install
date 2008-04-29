@@ -1,12 +1,13 @@
 post_install() {
-  echo "WARNING: The larch init system has changed in larch-5.2."
-  echo "A customized '/etc/inittab' is generated from that in the overlay"
-  echo "in your profile, if there is such a file. Otherwise the existing"
-  echo "/etc/inittab is customized. The original /etc/inittab is saved to"
-  echo "/etc/inittab.larchsave, so that the hard disk installer can restore it."
-  echo "The customizations involve changing the 'rc::sysinit' and 'rh:06' lines."
-  echo "The larch versions of rc.sysinit and rc.shutdown are now called"
-  echo "rc.sysinit-larch and rc.shutdown-larch."
+  echo "WARNING: The larch init system has changed again in larch-5.3."
+  echo "By using new function-based versions of /etc/rc.sysinit and /etc/rc.shutdown"
+  echo "it is no longer necessary to change '/etc/inittab', though your"
+  echo "profile may do this for its own reasons."
+  echo "The original /etc/inittab is still saved to /etc/inittab.larchsave, so that"
+  echo "the hard disk installer can restore it."
+  echo "Until function-based versions of /etc/rc.sysinit and /etc/rc.shutdown"
+  echo "are adopted by Arch Linux officially, a customized 'initscripts' package"
+  echo "must be used for larch."
   bin/true
 }
 
