@@ -24,7 +24,7 @@ fi
 ### Maybe it would be better just to provide a special live quit desktop
 ### icon which can be removed on installation, like the installation icon.
 
-defaultquit='<builtin name="Quit" cmd=Quit icon="gnome-logout"/>'
+defaultquit='<builtin name="Quit" cmd="Quit" icon="gnome-logout"/>'
 
 replacequit ()
 {
@@ -40,11 +40,13 @@ replacequit ()
         fi
     done
 
-    sed -i "s|<app .*cmd=\"larchquit.*/>|${defaultquit}|" \
-            ${INSTALL}$1/.config/xfce4/desktop/menu.xml
+    if [ -f ${INSTALL}$1/.bash_profile ]; then
+        sed -i "s|<app .*cmd=\"larchquit.*/>|${defaultquit}|" \
+                ${INSTALL}$1/.config/xfce4/desktop/menu.xml
 
-    cp /.livesys/xfce-session.rc ${INSTALL}$1/.config/xfce4-session
-    cp /.livesys/.bash_profile ${INSTALL}$1
+        cp /.livesys/xfce4-session.rc ${INSTALL}$1/.config/xfce4-session
+        cp /.livesys/bash_profile ${INSTALL}$1/.bash_profile
+    fi
 }
 
 for hd in $( cat ${INSTALL}/etc/passwd | cut -d':' -f6 | grep '^/home/' ) \
