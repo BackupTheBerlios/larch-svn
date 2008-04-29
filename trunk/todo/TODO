@@ -1,38 +1,13 @@
 TODO
 ====
 
-*) IMPORTANT: In trunk only xmini profile has been updated for new initscripts!!!
-
-*) add graphical shutdown/user-switch, at least to profile. Done in trunk,
-  used in xmini profile, but removing it after installation (from panel/menu)
-  has not yet been completed ...
-
-*) Use new mv in klibc-extras. Done in trunk.
-
-*) Check for syslinux package if not building grub system. DONE in trunk
-  (in usbboot and in buildlive, but in the latter only when building isolinux iso).
-
-*) New init idea. Use custom /etc/inittab which uses /etc/rc.larchinit and
-  /etc/rc.larchshutdown instead of /etc/rc.sysinit and /etc/rc.shutdown,
-  thus eliminating the need for arch0.tar.gz (hopefully). Only /etc/inittab
-  would need replacement on installation (either from the version in system
-  or from /etc/inittab.pacnew or as a separate installer file).
-   /etc/rc.larchinit and /etc/rc.larchshutdown would be in the larch-live
-  package.
-   Would I need to add NoUpgrade etc/inittab to my pacman.conf? Shouldn't
-  need to. IMPLENTED in 5.2.
-
 *) Do I need to customize the pacman.conf in larch live system? On
   installation too?
-
-*) Are the ignored dirs in /var mentioned in the docs?
 
 *) What about saving a session during normal operation, not only at shutdown?
 
 *) Detect kernel updates and rebuild corresponding parts of boot medium
   (offer to rebuild boot cd?).
-
-*) New package contents in 5.2 documented?
 
 *) larchin. Add LVM support (maybe also RAID?).
 
