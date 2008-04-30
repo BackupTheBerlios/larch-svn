@@ -16,17 +16,14 @@ eject
 ntfsprogs
 parted
 
-ddcxinfo-knoppix
-hwd
+#ddcxinfo-knoppix
+#hwd
 
 sudo
 
 lsof
 cdrkit
 dvd+rw-tools
-
-# Needed by the installer
-python
 
 base-devel
 larch
@@ -106,6 +103,7 @@ thunderbird
 # xfce
 xfce4
 thunar-volman
+thunar-archive-plugin
 xfce4-systemload-plugin
 xfce4-cpugraph-plugin
 xfce4-screenshooter-plugin
@@ -115,6 +113,7 @@ xfce4-mount-plugin
 
 #desktop-file-utils is required by thunar, etc.
 gimp
+xsane
 wicd
 
 geany
@@ -138,4 +137,12 @@ asunder
 
 evince
 gthumb
-gnomebaker
+mirage
+
+# For cd/dvd burning gui k3b seems to be the only option at the moment -
+# as far as I can see, but it pulls in a lot of kde stuff.
+k3b
+scribus
+
+hplip
+pyqt3
