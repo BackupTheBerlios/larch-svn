@@ -70,12 +70,12 @@ else:
 __builtin__.basePath = basedir
 __builtin__.stages = {}
 __builtin__.mainWindow = Larchin()
-#__builtin__.install = installClass(target)
+__builtin__.install = installClass(target)
 initialized = True
 
 import imp
 mlist = []
-for module in ('welcome', 'devices'):
+for module in ('welcome', 'finddevices'):
     m = imp.load_source(module, "%s/modules/stages/%s.py" % (basedir, module))
     if m.listed:
         mlist.append((m.moduleName, m.moduleDescription))

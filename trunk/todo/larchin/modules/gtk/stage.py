@@ -36,8 +36,6 @@ class Stage(gtk.VBox):
         ltitle.set_markup('<span size="xx-large">%s</span>' % title)
         self.pack_start(ltitle, False, padding=10)
 
-        stageTitle = _("Undocumented stage")
-
     def getHelp(self):
         return _("Sorry, I'm afraid there is at present no information"
                 " for this stage.")
@@ -46,7 +44,7 @@ class Stage(gtk.VBox):
         dialog = gtk.MessageDialog(None,
                 gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
                 gtk.MESSAGE_INFO, gtk.BUTTONS_OK)
-        dialog.set_markup("<b>%s</b>" % self.stageTitle())
+        #dialog.set_markup("<b>%s</b>" % self.stageTitle())
         dialog.format_secondary_markup(self.getHelp())
         dialog.set_title(_("larchin Help"))
         dialog.run()
@@ -105,6 +103,10 @@ class Stage(gtk.VBox):
     def setLabel(self, l, text):
         l.set_markup(text)
 
+    def addReportWidget(self, title=None):
+        w = Report()
+        return self.addWidget(w)
+
     def addWidget(self, w, expand=True):
         self.pack_start(w, expand)
         return w
@@ -139,3 +141,31 @@ class Stage(gtk.VBox):
         so that it is not called again in the next idle loop.
         """
         return False
+
+
+class Report(gtk.ScrolledWindow):
+    """
+    """
+    def __init__(self):
+        gtk.ScrolledWindow.__init__(self)
+        self.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        self.view = gtk.TextView()
+        self.view.set_editable(False)
+        #view.set_wrap_mode(gtk.WRAP_WORD)
+        self.add(self.view)
+        self.show()
+        self.view.show()
+
+        self.reportbuf = self.view.get_buffer()
+
+    def report(self, text):
+        self.reportbuf.insert(self.reportbuf.get_end_iter(), text+'\n')
+        self.view.scroll_mark_onscreen(self.reportbuf.get_insert())
+        mainWindow.eventloop()
+
+    def backline(self):
+        lc = self.reportbuf.get_line_count()
+        li = self.reportbuf.get_iter_at_line(lc-2)
+        ei = self.reportbuf.get_end_iter()
+        self.reportbuf.delete(li, ei)
+

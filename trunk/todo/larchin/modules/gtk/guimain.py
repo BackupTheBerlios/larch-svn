@@ -161,7 +161,7 @@ class Larchin(gtk.Window):
     def ok(self, data):
         stagename = self.mainWidget.stagename
         self.mainWidget.forward()
-        set.setStageDone(stagename)
+        self.setStageDone(stagename)
 
 class StageList(gtk.ScrolledWindow):
     def __init__(self):

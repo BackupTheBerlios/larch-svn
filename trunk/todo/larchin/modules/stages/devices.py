@@ -1,4 +1,4 @@
-# devices.py - detect disk-like devices
+# devices.py - select installation device stage
 #
 # (c) Copyright 2008 Michael Towers <gradgrind[at]online[dot]de>
 #
@@ -21,80 +21,44 @@
 #----------------------------------------------------------------------------
 # 2008.05.10
 
-from stage import Stage
 
-class Widget(Stage):
-    def __init__(self):
-        Stage.__init__(self, moduleDescription)
-        self.addLabel(_('This will install Arch Linux'
-                ' from this "live" system on your computer.'
-                ' This program was written'
-                ' for the <i>larch</i> project:\n'
-                '       http://larch.berlios.de\n'
-                '\nIt is free software,'
-                ' released under the GNU General Public License.\n\n') +
-                'Copyright (c) 2008   Michael Towers')
+class Devices(Stage):
+    def stageTitle(self):
+        return _("Select installation device")
 
     def getHelp(self):
-        return _("Click on the 'Forward' button to start.")
+        return _("Here you can choose to which of the disk(-like) devices"
+                " you want to install Arch Linux.\n\n"
+                "Select one of the devices"
+                " and click on the 'OK' button.\n\n"
+                "To use partitions from more than one device, or to use a"
+                " device on which partitions are currently mounted (such "
+                " partitions are not shown here), you must select"
+                " 'manual partitioning' and click on the 'OK' button."
+                " You will be taken to the manual partitioning menu.")
+
+    def __init__(self):
+        Stage.__init__(self)
+
+        i = 0
+        for d, s, n in install.getDevices():
+            if d.endswith('-'):
+                continue
+            i += 1
+            self.addOption(d, "%16s  (%10s : %s)" % (d, s, n), (i == 1))
+
+        self.addOption('manual', _("Manual partitioning"))
+
 
     def forward(self):
-        mainWindow.setStage('Devices')
-
-
-
-        larchdev = install.larchdev().rstrip('0123456789')
-        larchcount = 0
-        devs = []
-        ld = install.listDevices()
-        # Note that if one of these has mounted partitions it will not be
-        # available for automatic partitioning, and should thus not be
-        # included in the list used for automatic installation
-        mounts = install.getmounts().splitlines()
-        count = 0
-        if ld:
-            for d, s, n in ld:
-                count += 1
-                # Mark devices which have mounted partitions
-                for m in mounts:
-                    if m.startswith(d):
-                        if (d == larchdev):
-                            larchcount = 1
-                        d += "-"
-                        count -= 1
-                        break
-                devs.append([d, s, n])
-            install.setDevices(devs)
-
-        if not devs:
-            popupError(_("No disk(-like) devices were found,"
-                    " so Arch Linux can not be installed on this machine"))
-            install.tidyup()
-        nds = len(devs)         # Total number of devices
-        mds = nds - count       # Number of devices with mounted partitions
-        mds2 = mds - larchcount # Number excluding the larch boot device
-
-        if mds2:
-            popupMessage(_("%d devices were found with mounted partitions."
-                    " These devices are not available for automatic"
-                    " partitioning, you must partition them manually.")
-                    % mds)
-
-        install.setDevice(None)
-        if (count == 1):
-            for d, s, n in devs:
-                if not d.endswith('-'):
-                    install.setDevice(d)
-                    break
-            mainWindow.goto('partitions')
-        elif (count == 0):
+        sel = self.getSelectedOption()
+        if (sel == 'manual'):
             mainWindow.goto('manualPart')
         else:
-            mainWindow.goto('devices')
+            install.setDevice(sel)
+            mainWindow.goto('partitions')
 
 
 #################################################################
 
-moduleName = 'Devices'
-listed = False
-moduleDescription = _("Detect disk(-like) devices")
+stages['devices'] = Devices

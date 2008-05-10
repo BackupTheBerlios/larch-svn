@@ -36,61 +36,10 @@ class Widget(Stage):
                 'Copyright (c) 2008   Michael Towers')
 
     def getHelp(self):
-        return _("Click on the 'Forward' button to start.")
+        return _("Click on the 'OK' button to start.")
 
     def forward(self):
-        mainWindow.setStage('Devices')
-
-
-
-        larchdev = install.larchdev().rstrip('0123456789')
-        larchcount = 0
-        devs = []
-        ld = install.listDevices()
-        # Note that if one of these has mounted partitions it will not be
-        # available for automatic partitioning, and should thus not be
-        # included in the list used for automatic installation
-        mounts = install.getmounts().splitlines()
-        count = 0
-        if ld:
-            for d, s, n in ld:
-                count += 1
-                # Mark devices which have mounted partitions
-                for m in mounts:
-                    if m.startswith(d):
-                        if (d == larchdev):
-                            larchcount = 1
-                        d += "-"
-                        count -= 1
-                        break
-                devs.append([d, s, n])
-            install.setDevices(devs)
-
-        if not devs:
-            popupError(_("No disk(-like) devices were found,"
-                    " so Arch Linux can not be installed on this machine"))
-            install.tidyup()
-        nds = len(devs)         # Total number of devices
-        mds = nds - count       # Number of devices with mounted partitions
-        mds2 = mds - larchcount # Number excluding the larch boot device
-
-        if mds2:
-            popupMessage(_("%d devices were found with mounted partitions."
-                    " These devices are not available for automatic"
-                    " partitioning, you must partition them manually.")
-                    % mds)
-
-        install.setDevice(None)
-        if (count == 1):
-            for d, s, n in devs:
-                if not d.endswith('-'):
-                    install.setDevice(d)
-                    break
-            mainWindow.goto('partitions')
-        elif (count == 0):
-            mainWindow.goto('manualPart')
-        else:
-            mainWindow.goto('devices')
+        mainWindow.setStage('FindDevices')
 
 
 #################################################################
