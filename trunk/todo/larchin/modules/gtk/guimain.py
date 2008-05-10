@@ -21,7 +21,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.05.05
+# 2008.05.10
 
 # Add a Quit button?
 
@@ -46,7 +46,7 @@ class Larchin(gtk.Window):
 
         self.stageList = StageList()
         self.pane.pack1(self.stageList)
-        self.pane.set_position(100)
+        self.pane.set_position(150)
 
         # The main widget for the current stage will occupy the right
         # position of the pane.
@@ -56,16 +56,14 @@ class Larchin(gtk.Window):
         #self.mainframe.set_size_request(500,400)
 
         self.mainWidget = None
-        # Keep a stack of stage names, for 'back' button implementation.
-        self.stagestack = []
 
         vbox1.pack_start(self.pane)
 
         buttons = gtk.HBox(False, spacing=10)
-        self.lButton = gtk.Button(stock=gtk.STOCK_GO_BACK)
+        #self.lButton = gtk.Button(stock=gtk.STOCK_GO_BACK)
         self.rButton = gtk.Button(stock=gtk.STOCK_OK)
         self.hButton = gtk.Button(stock=gtk.STOCK_HELP)
-        buttons.pack_start(self.lButton, False, False, padding=3)
+        #buttons.pack_start(self.lButton, False, False, padding=3)
         buttons.pack_start(self.hButton, False, False, padding=3)
         buttons.pack_end(self.rButton, False, False, padding=3)
 
@@ -74,7 +72,7 @@ class Larchin(gtk.Window):
         self.add(vbox1)
 
         self.hButton.connect("clicked", self.help)
-        self.lButton.connect("clicked", self.sigprocess, self.back)
+        #self.lButton.connect("clicked", self.sigprocess, self.back)
         self.rButton.connect("clicked", self.sigprocess, self.ok)
 
         self.watchcursor = gtk.gdk.Cursor(gtk.gdk.WATCH)
@@ -101,8 +99,8 @@ class Larchin(gtk.Window):
         install.tidyup()
         gtk.main_quit()
 
-    def enable_forward(self, on):
-        self.rButton.set_sensitive(on)
+    #def enable_forward(self, on):
+    #    self.rButton.set_sensitive(on)
 
     def sigprocess(self, widget, slot, arg=None):
         if self.busy:
@@ -140,25 +138,19 @@ class Larchin(gtk.Window):
         # Cancel this timer
         return False
 
-    def newStage(self, stagename):
-        """This is the main function for entering a new stage.
-        It stacks the stages so that they can be returned to later.
-        """
-        self.stagestack.append(stagename)
-        self.setStage(stagename)
-
-    def setStage(self):
-        current = self.pane-get_child2()
+    def setStage(self, stagename):
+        current = self.mainframe.get_child()
         if current:
-            self.pane.remove(current)
+            self.mainframe.remove(current)
 
-        self.mainWidget = stages[stagename]()
-        self.pane.pack2(self.mainWidget)
+        self.mainWidget = stages[stagename].Widget()
+        self.mainWidget.stagename = stagename
+        self.mainframe.add(self.mainWidget)
 
-        llabel = self.mainWidget.labelL()
-        self.lButton.set_label(llabel)
-        self.rButton.set_label(self.mainWidget.labelR())
-        self.lButton.set_sensitive(llabel != "")
+        #llabel = self.mainWidget.labelL()
+        #self.lButton.set_label(llabel)
+        #self.lButton.set_sensitive(llabel != "")
+        #self.rButton.set_label(self.mainWidget.labelR())
         self.mainWidget.show_all()
 
         self.eventloop()
@@ -166,17 +158,10 @@ class Larchin(gtk.Window):
     def help(self, widget, data=None):
         self.mainWidget.help()
 
-    def back(self, data):
-        """This goes back to the stage previous to the current one in the
-        actually executed stage sequence.
-        """
-        stagename = self.stagestack[-1]
-        del(self.stagestack[-1])
-        self.setStage(stagename)
-
     def ok(self, data):
+        stagename = self.mainWidget.stagename
         self.mainWidget.forward()
-
+        set.setStageDone(stagename)
 
 class StageList(gtk.ScrolledWindow):
     def __init__(self):
@@ -203,7 +188,7 @@ class StageList(gtk.ScrolledWindow):
         self.tvcolumn.pack_start(celltoggle, expand=False)
         self.tvcolumn.add_attribute(celltoggle, 'active', 2)
         self.tvcolumn.pack_start(celltext, expand=True)
-        self.tvcolumn.add_attribute(celltext, 'text', 1)
+        self.tvcolumn.add_attribute(celltext, 'markup', 1)
         # add column to treeview
         self.treeview.append_column(self.tvcolumn)
         self.add(self.treeview)
@@ -219,8 +204,8 @@ class StageList(gtk.ScrolledWindow):
 
 
         # Testing only!
-        self.done('one')
-        self.current('two')
+        #self.done('one')
+        #self.current('two')
 
 
 
@@ -247,3 +232,5 @@ class StageList(gtk.ScrolledWindow):
             s = self.liststore.get_value(iter, 0)
             #self.selection.unselect_iter(iter)
             print 'changed', s
+
+

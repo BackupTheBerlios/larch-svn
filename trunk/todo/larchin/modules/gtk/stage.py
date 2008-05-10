@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.12
+# 2008.05.10
 
 import gtk, gobject
 
@@ -27,22 +27,16 @@ styles = {  'red' : '<span foreground="red">%s</span>'
     }
 
 class Stage(gtk.VBox):
-    def __init__(self):
+    def __init__(self, title):
         gtk.VBox.__init__(self)
         self.options = {}
         self.option0 = None
 
-    def labelL(self):
-        return gtk.STOCK_GO_BACK
+        ltitle = gtk.Label()
+        ltitle.set_markup('<span size="xx-large">%s</span>' % title)
+        self.pack_start(ltitle, False, padding=10)
 
-    def labelR(self):
-        return gtk.STOCK_GO_FORWARD
-
-    def reinit(self):
-        return
-
-    def stageTitle(self):
-        return _("Undocumented stage")
+        stageTitle = _("Undocumented stage")
 
     def getHelp(self):
         return _("Sorry, I'm afraid there is at present no information"

@@ -21,7 +21,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.05.05
+# 2008.05.10
 
 import os, sys
 
@@ -66,17 +66,25 @@ else:
         _("Bad arguments"))
     quit()
 
+
 __builtin__.basePath = basedir
 __builtin__.stages = {}
 __builtin__.mainWindow = Larchin()
 #__builtin__.install = installClass(target)
 initialized = True
 
+import imp
+mlist = []
+for module in ('welcome', 'devices'):
+    m = imp.load_source(module, "%s/modules/stages/%s.py" % (basedir, module))
+    if m.listed:
+        mlist.append((m.moduleName, m.moduleDescription))
+    stages[m.moduleName] = m
 
-# For testing only!!
-mainWindow.setStageList((('one','One'), ('two','The next stage'),
-        ('three','Three')))
+mainWindow.setStageList(mlist)
+#mainWindow.setStageList((('one','One'), ('two','The next stage'),
+#        ('three','Three')))
 # Actually the stage texts should probably be supplied by the respective modules
 
-#mainWindow.goto('welcome')
+mainWindow.setStage('Welcome')
 mainWindow.mainLoop()
