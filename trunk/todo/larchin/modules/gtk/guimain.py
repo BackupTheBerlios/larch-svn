@@ -21,11 +21,12 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.05.10
+# 2008.05.11
 
 # Add a Quit button?
 
 import gtk, gobject
+from dialogs import popupError
 
 class Larchin(gtk.Window):
     def __init__(self):
@@ -86,8 +87,8 @@ class Larchin(gtk.Window):
     def setStageDone(self, stagename):
         self.stageList.done(stagename)
 
-    def setStageCurrent(self, stagename):
-        self.stageList.current(stagename)
+    def selectStage(self, stagename):
+        self.stageList.select(stagename)
 
     ###########################################################
 
@@ -139,6 +140,7 @@ class Larchin(gtk.Window):
         return False
 
     def setStage(self, stagename):
+        self.busy_on()
         current = self.mainframe.get_child()
         if current:
             self.mainframe.remove(current)
@@ -153,6 +155,7 @@ class Larchin(gtk.Window):
         #self.rButton.set_label(self.mainWidget.labelR())
         self.mainWidget.show_all()
 
+        self.busy_off()
         self.eventloop()
 
     def help(self, widget, data=None):
@@ -160,8 +163,9 @@ class Larchin(gtk.Window):
 
     def ok(self, data):
         stagename = self.mainWidget.stagename
-        self.mainWidget.forward()
+        rval = self.mainWidget.forward()
         self.setStageDone(stagename)
+        self.selectStage(stageSwitch[stagename][rval])
 
 class StageList(gtk.ScrolledWindow):
     def __init__(self):
@@ -174,7 +178,6 @@ class StageList(gtk.ScrolledWindow):
         #   stage name
         #   displayed string
         #   completed flag
-        #   current flag
         self.liststore = gtk.ListStore(str, str, bool, str)
         self.treeview.set_model(self.liststore)
         # create CellRenderers to render the data
@@ -183,8 +186,6 @@ class StageList(gtk.ScrolledWindow):
         cellcurrent = gtk.CellRendererText()
         # create the TreeViewColumn to display the groups
         self.tvcolumn = gtk.TreeViewColumn(_("Stages"))
-        self.tvcolumn.pack_start(cellcurrent, expand=False)
-        self.tvcolumn.add_attribute(cellcurrent, 'text', 3)
         self.tvcolumn.pack_start(celltoggle, expand=False)
         self.tvcolumn.add_attribute(celltoggle, 'active', 2)
         self.tvcolumn.pack_start(celltext, expand=True)
@@ -202,13 +203,6 @@ class StageList(gtk.ScrolledWindow):
         for sn, st in stages:
             self.liststore.append([sn, st, False, " "])
 
-
-        # Testing only!
-        #self.done('one')
-        #self.current('two')
-
-
-
     def done(self, stagename):
         i = 0
         for r in self.liststore:
@@ -217,20 +211,22 @@ class StageList(gtk.ScrolledWindow):
                 break
             i += 1
 
-    def current(self, stagename):
+    def select(self, stagename):
         i = 0
         for r in self.liststore:
             if (r[0] == stagename):
-                self.liststore[i][3] = '*'
-            else:
-                self.liststore[i][3] = ' '
+                self.selection.select_path(i)
+                return
             i += 1
+        popupError(_("Attempt to select non-existent stage: %s") % stagename,
+                "BUG")
 
     def changed_cb(self, widget, data=None):
         tv, iter = self.selection.get_selected()
         if iter:
             s = self.liststore.get_value(iter, 0)
             #self.selection.unselect_iter(iter)
-            print 'changed', s
+            #print 'changed', s
+            mainWindow.setStage(s)
 
 

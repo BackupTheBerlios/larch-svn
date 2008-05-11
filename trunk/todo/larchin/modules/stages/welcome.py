@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.05.10
+# 2008.05.11
 
 from stage import Stage
 
@@ -39,12 +39,11 @@ class Widget(Stage):
         return _("Click on the 'OK' button to start.")
 
     def forward(self):
-        mainWindow.setStage('FindDevices')
+        return 0
 
 
 #################################################################
 
 moduleName = 'Welcome'
-listed = True
 moduleDescription = _('Welcome to <i>larchin</i>')
 

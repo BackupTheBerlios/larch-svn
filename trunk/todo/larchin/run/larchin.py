@@ -21,7 +21,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.05.10
+# 2008.05.11
 
 import os, sys
 
@@ -69,22 +69,40 @@ else:
 
 __builtin__.basePath = basedir
 __builtin__.stages = {}
+__builtin__.stageSwitch = {}
 __builtin__.mainWindow = Larchin()
 __builtin__.install = installClass(target)
 initialized = True
 
 import imp
 mlist = []
+# I might change this to import all .py files in the stages folder ...
 for module in ('welcome', 'finddevices'):
     m = imp.load_source(module, "%s/modules/stages/%s.py" % (basedir, module))
-    if m.listed:
-        mlist.append((m.moduleName, m.moduleDescription))
+    mlist.append((m.moduleName, m.moduleDescription))
     stages[m.moduleName] = m
 
 mainWindow.setStageList(mlist)
-#mainWindow.setStageList((('one','One'), ('two','The next stage'),
-#        ('three','Three')))
-# Actually the stage texts should probably be supplied by the respective modules
 
-mainWindow.setStage('Welcome')
+# The following list determines the stage transitions.
+# The first entry on a line is the present stage, the subsequent entries
+# are the possible subsequent stages, which will be selected by index.
+stageSwitchSource = """
+Welcome:FindDevices
+FindDevices:AutoPart:ManuPart
+"""
+
+# Build a dictionary for the stage transitions
+for line in stageSwitchSource.splitlines():
+    line = line.strip()
+    if line and (line[0] != '#'):
+        item = line.split(':')
+        stageSwitch[item[0]] = item[1:]
+
+mainWindow.selectStage('Welcome')
 mainWindow.mainLoop()
+
+
+
+# What about generated .pyc files? Should the package include pre-compiled
+# versions?

@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.05.10
+# 2008.05.11
 
 from stage import Stage
 from dialogs import popupError, popupMessage
@@ -27,38 +27,43 @@ from dialogs import popupError, popupMessage
 class Widget(Stage):
     def __init__(self):
         Stage.__init__(self, moduleDescription)
-        self.message = self.addReportWidget()
-        self.message.report(_('Searching for disk(-like) devices'
-                ' and currently mounted partitions.\n'
-                'If a device line starts with "*", one or more of its'
-                ' partitions are currently\nmounted and this device'
-                ' will not be offered for automatic partitioning.\n\n'))
-        mainWindow.busy_on()
+        self.addLabel(_('Disk(-like) devices will be detected and offered'
+                ' for automatic partitioning.\n\n'
+                'If a device has mounted partitions it will not be offered'
+                ' for automatic partitioning. If you want to partition'
+                ' such a device, you must select the "Manual Partitioning"'
+                ' stage.'))
         self.getDevices()
-        mainWindow.busy_off()
 
     def getHelp(self):
-        return _('An automatically calculated default partitioning scheme'
-                ' will be offered on the basis of the discovered drives and'
-                ' partitions. A very limited amount of tweaking to this'
-                ' scheme is possible.\n'
-                ' Only devices with no mounted partitions will be offered'
-                ' for automatic partitioning.\n'
-                ' If you want more control over the partitioning of your disk'
+        return _('On the basis of the detected disk(-like) devices a choice'
+                ' of devices for automatic partitioning will be offered.\n'
+                'Only devices with no mounted partitions will be offered'
+                ' for automatic partitioning, any others will be listed but'
+                ' will not be selectable.\n'
+                'The automatically calculated partitioning scheme'
+                ' allows only a limited amount of tweaking, so if you want'
+                ' more control over the partitioning of your disk'
                 ' drives and the location of the installation, you will'
-                ' need to use an external tool. cfdisk and gparted'
-                ' should normally be available for partitioning. The'
-                ' selection of the mount points can then be done in the'
+                ' need to select manual partitioning. This will normally'
+                ' allow the use of the external tools cfdisk and gparted.\n'
+                'In the case of manual partitioning the selection of the'
+                ' mount points is done separately in the'
                 ' "Set Mount Points" stage, which will be skipped if the'
-                ' default partitioning scheme is accepted.')
+                ' automatic partitioning scheme is accepted.\n'
+                'Selecting one of the devices offered for automatic'
+                ' partitioning will not yet cause it to be modified,'
+                ' so try it out without fear. You can return here via the'
+                ' stage menu.')
 
     def forward(self):
-        if (self.devcount == 1):
-            mainWindow.setStage('Partitions')
-        elif (self.devcount == 0):
-            mainWindow.setStage('ManualPart')
+        sel = self.getSelectedOption()
+        if (sel == 'manual'):
+            install.setDevice(None)
+            return 1
         else:
-            mainWindow.setStage('Devices')
+            install.setDevice(sel)
+            return 0
 
     def getDevices(self):
         larchdev = install.larchdev().rstrip('0123456789')
@@ -69,50 +74,36 @@ class Widget(Stage):
         # available for automatic partitioning, and should thus not be
         # included in the list used for automatic installation
         mounts = install.getmounts().splitlines()
-        self.devcount = 0
+        i = 0
         if ld:
             for d, s, n in ld:
-                self.devcount += 1
+                i += 1
                 # Mark devices which have mounted partitions
                 dstring = "%16s  (%10s : %s)" % (d, s, n)
-                dm = " "
+                dm = False
                 for m in mounts:
                     if m.startswith(d):
                         if (d == larchdev):
                             larchcount = 1
-                        d += "-"
-                        dm = "*"
-                        self.devcount -= 1
+                        #d += "-"
+                        dm = True
+                        i -= 1
                         break
                 devs.append([d, s, n])
-                self.message.report(dm + dstring)
+                if dm:
+                    self.addLabel('***' + dstring, align='left')
+                else:
+                    self.addOption(d, dstring, (i == 1))
             install.setDevices(devs)
+            self.addOption('manual', _("Manual partitioning"), (i == 0))
 
         if not devs:
             popupError(_("No disk(-like) devices were found,"
                     " so Arch Linux can not be installed on this machine"))
-            install.tidyup()
-        nds = len(devs)         # Total number of devices
-        mds = nds - self.devcount   # Number of devices with mounted partitions
-        mds2 = mds - larchcount # Number excluding the larch boot device
-
-        if mds2:
-            self.message.report(_("\n\n%d devices were found with mounted"
-                    " partitions.\n"
-                    "These devices are not available for automatic"
-                    " partitioning,\nyou must partition them manually.")
-                    % mds)
-
-        install.setDevice(None)
-        if (self.devcount == 1):
-            for d, s, n in devs:
-                if not d.endswith('-'):
-                    install.setDevice(d)
-                    break
+            mainWindow.exit()
 
 
 #################################################################
 
 moduleName = 'FindDevices'
-listed = True
 moduleDescription = _("Disk Discovery")
