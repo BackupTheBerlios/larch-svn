@@ -1,4 +1,4 @@
-# partitions.py - select automatic or manual partitioning stage
+# partitions.py - Automatic partitioning and mount-point selection
 #
 # (c) Copyright 2008 Michael Towers <gradgrind[at]online[dot]de>
 #
@@ -19,22 +19,28 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.16
+# 2008.05.11
 
 # I think the logic of this stage is probably too complicated ...
 
-class Partitions(Stage):
-    def stageTitle(self):
-        return _("Choose partitioning scheme")
+from stage import Stage
+from partitions_gui import NtfsWidget, SwapWidget, HomeWidget
+from partitions_gui import TotalWidget, RootWidget
 
+class Widget(Stage):
     def getHelp(self):
-        return _("Here you can choose which part(s) of the disk(-like)"
-                " device to use for the Arch Linux installation.\n\n"
+        return _("To make straightforward installations easier it is"
+                " possible to choose a simple automatic division of your"
+                " disk drive for the Arch Linux installation.\n\n"
                 "WARNING: If you have an operating system already installed"
-                " on this drive which you wish to keep, you must choose"
-                " 'expert' partitioning, unless the existing operating"
-                " system is on the first partition ONLY, and uses the NTFS"
-                " file-system (Windows).\n\n"
+                " on this drive which you wish to keep, you must perform"
+                " partitioning manually (or use the existing partitions) by"
+                " selecting 'Manual Partitioning' (or 'Set Mount Points')"
+                " from the stage menu.\n"
+                "EXCEPTION: if the existing operating system is on the"
+                " first partition ONLY, and uses the NTFS file-system"
+                " (Windows), it is also possible to use automatic"
+                " partitioning.\n\n"
                 "If the first partition (alone) is occupied by a Windows"
                 " operating system, you have here the option of shrinking it"
                 " to create enough space for Arch Linux.")
@@ -43,9 +49,7 @@ class Partitions(Stage):
         """Things could have changed if we return to this stage, so
         all the setting up of the data is done in 'reinit'.
         """
-        Stage.__init__(self)
-        from partitions_gui import NtfsWidget, SwapWidget, HomeWidget
-        from partitions_gui import TotalWidget, RootWidget
+        Stage.__init__(self, moduleDescription)
 
         # Info: total drive size
         self.totalsize = self.addWidget(TotalWidget())
@@ -323,5 +327,6 @@ class Partitions(Stage):
 
 #################################################################
 
-stages['partitions'] = Partitions
+moduleName = 'AutoPart'
+moduleDescription = _("Automatic Partitioning")
 
