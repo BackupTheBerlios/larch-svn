@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.05.11
+# 2008.05.12
 
 from stage import Stage
 from dialogs import popupError, popupMessage
@@ -57,18 +57,18 @@ class Widget(Stage):
                 ' stage menu.')
 
     def forward(self):
+        # Set device selection for automatic partitioning.
+        # The value is the name of the drive ('/dev/sda', etc.).
+        # An empty string is used in the case of manual partitioning.
         sel = self.getSelectedOption()
         if (sel == 'manual'):
-            install.setDevice(None)
+            install.set_config('autodevice', '')
             return 1
         else:
-            install.setDevice(sel)
+            install.set_config('autodevice', sel)
             return 0
 
     def getDevices(self):
-        larchdev = install.larchdev().rstrip('0123456789')
-        larchcount = 0
-        devs = []
         ld = install.listDevices()
         # Note that if one of these has mounted partitions it will not be
         # available for automatic partitioning, and should thus not be
@@ -78,26 +78,21 @@ class Widget(Stage):
         if ld:
             for d, s, n in ld:
                 i += 1
-                # Mark devices which have mounted partitions
+                # Determine devices which have mounted partitions
                 dstring = "%16s  (%10s : %s)" % (d, s, n)
                 dm = False
                 for m in mounts:
                     if m.startswith(d):
-                        if (d == larchdev):
-                            larchcount = 1
-                        #d += "-"
                         dm = True
                         i -= 1
                         break
-                devs.append([d, s, n])
                 if dm:
                     self.addLabel('***' + dstring, align='left')
                 else:
                     self.addOption(d, dstring, (i == 1))
-            install.setDevices(devs)
             self.addOption('manual', _("Manual partitioning"), (i == 0))
 
-        if not devs:
+        else:
             popupError(_("No disk(-like) devices were found,"
                     " so Arch Linux can not be installed on this machine"))
             mainWindow.exit()

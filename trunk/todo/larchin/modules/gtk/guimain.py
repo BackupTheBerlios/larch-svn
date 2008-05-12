@@ -147,13 +147,11 @@ class Larchin(gtk.Window):
 
         self.mainWidget = stages[stagename].Widget()
         self.mainWidget.stagename = stagename
-        self.mainframe.add(self.mainWidget)
-
-        #llabel = self.mainWidget.labelL()
-        #self.lButton.set_label(llabel)
-        #self.lButton.set_sensitive(llabel != "")
-        #self.rButton.set_label(self.mainWidget.labelR())
-        self.mainWidget.show_all()
+        if self.mainWidget.skip:
+            self.ok('notdone')
+        else:
+            self.mainframe.add(self.mainWidget)
+            self.mainWidget.show_all()
 
         self.busy_off()
         self.eventloop()
@@ -164,7 +162,8 @@ class Larchin(gtk.Window):
     def ok(self, data):
         stagename = self.mainWidget.stagename
         rval = self.mainWidget.forward()
-        self.setStageDone(stagename)
+        if (data != 'notdone'):
+            self.setStageDone(stagename)
         self.selectStage(stageSwitch[stagename][rval])
 
 class StageList(gtk.ScrolledWindow):

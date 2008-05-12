@@ -32,6 +32,9 @@ class Stage(gtk.VBox):
         self.options = {}
         self.option0 = None
 
+        # A flag to allow a stage to be skipped
+        self.skip = False
+
         ltitle = gtk.Label()
         ltitle.set_markup('<span size="xx-large">%s</span>' % title)
         self.pack_start(ltitle, False, padding=10)

@@ -21,7 +21,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.05.11
+# 2008.05.12
 
 import os, sys
 
@@ -77,7 +77,7 @@ initialized = True
 import imp
 mlist = []
 # I might change this to import all .py files in the stages folder ...
-for module in ('welcome', 'finddevices', 'partitions'):
+for module in ('welcome', 'ntfs', 'finddevices', 'partitions'):
     m = imp.load_source(module, "%s/modules/stages/%s.py" % (basedir, module))
     mlist.append((m.moduleName, m.moduleDescription))
     stages[m.moduleName] = m
@@ -88,7 +88,8 @@ mainWindow.setStageList(mlist)
 # The first entry on a line is the present stage, the subsequent entries
 # are the possible subsequent stages, which will be selected by index.
 stageSwitchSource = """
-Welcome:FindDevices
+Welcome:NtfsShrink
+NtfsShrink:FindDevices
 FindDevices:AutoPart:ManuPart
 """
 

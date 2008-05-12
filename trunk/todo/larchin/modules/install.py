@@ -23,7 +23,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.04.18
+# 2008.05.12
 
 from subprocess import Popen, PIPE, STDOUT
 import os, shutil, signal
@@ -48,6 +48,25 @@ class installClass:
         # Allow possibility of offering 'frugal' installation (may never be
         # implemented as it should perhaps be handled completely separately).
         self.frugal = False
+
+    def set_config(self, item, value):
+        fh = open("/tmp/larchin/%s" % item, "w")
+        fh.write(value)
+        fh.close()
+
+    def get_config(self, item, trap=True):
+        f = "/tmp/larchin/%s" % item
+        if os.path.isfile(f):
+            fh = open(f, "r")
+            value = fh.read()
+            fh.close()
+        elif trap:
+            popupError(_("Configuration item not found: %s") % item)
+            mainWindow.exit()
+        else:
+            value = None
+        return value
+
 
     def tidyup(self):
         for p in self.processes:
@@ -155,16 +174,6 @@ class installClass:
         """
         return self.xcall("larchbootdev").strip()
 
-    def setDevice(self, device):
-        """Set device selection for automatic partitioning.
-        The value is the name of the drive ('/dev/sda', etc.).
-        None is also a possibility ...
-        """
-        self.autodevice = device
-
-    def selectedDevice(self):
-        return self.autodevice or self.devices[0][0]
-
     def setPart(self, start):
         """Used by the autopartitioner to determine where the free space
         begins. The value can be:
@@ -175,26 +184,33 @@ class installClass:
         self.autoPartStart = start
 
     def getDeviceInfo(self, dev):
-        # Info on drive and partitions (dev="/dev/sda", etc.):
-        self.dinfo = self.xcall("get-partitions %s" % dev)
+        """Info on drive and partitions (dev="/dev/sda", etc.)
+        Return tuple: ( drive size in MB = 10^6B,
+                        cylinder size in MB,
+                        [(partition-number, partition-type,
+                                size in MB, start in MB, end in MB),
+                         ... ]
+                      )
+        """
+        dinfo = self.xcall("get-partitions %s" % dev)
         # get the drive size in MB
-        dsm = re.search(r"^/dev.*:([0-9\.]+)MB:.*;$", self.dinfo, re.M)
-        self.dsize = int(dsm.group(1).split('.')[0])
-        # get the info for the first partition, but only if it is NTFS
-        p1m = re.search(r"^1:([0-9\.]+)MB:([0-9\.]+)MB:"
-                "([0-9\.]+)MB:ntfs:.*;$", self.dinfo, re.M)
-        if p1m:
-            self.p1size = int(p1m.group(3).split('.')[0])
-            self.p1start = int(p1m.group(1).split('.')[0])
-            self.p1end = int(p1m.group(2).split('.')[0])
-        else:
-            self.p1size = 0
-            self.p1start = 0
-            self.p1end = 0
+        dsm = re.search(r"^/dev.*:([0-9\.]+)MB:.*;$", dinfo, re.M)
+        dsize = int(dsm.group(1).split('.')[0])
+        # get the info for the partitions
+        ilist = []
+        for l in dinfo.splitlines():
+            pm = re.search(r"^([0-9]+):([0-9\.]+)MB:([0-9\.]+)MB:"
+                    "([0-9\.]+)MB:([^\:]*):.*;$", l)
+            if pm:
+                # Add tuple (partition-number, partition-type,
+                #            size in MB, start in MB, end in MB)
+                ilist.append((int(pm.group(1)), pm.group(5),
+                              int(pm.group(4).split('.')[0]),
+                              int(pm.group(2).split('.')[0]),
+                              int(pm.group(3).split('.')[0])))
         # Also get the size of a cylinder, convert to MB
         c, m = self.xcall("get-cylsize %s" % dev).split()
-        self.cylinders = int(c)
-        self.cylinderMB = float(m) / 1000
+        return (dsize, float(m) / 1000, ilist)
 
     def getPartInfo(self, partno):
         """Get size and fstype for the given partition number using the

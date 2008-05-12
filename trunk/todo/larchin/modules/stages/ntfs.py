@@ -1,4 +1,4 @@
-# partitions.py - Automatic partitioning and mount-point selection
+# ntfs.py - Resizing of NTS partitions
 #
 # (c) Copyright 2008 Michael Towers <gradgrind[at]online[dot]de>
 #
@@ -19,37 +19,39 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.05.11
+# 2008.05.12
 
-# I think the logic of this stage is probably too complicated ...
 
 from stage import Stage
-from partitions_gui import NtfsWidget, SwapWidget, HomeWidget
-from partitions_gui import TotalWidget, RootWidget
+#from ntfs_gui import NtfsWidget
 
 class Widget(Stage):
     def getHelp(self):
-        return _("To make straightforward installations easier it is"
-                " possible to choose a simple automatic division of your"
-                " disk drive for the Arch Linux installation.\n\n"
-                "WARNING: If you have an operating system already installed"
-                " on this drive which you wish to keep, you must perform"
-                " partitioning manually (or use the existing partitions) by"
-                " selecting 'Manual Partitioning' (or 'Set Mount Points')"
-                " from the stage menu.\n"
-                "EXCEPTION: if the existing operating system is on the"
-                " first partition ONLY, and uses the NTFS file-system"
-                " (Windows), it is also possible to use automatic"
-                " partitioning.\n\n"
-                "If the first partition (alone) is occupied by a Windows"
-                " operating system, you have here the option of shrinking it"
-                " to create enough space for Arch Linux.")
+        return _("If a partition is occupied by a Windows operating system"
+                " (using the NTS file-system), you have here the option of"
+                " shrinking it to create enough space for Arch Linux.")
 
     def __init__(self):
-        """Things could have changed if we return to this stage, so
-        all the setting up of the data is done in 'reinit'.
+        """
         """
         Stage.__init__(self, moduleDescription)
+
+        # Detect all NTFS partitions
+        self.getNTFSparts()
+
+        # If shrinking won't provide enough space, toofull=True?
+        toofull = False
+
+
+        if (not self.ntfsparts) or toofull:
+            # Skip this stage
+            self.skip = True
+            return
+
+        for np in self.ntfsparts:
+            print np
+
+
 
         # Info: total drive size
         self.totalsize = self.addWidget(TotalWidget())
@@ -80,6 +82,28 @@ class Widget(Stage):
         self.totalsize.set(self.dev, self.dsize)
 
         self.request_update(self.start)
+
+
+    def getNTFSparts(self):
+        # Only unmounted partitions will be considered
+        mounts = [m.split()[0] for m in install.getmounts().splitlines()
+                if m.startswith('/dev/')]
+        print "mounts", mounts
+        ld = install.listDevices()
+        self.ntfsparts = []
+        for d, s, n in ld:
+            di = install.getDeviceInfo(d)
+            for pi in di[2]:
+                if (pi[1] == 'ntfs'):
+                    p = d+str(pi[0])
+                    if not (p in mounts):
+                        # Make list of (partition, disk-size MB,
+                        #       cylinder size MB
+                        #       (size MB, start MB, end MB)
+                        self.ntfsparts.append((p, di[0], di[1], pi[2:]))
+
+
+
 
     def start(self):
         self.ntfs.enable(self.keep1init(self.dev))
@@ -242,6 +266,9 @@ class Widget(Stage):
         return True
 
     def forward(self):
+        return 0
+
+
         if (self.ntfs.is_enabled and self.ntfs.keep1state
                 and self.ntfs.shrinkstate):
             if not popupWarning(_("You are about to shrink the"
@@ -313,6 +340,6 @@ class Widget(Stage):
 
 #################################################################
 
-moduleName = 'AutoPart'
-moduleDescription = _("Automatic Partitioning")
+moduleName = 'NtfsShrink'
+moduleDescription = _("Shrink NTFS (Windows) Partition")
 
