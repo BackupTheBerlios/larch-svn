@@ -35,6 +35,8 @@ from dialogs import PopupInfo, popupWarning, popupError
 
 class installClass:
     def __init__(self, host=None):
+        self.LINUXMIN = 5000   # MB, guessed minimum space for Linux
+
         self.host = host
 
         self.processes = []
@@ -128,6 +130,9 @@ class installClass:
         del(self.processes[-1])
 
     def xcall(self, cmd, opt="", callback=None):
+
+        print "XCALL:", cmd
+
         if self.host:
             process = self.xcall_net(cmd, opt)
         else:
@@ -321,6 +326,10 @@ class installClass:
             cmd = "cfdisk %s" % dev
         self.terminal(cmd)
 
+    def rmpart(self, dev, partno):
+        """Remove the given partition  (device + partition number).
+        """
+        return self.xcall("rmpart %s %d" % (dev, partno))
 
     def rmparts(self, dev, partno):
         """Remove all partitions on the given device starting from the

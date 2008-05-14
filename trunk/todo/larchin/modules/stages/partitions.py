@@ -24,8 +24,8 @@
 # I think the logic of this stage is probably too complicated ...
 
 from stage import Stage
-from partitions_gui import NtfsWidget, SwapWidget, HomeWidget
-from partitions_gui import TotalWidget, RootWidget
+from partitions_gui import SwapWidget, HomeWidget
+from partitions_gui import RootWidget
 
 class Widget(Stage):
     def getHelp(self):

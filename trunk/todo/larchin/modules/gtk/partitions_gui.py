@@ -19,127 +19,9 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.16
+# 2008.05.13
 
 import gtk
-
-class NtfsWidget(gtk.Frame):
-    """This widget allows an existing operating system (Windows/NTFS)
-    to be retained (optionally). It also provides for shrinking the
-    partition used by that operating system. This function is just the
-    constructor, the logic is handled by other functions.
-    """
-    def __init__(self, master):
-        gtk.Frame.__init__(self)
-        self.master = master
-
-        self.keep1 = gtk.CheckButton(_("Retain existing operating system"
-                " on first partition"))
-        self.set_label_widget(self.keep1)
-
-        adjlabel = gtk.Label(_("Set new size of NTFS partition (GB)"))
-        adjlabel.set_alignment(0.9, 0.5)
-        self.ntfsadj = gtk.Adjustment(step_incr=0.1, page_incr=1.0)
-        hscale = gtk.HScale(self.ntfsadj)
-
-        self.shrink = gtk.CheckButton(_("Shrink NTFS partition"))
-
-        self.ntfsframe = gtk.Frame()
-        self.ntfsframe.set_border_width(10)
-        self.ntfsframe.set_label_widget(self.shrink)
-        self.ntfsbox = gtk.VBox()
-        self.ntfsbox.pack_start(adjlabel)
-        self.ntfsbox.pack_start(hscale)
-        self.ntfsframe.add(self.ntfsbox)
-
-        self.add(self.ntfsframe)
-
-        self.is_enabled = False
-        self.keep1state = False
-        self.shrinkstate = False
-        self.size = 0.0
-
-        self.ntfsadj.connect("value_changed", self.ntfs_size_cb)
-        self.shrink.connect("toggled", self.shrink_check_cb)
-        self.keep1.connect("toggled", self.keep1_check_cb)
-
-
-    def enable(self, on):
-        """Show (on=True) or hide (on=False) the ntfs shrinking widget.
-        """
-        if on:
-            self.show()
-        else:
-            self.hide()
-        self.is_enabled = on
-
-
-    def set_keep1(self, on, update=True):
-        """Set checkbutton 'keep 1st partition' on or off.
-        """
-        if (on != self.keep1state):
-            self.keep1state = on
-            self.master.keep1_cb(on)
-        if update:
-            self.keep1.set_active(on)
-
-    def keep1_check_cb(self, widget, data=None):
-        self.set_keep1(self.keep1.get_active(), False)
-
-
-    def enable_shrink(self, on):
-        if on:
-            self.ntfsframe.show()
-        else:
-            self.ntfsframe.hide()
-
-    def enable_shrinkswitch(self, on):
-        self.shrink.set_sensitive(on)
-
-    def set_shrink(self, on, update=True):
-        """Set checkbutton 'shrink 1st partition' on or off.
-        """
-        if (on != self.shrinkstate):
-            self.shrinkstate = on
-            self.master.shrink_cb(on)
-        if update:
-            self.shrink.set_active(on)
-        if on:
-            self.ntfsbox.show()
-        else:
-            self.ntfsbox.hide()
-
-    def shrink_check_cb(self, widget, data=None):
-        self.set_shrink(self.shrink.get_active(), False)
-
-
-    def set_shrinkadjust(self, lower = None, upper = None,
-            value = None, update = True):
-        """Set the size adjustment slider. Any of lower limit, upper limit
-        and size can be set independently.
-        """
-        if (lower != None):
-            self.ntfsadj.lower = lower
-            if (self.size < lower):
-                self.size = lower
-                self.ntfsadj.value = lower
-                self.master.ntfssize_cb(lower)
-        if (upper != None):
-            self.ntfsadj.upper = upper
-            if (self.size > upper):
-                self.size = upper
-                self.ntfsadj.value = upper
-                self.master.ntfssize_cb(upper)
-        if ((value != None) and (value != self.size)
-                and (value >= self.ntfsadj.lower)
-                and (value <= self.ntfsadj.upper)):
-            self.size = value
-            self.master.ntfssize_cb(value)
-            if update:
-                self.ntfsadj.value = value
-
-    def ntfs_size_cb(self, widget, data=None):
-        self.set_shrinkadjust(value=self.ntfsadj.value, update=False)
 
 
 class SwapWidget(gtk.Frame):
@@ -322,20 +204,4 @@ class RootWidget(gtk.HBox):
 
     def set_value(self, flval):
         self.rootsizew.set_text("%8.1f" % flval)
-
-class TotalWidget(gtk.HBox):
-    """A widget to display (only - it is not editable) the total size
-    of the current disk drive.
-    """
-    def __init__(self):
-        gtk.HBox.__init__(self)
-        self.label = gtk.Label()
-        self.sizew = gtk.Entry(10)
-        self.sizew.set_editable(False)
-        self.pack_end(self.sizew, False)
-        self.pack_end(self.label, False)
-
-    def set(self, drive, flval):
-        self.label.set_text(_("Total capacity of drive %s (GB):  ") % drive)
-        self.sizew.set_text("%8.1f" % flval)
 

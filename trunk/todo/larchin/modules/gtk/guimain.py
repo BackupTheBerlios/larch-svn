@@ -21,7 +21,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.05.11
+# 2008.05.14
 
 # Add a Quit button?
 
@@ -162,6 +162,8 @@ class Larchin(gtk.Window):
     def ok(self, data):
         stagename = self.mainWidget.stagename
         rval = self.mainWidget.forward()
+        if (rval < 0):
+            return
         if (data != 'notdone'):
             self.setStageDone(stagename)
         self.selectStage(stageSwitch[stagename][rval])
@@ -177,7 +179,7 @@ class StageList(gtk.ScrolledWindow):
         #   stage name
         #   displayed string
         #   completed flag
-        self.liststore = gtk.ListStore(str, str, bool, str)
+        self.liststore = gtk.ListStore(str, str, bool)
         self.treeview.set_model(self.liststore)
         # create CellRenderers to render the data
         celltoggle = gtk.CellRendererToggle()
@@ -200,7 +202,7 @@ class StageList(gtk.ScrolledWindow):
     def initStages(self, stages):
         self.liststore.clear()
         for sn, st in stages:
-            self.liststore.append([sn, st, False, " "])
+            self.liststore.append([sn, st, False])
 
     def done(self, stagename):
         i = 0
@@ -224,8 +226,6 @@ class StageList(gtk.ScrolledWindow):
         tv, iter = self.selection.get_selected()
         if iter:
             s = self.liststore.get_value(iter, 0)
-            #self.selection.unselect_iter(iter)
-            #print 'changed', s
             mainWindow.setStage(s)
 
 
