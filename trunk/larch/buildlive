@@ -282,7 +282,7 @@ mklive ()
     if ! [ -f ${LARCHBUILD}/tmp/overlay/etc/pacman.conf ]; then
         cp ${INSTLDIR}/etc/pacman.conf ${LARCHBUILD}/tmp/overlay/etc/pacman.conf
     fi
-    if ! grep "^^^LARCH-IGNORE^^^" ${LARCHBUILD}/tmp/overlay/etc/pacman.conf \
+    if ! grep "+++LARCH-IGNORE+++" ${LARCHBUILD}/tmp/overlay/etc/pacman.conf \
             &>/dev/null; then
         igpak="IgnorePkg = kernel26 aufs initscripts"
         for pak in $( cat ${PROFILE}/noupdate 2>/dev/null ); do
