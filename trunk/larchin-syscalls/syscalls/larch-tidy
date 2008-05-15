@@ -39,8 +39,11 @@ else
         . /.livesys/larch0
     fi
 
-    # Get the 'original' version of /etc/inittab
-    mv -f ${INSTALL}/etc/inittab.larchsave ${INSTALL}/etc/inittab
+    # Get the 'original' version of saved files in /etc
+    # (inittab, rc.sysinit, rc.shutdown)
+    for fs in ${INSTALL}/etc/*.larchsave; do
+        mv -f ${fs} ${fs%.larchsave}
+    done
 
     # Remove live-specific packages
     for p in larch-live larchin larchin-syscalls; do

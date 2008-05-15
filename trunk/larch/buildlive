@@ -169,11 +169,6 @@ mklive ()
 
     ### END of initcpio generation
 
-    # Save original /etc/inittab
-    if ! [ -f ${INSTLDIR}/etc/inittab.larchsave ]; then
-        cp ${INSTLDIR}/etc/inittab ${INSTLDIR}/etc/inittab.larchsave
-    fi
-
     ### if no saved system.sqf, squash the Arch installation at ${INSTLDIR}
     if [ ! -e "${LARCHBUILD}/tmp/system.sqf" ]; then
         ignorefiles=/.larch/ignorefiles
@@ -273,6 +268,16 @@ mklive ()
 
     # Ensure the overlay has at least the /etc folder
     mkdir -p ${LARCHBUILD}/tmp/overlay/etc
+
+    # Save original /etc/inittab, /etc/rc.sysinit and /etc/rc.shutdown
+    for fsave in inittab rc.sysinit rc.shutdown; do
+        if ! [ -f ${INSTLDIR}/etc/${fsave}.larchsave ]; then
+            # A running larch system will already have this file, and it
+            # shouldn't be overwritten
+            cp ${INSTLDIR}/etc/${fsave} \
+                    ${LARCHBUILD}/tmp/overlay/etc/${fsave}.larchsave
+        fi
+    done
 
     # Place the live rc.sysinit and rc.shutdown scripts in the overlay
     cp ${INSTLDIR}/etc/rc.sysinit.larch ${LARCHBUILD}/tmp/overlay/etc/rc.sysinit

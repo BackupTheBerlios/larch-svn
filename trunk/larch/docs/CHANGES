@@ -5,7 +5,8 @@ buildlive) by larch versions which are compatible with the standard versions.
 When larch-live is installed, the standard functions will be replaced by
 larch functions. On installation using larchin larch-live will be removed
 so the behaviour reverts to standard Arch behaviour, although the rc scripts
-have been changed. (? Do I want to save the originals and reinsert these?)
+have been changed. But in any case the originals are saved so that they can
+be restored on installation with larchin.
 
 Changed handling of pacman.conf slightly. When there is a pacman.conf in the
 profile (base directory, not overlay), this will be copied to the working

@@ -152,12 +152,33 @@ architecture) and extract the needed files. The installation script
 use a local pacman package rather than downloading it, put that package in the
 working directory before running <strong>larch-setup</strong>.
 </p>
-<p>You also need an appropriate 'pacman.conf' file (either at /etc/pacman.conf or
-in the working directory). On a non-<em>Arch</em> system, unless a pacman.conf
-is already present in the working directory, this will be created afresh and
-a dialog will be presented by <strong>larch-setup</strong> to select a mirror.
-On an <em>Arch</em> system it is assumed that you have already configured your
-mirrors appropriately.
+
+<h3><a name="pacman_conf"></a>'pacman.conf' for building and live system use</h3>
+
+<p>You also need an appropriate 'pacman.conf' file. On a non-<em>Arch</em> system,
+unless a pacman.conf is already present in the working directory, this will be
+created afresh and a dialog will be presented by <strong>larch-setup</strong>
+to select a mirror. Because of potential overwriting (see below) this file
+is also copied to pacman.conf.0 (also in the working directory).
+</p>
+<p>On an <em>Arch</em> system it is assumed that you have already configured your
+mirrors appropriately, and the system '/etc/pacman.conf' can be taken.
+</p>
+<p>When there is a 'pacman.conf' in the profile (base directory, not overlay),
+this will be copied to the working directory and used by <em>mklarch</em>
+for performing the installation, even if
+there was already a version in the working directory. The 'pacman.conf' in
+the resulting live system will also be this version if built using
+<em>mklarch</em> (i.e. taken from the resulting file in the working
+directory). If <em>larchify</em> is used the existing '/etc/pacman.conf'
+within the system to be larchified will be used. However, if the overlay in
+the profile has its own '/etc/pacman.conf' this will (in both cases) be
+used in preference.
+</p>
+<p>Additionally, an 'IgnorePkg' line is added to the live system's '/etc/pacman.conf',
+for 'kernel26', 'aufs' and 'initscripts'. Packages listed in the 'noupdate' file
+in the profile, will also be added.
+This line will be removed on installation using <em>larchin</em>.
 </p>
 
 <h3><a name="Squashfs_and_Unionfs"></a>squashfs and aufs</h3>
@@ -231,8 +252,8 @@ Maybe ones you have compiled yourself, e.g. from the AUR, or modified versions
 (fixes or customizations) of standard packages. To do this you need to put your
 packages in a directory and run <strong>gen-repo</strong> - which requires python -
 on this directory (run it without arguments to get usage instructions). Then place
-an entry for this new repository in your 'pacman.conf' (probably the one in the
-working directory).
+an entry for this new repository in your 'pacman.conf' (in the profile or else
+in the working directory).
 If your packages replace some in the existing repositories, your custom
 repository needs to come before those repositories in 'pacman.conf'.
 Any packages you want installed now just need to be

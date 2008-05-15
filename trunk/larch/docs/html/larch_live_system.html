@@ -90,13 +90,25 @@ advantage of it, although some additions need to be made to boot live CD/USB sys
 <h3><a name="rc_files"></a>/etc/inittab, /etc/rc.sysinit and /etc/rc.shutdown</h3>
 
 <p>The initial boot script and the shutdown script must be customized for use
-in a larch live environment. From larch version 5.3, this is done by providing
-modified versions of certain functions in the '/etc/rc.d/functions.d' directory
-(these functions are in the 'larch-live' package).
-At the time of writing this requires a modified 'initscripts' package, but I
-hope the official package will sometime contain suitable versions of the
+in a larch live environment. There are numerous ways of achieving that and
+<em>larch</em> has tried out several. In version 5.3.2 a method was introduced which
+involves replacing the original /etc/rc.sysinit and /etc/rc.shutdown scripts
+by modified versions which are fully equivalent to the official scripts but
+split off certain parts into functions which can be overridden when used in a
+<em>larch</em> live system. The 'larch-live' package provides the files
+/etc/larch-sysinit and /etc/larch-shutdown which provide the new versions
+of these functions for live use.
+<p>The need to overwrite certain system files is a bit messy, and means that
+the initscripts package should not be updated in the live system, but I
+hope the official package will sometime itself contain suitable versions of the
 '/etc/rc.sysinit' and '/etc/rc.shutdown' files which separate out the
-relevant functions to files in '/etc/rc.d/functions.d'.
+relevant functions so that larch doesn't need to overwrite them.
+</p>
+<p>Although it is not strictly necessary (because the substituted files are
+fully equivalent to the official ones), larch saves the originals as
+'/etc/rc.sysinit.larchsave' and '/etc/rc.shutdown.larchsave', so that these
+can be restored on installation by <em>larchin</em> (this might avoid later
+confusion).
 </p>
 
 <p>It is possible to use a customized version of '/etc/inittab', by
