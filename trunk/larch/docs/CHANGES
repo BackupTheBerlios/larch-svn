@@ -1,3 +1,21 @@
+2008.05.15
+Version 5.3.2, adjusted initscripts approach so that it doesn't require a
+custom initscripts package. Now rc.sysinit and rc.shutdown are replaced (in
+buildlive) by larch versions which are compatible with the standard versions.
+When larch-live is installed, the standard functions will be replaced by
+larch functions. On installation using larchin larch-live will be removed
+so the behaviour reverts to standard Arch behaviour, although the rc scripts
+have been changed. (? Do I want to save the originals and reinsert these?)
+
+Changed handling of pacman.conf slightly. When there is a pacman.conf in the
+profile (base directory, not overlay), this will be copied to the working
+directory and used by mklarch, even if there was already a version in the
+working directory. The pacman.conf in the live system will be this version
+if built using mklarch, otherwise the existing version. However an
+'IgnorePkg' line is added for kernel26, aufs and initscripts. Packages
+listed in the 'noupdate' file in the profile, will also be added. This
+line will be removed on installation using larchin.
+
 2008.04.27
 Version 5.3.0, new initscripts approach, replacing functions in /etc/rc.d/functions
 rather than replacing /etc/rc.sysinit and /etc/rc.shutdown. At present this

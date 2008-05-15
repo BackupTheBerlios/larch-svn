@@ -47,4 +47,9 @@ else
         pacman -r ${INSTALL} -R ${p} 2>/dev/null
     done
 
+    # Remove larch live specific package upgrade ignores
+    if grep "#---LARCH-IGNORE---" ${INSTALL}/etc/pacman.conf &>/dev/null; then
+        sed "/#+++LARCH-IGNORE+++/,/#---LARCH-IGNORE---/ d" \
+                -i ${INSTALL}/etc/pacman.conf
+    fi
 fi

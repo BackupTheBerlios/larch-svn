@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.04.27
+# 2008.05.15
 
 # Location for the CD image
 CDDATA="${LARCHBUILD}/cd"
@@ -269,6 +269,27 @@ mklive ()
             cp -rf ${PROFILE}/rootoverlay/* ${LARCHBUILD}/tmp/overlay
         fi
 
+    fi
+
+    # Ensure the overlay has at least the /etc folder
+    mkdir -p ${LARCHBUILD}/tmp/overlay/etc
+
+    # Place the live rc.sysinit and rc.shutdown scripts in the overlay
+    cp ${INSTLDIR}/etc/rc.sysinit.larch ${LARCHBUILD}/tmp/overlay/etc/rc.sysinit
+    cp ${INSTLDIR}/etc/rc.shutdown.larch ${LARCHBUILD}/tmp/overlay/etc/rc.shutdown
+
+    # Add IgnorePkg to pacman.conf
+    if ! [ -f ${LARCHBUILD}/tmp/overlay/etc/pacman.conf ]; then
+        cp ${INSTLDIR}/etc/pacman.conf ${LARCHBUILD}/tmp/overlay/etc/pacman.conf
+    fi
+    if ! grep "^^^LARCH-IGNORE^^^" ${LARCHBUILD}/tmp/overlay/etc/pacman.conf \
+            &>/dev/null; then
+        igpak="IgnorePkg = kernel26 aufs initscripts"
+        for pak in $( cat ${PROFILE}/noupdate 2>/dev/null ); do
+            igpak="${igpak} ${pak}"
+        done
+        sed "/\[options\]/ a\#+++LARCH-IGNORE+++\n${igpak}\n#---LARCH-IGNORE---" \
+                -i ${LARCHBUILD}/tmp/overlay/etc/pacman.conf
     fi
 
     # Generate customized /etc/rc.conf

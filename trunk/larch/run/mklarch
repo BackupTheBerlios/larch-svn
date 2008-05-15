@@ -21,7 +21,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.03.31
+# 2008.05.15
 
 
 # directory to use for building the CD - the installation root
@@ -169,14 +169,14 @@ if [ -f ${PROFILE}/baseveto ]; then
     INPACSO="${INPACSO} -x ${PROFILE}/baseveto"
 fi
 
-if ! [ -f pacman.conf ]; then
-    if [ -f ${PROFILE}/pacman.conf ]; then
-        cp ${PROFILE}/pacman.conf .
-    elif ! [ -f /etc/pacman.conf ]; then
+if [ -f ${PROFILE}/pacman.conf ]; then
+    cp ${PROFILE}/pacman.conf .
+elif ! [ -f pacman.conf ]; then
+    if [ -f /etc/pacman.conf ]; then
+        cp /etc/pacman.conf .
+    else
         echo "ERROR: Couldn't find pacman.conf"
         exit 1
-    else
-        cp /etc/pacman.conf .
     fi
 fi
 INPACSO="${INPACSO} -k pacman.conf"
@@ -219,7 +219,8 @@ if [ $? -ne 0 ]; then exit 1; fi
 #    if [ "${d}" != "local" ]; then rm -r ${INSTLDIR}/var/lib/pacman/${d}; fi
 #done
 
-# Use build version of pacman.conf in live system, without [larch5] repository
+# Use build version of pacman.conf in live system, without [larch5] repository.
+# This can be overwritten by a pacman.conf in the profile's overlay.
 sed '/^\[larch5\]/,/^ *$/ d' -i pacman.conf
 cp -f pacman.conf ${INSTLDIR}/etc
 
