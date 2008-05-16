@@ -1,8 +1,8 @@
 # Maintainer: Michael Towers <gradgrind[at]online[dot]de>
-# 2008.05.15
+# 2008.05.16
 pkgname=larchin-syscalls
 pkgver=5.3.2
-pkgrel=1
+pkgrel=2
 
 pkgdesc="bash scripts for larchin (larch hard disk installer with gui)"
 url="http://larch.berlios.de"

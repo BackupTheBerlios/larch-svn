@@ -34,11 +34,6 @@ if [ -f ${INSTALL}/etc/rc.sysinit0 ]; then
 
 else
 # larch-5
-    # Remove any files and directories intended only for the live system
-    if [ -f /.livesys/larch0 ]; then
-        . /.livesys/larch0
-    fi
-
     # Get the 'original' version of saved files in /etc
     # (inittab, rc.sysinit, rc.shutdown)
     for fs in ${INSTALL}/etc/*.larchsave; do
@@ -54,5 +49,11 @@ else
     if grep "#---LARCH-IGNORE---" ${INSTALL}/etc/pacman.conf &>/dev/null; then
         sed "/#+++LARCH-IGNORE+++/,/#---LARCH-IGNORE---/ d" \
                 -i ${INSTALL}/etc/pacman.conf
+    fi
+
+    # Remove any files and directories intended only for the live system,
+    # perform any other custom tweaks
+    if [ -f /.livesys/larch0 ]; then
+        . /.livesys/larch0
     fi
 fi

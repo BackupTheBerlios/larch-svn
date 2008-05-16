@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.05.15
+# 2008.05.16
 
 # Location for the CD image
 CDDATA="${LARCHBUILD}/cd"
@@ -74,10 +74,6 @@ mklive ()
     if ! ${chrootx}grep /squashfs.ko \
             /lib/modules/${KVERSION}/modules.dep &>/dev/null; then
         echo "ERROR: No squashfs module found"
-        fail=1
-    fi
-    if ! [ -f "${INSTLDIR}/etc/rc.d/functions.d/sysinit" ]; then
-        echo "ERROR: You must install the larch version of 'initscripts'"
         fail=1
     fi
     if ${chrootx}grep /aufs.ko \
@@ -271,9 +267,15 @@ mklive ()
 
     # Save original /etc/inittab, /etc/rc.sysinit and /etc/rc.shutdown
     for fsave in inittab rc.sysinit rc.shutdown; do
-        if ! [ -f ${INSTLDIR}/etc/${fsave}.larchsave ]; then
+        if [ -f ${INSTLDIR}/etc/${fsave}.larchsave ]; then
             # A running larch system will already have this file, and it
             # shouldn't be overwritten
+            echo "// /etc/${fsave}.larchsave exists already, not overwriting"
+        elif [ -f ${LARCHBUILD}/tmp/overlay/etc/${fsave}.larchsave ]; then
+            # A profile can supply this file in the overlay, and it
+            # shouldn't be overwritten
+            echo "// /etc/${fsave}.larchsave found in overlay, not overwriting"
+        else
             cp ${INSTLDIR}/etc/${fsave} \
                     ${LARCHBUILD}/tmp/overlay/etc/${fsave}.larchsave
         fi
