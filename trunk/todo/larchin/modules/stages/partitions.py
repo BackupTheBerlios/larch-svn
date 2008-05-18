@@ -67,7 +67,7 @@ class Widget(Stage):
                 self.startsector = p[4] + 1
 
         avsec = (self.dinfo[1] * self.dinfo[2] - self.startsector)
-        self.avG = avsec * self.dinfo[3] / 1.0e9)
+        self.avG = avsec * self.dinfo[3] / 1.0e9
         if (self.startpart > 1):
             popupMessage(_("One or more NTFS (Windows) partitions were"
                     " found. These will be retained. The available space"
@@ -89,12 +89,6 @@ class Widget(Stage):
         install.clearParts()
 
 #?
-        self.request_update(self.start)
-
-    def start(self):
-
-        self.swap.enable(True)
-        return self.stop_callback()
 
     def swapsize_cb(self, sizeG):
         self.swapsizeG = sizeG
@@ -131,33 +125,14 @@ class Widget(Stage):
             swap_value = SWAPDEF
         self.swap.set_adjust(upper=swap_upper, value=swap_value)
 
-        return self.stop_callback()
 
 
-    def ntfsresize(self):
-        """Shrink NTFS filesystem on first partition.
-        """
-        # convert size to MB
-        newsize = int(self.ntfs.size * 1000)
-        message = install.doNTFSshrink(newsize)
-        if message:
-            # resize failed
-            popupMessage(_("Sorry, resizing failed. Here is the"
-                    " error report:\n\n") + message)
-            self.reinit()
-            return False
-        return True
+
 
     def forward(self):
-        if (self.ntfs.is_enabled and self.ntfs.keep1state
-                and self.ntfs.shrinkstate):
-            if not popupWarning(_("You are about to shrink the"
-                    " first partition. Make sure you have backed up"
-                    " any important data.\n\nContinue?")):
-                return
-            if not self.ntfsresize():
-                self.reinit()
-                return
+
+        print "NYI"
+        return 0
 
         # Set up the installation partitions automatically.
         if (self.ntfs.is_enabled and self.ntfs.keep1state):

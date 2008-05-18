@@ -88,7 +88,7 @@ class HomeWidget(gtk.Frame):
     """
     def __init__(self, size_cb):
         gtk.Frame.__init__(self)
-        self.master = master
+        self.size_callback = size_cb
         adjlabel = gtk.Label(_("Set size of '/home' partition (GB)"))
         adjlabel.set_alignment(0.9, 0.5)
         self.homeadj = gtk.Adjustment(lower=0.1, step_incr=0.1, page_incr=1.0)
@@ -104,7 +104,6 @@ class HomeWidget(gtk.Frame):
 
         self.is_enabled = False
         self.homestate = False
-        self.size = 0.0
         self.homeadj.connect("value_changed", self.home_size_cb, size_cb)
         self.homeon.connect("toggled", self.home_check_cb)
 
@@ -119,8 +118,8 @@ class HomeWidget(gtk.Frame):
             self.hide()
         self.is_enabled = on
 
-    def home_size_cb(self, widget, callback):
-        callback(self.homeadj.value)
+    def home_size_cb(self, widget, data=None):
+        self.size_callback(self.homeadj.value)
 
     def home_check_cb(self, widget, data=None):
         self.set_home(self.homeon.get_active(), False)
@@ -128,11 +127,12 @@ class HomeWidget(gtk.Frame):
     def set_home(self, on, update=True):
         if (on != self.homestate):
             self.homestate = on
-            self.master.homesize_cb()
         if on:
             self.homebox.show()
+            self.size_callback(self.homeadj.value)
         else:
             self.homebox.hide()
+            self.size_callback(0.0)
         if update:
             self.homeon.set_active(on)
 
@@ -141,24 +141,12 @@ class HomeWidget(gtk.Frame):
         """Set the size adjustment slider. Any of lower limit, upper limit
         and size can be set independently.
         """
-        osize = self.size
         if (lower != None):
             self.homeadj.lower = lower
-            if (self.size < lower):
-                self.size = lower
-                self.homeadj.value = lower
         if (upper != None):
             self.homeadj.upper = upper
-            if (self.size > upper):
-                self.size = upper
-                self.homeadj.value = upper
-        if ((value != None) and (value != self.size)
+        if ((value != None)
                 and (value >= self.homeadj.lower)
                 and (value <= self.homeadj.upper)):
-            self.size = value
-            if update:
-                self.homeadj.value = value
-
-        if (osize != self.size):
-            self.master.homesize_cb()
+            self.homeadj.value = value
 
