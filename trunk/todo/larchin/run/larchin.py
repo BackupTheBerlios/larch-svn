@@ -21,7 +21,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.05.12
+# 2008.05.17
 
 import os, sys
 
@@ -66,7 +66,12 @@ else:
         _("Bad arguments"))
     quit()
 
+def plog(text):
+    """A function to log information from the program.
+    """
+    print text
 
+__builtin__.plog = plog
 __builtin__.basePath = basedir
 __builtin__.stages = {}
 __builtin__.stageSwitch = {}

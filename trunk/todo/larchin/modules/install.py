@@ -23,7 +23,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.05.12
+# 2008.05.18
 
 from subprocess import Popen, PIPE, STDOUT
 import os, shutil, signal
@@ -35,7 +35,7 @@ from dialogs import PopupInfo, popupWarning, popupError
 
 class installClass:
     def __init__(self, host=None):
-        self.LINUXMIN = 5000   # MB, guessed minimum space for Linux
+        self.LINUXMIN = 5.0     # GB, guessed minimum space for Linux
 
         self.host = host
 
@@ -189,48 +189,62 @@ class installClass:
         self.autoPartStart = start
 
     def getDeviceInfo(self, dev):
-        """Info on drive and partitions (dev="/dev/sda", etc.)
-        Return tuple: ( drive size in MB = 10^6B,
-                        cylinder size in MB,
-                        [(partition-number, partition-type,
-                                size in MB, start in MB, end in MB),
-                         ... ]
-                      )
+        """Get info on drive and partitions (dev="/dev/sda", etc.)
+        Return tuple: ( drive size as string,
+                        drive size in cylinders,
+                        cylinder size in sectors,
+                        sector size in bytes )
         """
-        dinfo = self.xcall("get-partitions %s" % dev)
-        # get the drive size in MB
-        dsm = re.search(r"^/dev.*:([0-9\.]+)MB:.*;$", dinfo, re.M)
-        dsize = int(dsm.group(1).split('.')[0])
-        # get the info for the partitions
+        dinfo = self.xcall("fdisk-l %s" % dev).splitlines()
+
+        # get the drive size as a string
+        ds = re.search(r"%s:([^,]+)" % dev, dinfo[0])
+        dsize = ds.group(1)
+
+        # get the drive size in cylinders
+        ds = re.search(r",[^,]+,[ ]*([0-9]+)", dinfo[1])
+        dcsize = ds.group(1)
+
+        # get cylinder size in sectors and sector size in bytes
+        ds = re.search(r"([0-9]+)[ ]*\*[ ]*([0-9]+)", dinfo[2])
+        csize = ds.group(1)
+        ssize = ds.group(2)
+
+        return (dsize, int(dcsize), int(csize), int(ssize))
+
+    def getParts(self, dev):
+        """Get info about the partitions on the given drive.
+        Return list of tuples:
+            [ (partition-number, partition-type,
+               size in sectors, start in sectors, end in sectors),
+                         ... ]
+
+        Under certain circumstances (?) the partition-type info seems
+        to be unreliable, e.g. a test with three NTFS partitions
+        resulted in the third showing an empty type-field.
+        """
+        pinfo = self.xcall("get-partinfo %s" % dev).splitlines()
         ilist = []
-        for l in dinfo.splitlines():
-            pm = re.search(r"^([0-9]+):([0-9\.]+)MB:([0-9\.]+)MB:"
-                    "([0-9\.]+)MB:([^\:]*):.*;$", l)
+        for l in pinfo:
+            pm = re.search(r"^([0-9]+):([0-9]+)s:([0-9]+)s:"
+                    "([0-9]+)s:([^\:]*)[;:]", l)
             if pm:
                 # Add tuple (partition-number, partition-type,
-                #            size in MB, start in MB, end in MB)
-                ilist.append((int(pm.group(1)), pm.group(5),
-                              int(pm.group(4).split('.')[0]),
-                              int(pm.group(2).split('.')[0]),
-                              int(pm.group(3).split('.')[0])))
-        # Also get the size of a cylinder, convert to MB
-        c, m = self.xcall("get-cylsize %s" % dev).split()
-        return (dsize, float(m) / 1000, ilist)
+                #            size in sectors, start in sectors, end in sectors)
+                # Free space has partition-number 0 and type 'free'
+                p = int(pm.group(1))
+                t = pm.group(5)
+                if (t == 'free'):
+                    p = 0
+                ilist.append((p, t, int(pm.group(4)),
+                              int(pm.group(2)), int(pm.group(3))))
+        return ilist
 
-    def getPartInfo(self, partno):
-        """Get size and fstype for the given partition number using the
-        data from the last call of getDeviceInfo.
+    def listNTFSpartitions(self):
+        """Return a simple list of partitions (on all devices) which are
+        of type 'ntfs'.
         """
-        rc = re.compile(r"^%d:([0-9\.]+)MB:([0-9\.]+)MB:"
-                "([0-9\.]+)MB:([^:]*):.*;$" % partno)
-        for l in self.dinfo.splitlines():
-            rm = rc.search(l)
-            if (rm and (rm.group(4) != 'free')):
-                size = int(rm.group(3))
-                fstype = rm.group(4)
-                return (size, fstype)
-        # This shouldn't happen
-        assert False, "I wasn't expecting the Spanish Inquisition"
+        return self.xcall("get-ntfs-parts").split()
 
     def getNTFSinfo(self, part):
         """Return information about the given partition as a tuple:
@@ -255,29 +269,28 @@ class installClass:
             cds = int(rx.search(lines[0]).group(1))
             srp = int(rx.search(lines[0]).group(1))
         except:
-            print "get-ntfsinfo failed"
+            plog("get-ntfsinfo failed")
             return None
         return (self.ntfs_cluster_size, cvs, cds, srp)
 
     def getNTFSmin(self, part):
-        """Get the minimum size in MB for shrinking the given NTFS partition.
+        """Get the minimum size in bytes for shrinking the given NTFS
+        partition.
         """
-        cs, cvs, cds, srp = self.getNTFSinfo(part)
-        return srp / 1000000
+        return self.getNTFSinfo(part)[3]
 
-    def doNTFSshrink(self, s):
+    def doNTFSshrink(self, device, partnum, size, partstart, diskinfo):
         """Shrink selected NTFS partition. First the file-system is shrunk,
-        then the partition containing it. The given size is in MB.
+        then the partition containing it. size and partstart are in sectors.
         """
-        # This rounding to whole clusters may well not be necessary
-        clus = int(s * 1e6) / self.ntfs_cluster_size
-        newsize = clus * self.ntfs_cluster_size
-
-        dev = self.selectedDevice()
-
+        dev = "%s%d" % (device, partnum)
+        ## This rounding to whole clusters may well not be necessary
+        #clus = int(s * 1e6) / self.ntfs_cluster_size
+        #newsize = clus * self.ntfs_cluster_size
+        newsize = size * diskinfo[3]
         # First a test run
         info = PopupInfo(_("Test run ..."), _("Shrink NTFS partition"))
-        res = self.xcall("ntfs-testrun %s1 %s" % (dev, newsize))
+        res = self.xcall("ntfs-testrun %s %s" % (dev, newsize))
         info.drop()
         if res:
             return res
@@ -285,20 +298,20 @@ class installClass:
         # Now the real thing, resize the file-system
         info = PopupInfo(_("This is for real, shrinking file-system ..."),
                 _("Shrink NTFS partition"))
-        res = self.xcall("ntfs-resize %s1 %s" % (dev, newsize))
+        res = self.xcall("ntfs-resize %s %s" % (dev, newsize))
+
         info.drop()
         if res:
             return res
 
-        # Now resize the actual partition
-
-        # Get new start of following partition - even cylinder boundary,
-        # doing quite a safe rounding up.
-        newcyl = (int((newsize / 1e6) / self.cylinderMB + 2) / 2) * 2
-
+        # Now resize the actual partition, so that it ends at a cylinder
+        # boundary after the end of the ntfs filesystem.
+        cylsize = diskinfo[2]
+        end = int((partstart + size + 2*cylsize) / cylsize) * cylsize
         info = PopupInfo(_("Resizing partition ..."),
                 _("Shrink NTFS partition"))
-        res = self.xcall("part1-resize %s %d" % (dev, newcyl))
+        res = self.xcall("part-resize %s %d %d" %
+                (device, partnum, end - partstart))
         info.drop()
         if res:
             return res
@@ -306,9 +319,8 @@ class installClass:
         # And finally expand the ntfs file-system into the new partition
         info = PopupInfo(_("Fitting file-system to new partition ..."),
                 _("Shrink NTFS partition"))
-        res = self.xcall("ntfs-growfit %s1" % dev)
+        res = self.xcall("ntfs-growfit %s" % dev)
         info.drop()
-        self.getDeviceInfo(dev)
         return res
 
     def gparted_available(self):

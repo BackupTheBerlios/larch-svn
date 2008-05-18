@@ -19,11 +19,12 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.05.14
+# 2008.05.18
 
 
 from stage import Stage
 from ntfs_gui import NtfsWidget, ShowInfoWidget, PartitionWidget
+from dialogs import popupWarning, popupMessage
 
 class Widget(Stage):
     def getHelp(self):
@@ -57,125 +58,159 @@ class Widget(Stage):
         self.rest = self.addWidget(ShowInfoWidget(
                 _("(Potential) free space at end of drive:  ")))
 
+        # Get a list of NTFS partitions (all disks) and then the
+        # corresponding info about the disks and partitions
+        self.partlist = self.getNTFSparts()
+        # Each disk (with NTFS partitions) gets an entry in self.diskinfo.
+        # Each entry is a list-pair: [disk info, list of partitions' info]
+        # The second item, the partition-info list can be changed if a
+        # partition is shrunk or removed.
+        self.diskinfo = {}
+        for p in self.partlist:
+            d = p.rstrip("0123456789")
+            if not self.diskinfo.has_key(d):
+                self.diskinfo[d] = [install.getDeviceInfo(d), None]
+                self.diskChanged(d)
+
+        # List of already 'handled' partitions
         self.donelist = []
+
         self.reinit()
 
     def reinit(self):
-        # Detect all NTFS partitions
-        self.getNTFSparts()
-        # Get simple list of ntfs partitions
-        self.partlist = []
-        for devs in self.ntfsparts:
-            self.partlist += [devs[0] + str(r[0]) for r in devs[3]]
+        # Display list of ntfs partitions
         self.info.set_plist(self.partlist)
 
         # If no NTFS partition to handle is found, skip this stage
         self.skip = True
-        for dev, dsize, csize, parts in self.ntfsparts:
+        dev0 = None
+        for part in self.partlist:
+            self.device = part.rstrip('0123456789')
+            self.partitionnum = int(part[len(self.device):])
+
+            self.dinfo, pilist = self.diskinfo[self.device]
+            # self.dinfo:
+            #   ( drive size as string,
+            #     drive size in cylinders,
+            #     cylinder size in sectors,
+            #     sector size in bytes )
+            # pi:
+            #   [(partition-number, partition-type,
+            #     size in sectors, start in sectors, end in sectors),
+            #    ... ]
+
+            # Get information on the current partition
+            for pi in pilist:
+                if (pi[0] == self.partitionnum):
+                    # These sizes are all in sectors
+                    psize, pstart, pend = pi[2:]
+                    break
+
             # Flag last NTFS partition on device
             self.lastpart = True
-            for part, t, psize, pstart, pend in parts:
-                dpart = dev+str(part)
-                if self.lastpart:
-                    self.lpsize, self.lpstart, self.lpend = psize, pstart, pend
-                if dpart in self.donelist:
-                    # Step through partitions
-                    self.lastpart = False
-                    continue
+            if (self.device == dev0):
+                self.lastpart = False
+            else:
+                # Remember info for last NTFS partition on this disk.
+                # These sizes are all in sectors
+                self.lpsize, self.lpstart, self.lpend = psize, pstart, pend
+            dev0 = self.device
 
-                self.device = dev
-                self.partitionnum = part
-                self.dsize = dsize
-                self.donelist.append(dpart)
-                self.info.set_part(dpart)
-                self.info.set_disksize("%8.1f GB" % (float(dsize) / 1000.0))
-                self.skip = False
+            if part in self.donelist:
+                # Step through partitions
+                continue
+            self.donelist.append(part)
+            self.pstart = pstart    # Needed for resizing
 
-                self.ntfs.set_partsize("%3.1f GB" % (float(psize) / 1000.0))
-                self.ntfs.set_delete(False)
-                # Set the maximum shrunk size to slightly less than the
-                # current partition size
-                psize -= 200
-                print "reduced psize =", psize
-                self.ntfs.set_max(psize)
+            self.info.set_part(part)
+            self.info.set_disksize(self.dinfo[0])
+            self.skip = False
+            plog("NTFS editor: %s" % part)
 
-                # Get occupied space, allow 200MB extra
-                ntfsmin = install.getNTFSmin(dpart) + 200
-                print "ntfsmin =", ntfsmin
-                if (psize < ntfsmin):
-                    # Too full to shrink
-                    self.ntfs.toofull(True)
-                    self.ntfs.set_delete(self.lastpart and
-                            ((dsize-pend) < install.LINUXMIN))
-                    return
+            self.dsize = self.dinfo[1] * self.dinfo[2]  # sectors
 
-                self.ntfs.toofull(False)
-                self.ntfs.set_min(ntfsmin)
+            self.secsize = self.dinfo[3]
+            psizeG = float(psize) * self.secsize / 1e9
+            self.ntfs.set_partsize("%3.1f GB" % psizeG)
+            self.ntfs.set_delete(False)
+            # Set the maximum shrunk size to slightly less than the
+            # current partition size
+            maxsizeG = psizeG - 0.2
+            plog("reduced psize = %d" % maxsizeG)
+            self.ntfs.set_max(maxsizeG)
 
-                # Whether to shrink by default?
-                # Only if it is the last NTFS partition on this disk,
-                # and if a fair sharing of free space calls for shrinking,
-                # and if it is possible to shrink to the required extent.
-                shrinkon = self.lastpart
-                # How much to shrink by default?
-                # Suggest sharing excess (over the minimum) equally between
-                # Linux and Windows
-                size = (psize + ntfsmin) / 2
-                if self.lastpart:
-                    excess = dsize - pstart - ntfsmin
-                    if excess < install.LINUXMIN:
-                        # The available space is too small, propose
-                        # deleting the partition
-                        self.ntfs.set_delete(True)
-                        size = ntfsmin
-                    else:
-                        excess -= install.LINUXMIN
-                        s = ntfsmin + (excess / 2)
-                        if (s < (psize - 500)):
-                            # shrink unless change is only minimal
-                            size = s
-                        else:
-                            shrinkon = False
-
-                else:
-                    self.set_rest(dsize - self.lpend)
-
-                self.ntfs.set_size(size)
-                self.ntfs.set_shrink(shrinkon)
+            # Get occupied space, allow 200MB extra
+            ntfsmin = float(install.getNTFSmin(part)) / 1e9 + 0.2
+            plog("ntfsmin = %3.1f" % ntfsmin)
+            if (maxsizeG < ntfsmin):
+                # Too full to shrink
+                self.ntfs.toofull(True)
+                self.ntfs.set_delete(self.lastpart and
+                        (((self.dsize-pend) * self.secsize / 1e9)
+                                < install.LINUXMIN))
                 return
 
-    def set_rest(self, mb):
-        self.rest.set("%8.1f GB" % (float(mb) / 1000.0))
+            self.ntfs.toofull(False)
+            self.ntfs.set_min(ntfsmin)
+
+            # Whether to shrink by default?
+            # Only if it is the last NTFS partition on this disk,
+            # and if a fair sharing of free space calls for shrinking,
+            # and if it is possible to shrink to the required extent.
+            shrinkon = self.lastpart
+            # How much to shrink by default?
+            # Suggest sharing excess (over the minimum) equally between
+            # Linux and Windows
+            sizeG = (psizeG + ntfsmin) / 2
+            if self.lastpart:
+                excess = (self.dsize - pstart) * self.secsize / 1e9 - ntfsmin
+                if excess < install.LINUXMIN:
+                    # The available space is too small, propose
+                    # deleting the partition
+                    self.ntfs.set_delete(True)
+                    sizeG = ntfsmin
+                else:
+                    excess -= install.LINUXMIN
+                    s = ntfsmin + (excess / 2)
+                    if (s < (psizeG - 0.5)):
+                        # shrink unless change is only minimal
+                        sizeG = s
+                    else:
+                        shrinkon = False
+
+            else:
+                self.set_rest(self.dsize - self.lpend)
+
+            self.ntfs.set_size(sizeG)
+            self.ntfs.set_shrink(shrinkon)
+            return
+        # End of for-loop
+
+    def set_rest(self, sectors):
+        self.rest.set("%8.1f GB" % (float(sectors) * self.secsize / 1e9))
 
     def getNTFSparts(self):
-        # Only unmounted partitions will be considered
+        """Return a list of NTFS partitions. Only unmounted partitions will
+        be considered.
+        """
+        # Get list of mounted partitions
         mounts = [m.split()[0] for m in install.getmounts().splitlines()
                 if m.startswith('/dev/')]
-        ld = install.listDevices()
-        self.ntfsparts = []
-        for d, s, n in ld:
-            parts = []
-            di = install.getDeviceInfo(d)
-            for pi in di[2]:
-                # pi: ( partition-number, partition-type,
-                #       size in MB, start in MB, end in MB )
-                if (pi[1] == 'ntfs'):
-                    p = pi[0]
-                    if not ((d+str(p)) in mounts):
-                        parts.append(pi)
-            if parts:
-                # Add record for this device:
-                #       ( device, disk-size MB, cylinder size MB,
-                #         ntfs partition info list )
-                parts.reverse()     # So that the last partition comes first
-                self.ntfsparts.append((d, di[0], di[1], parts))
+
+        # Get and filter list of NTS partitions
+        partlist = [p for p in install.listNTFSpartitions()
+                if p not in mounts]
+
+        # Reverse the list order so that the last partitions come first
+        partlist.reverse()
+        return partlist
 
     def size_changed_cb(self, size):
         """Called when the requested shrinkage changes, by moving the slider,
         by changing the delete flag, by changing the shrink flag.
         size < 0 => delete
         size = 0 => no shrink
-        size > 0 => new shrunk size
+        size > 0 => new shrunk size, in GB
         """
         if self.lastpart:
             if (size < 0):
@@ -185,7 +220,8 @@ class Widget(Stage):
             elif (size == 0):
                 rest = self.dsize - self.lpend
             else:
-                rest = self.dsize - self.lpstart - size
+                rest = self.dsize - self.lpstart - int(
+                        size * 1e9 / self.secsize)
             self.set_rest(rest)
 
     def forward(self):
@@ -193,14 +229,27 @@ class Widget(Stage):
             return 0
 
         # Carry out the requested operation!
+        devpart="%s%d" % (self.device, self.partitionnum)
         if self.ntfs.deletestate:
             install.rmpart(self.device, self.partitionnum)
+            self.partlist.remove(devpart)
+            self.diskChanged(self.device)
 
-        else:
-            #????
-            pass
+        elif self.ntfs.shrinkstate and popupWarning(
+                _("You are about to shrink %s."
+                " Make sure you have backed up"
+                " any important data.\n\n"
+                "Continue?") % devpart):
+            newsize = int(self.ntfs.size * 1e9 / self.secsize)  # sectors
+            message = install.doNTFSshrink(self.device, self.partitionnum,
+                    newsize, self.pstart, self.dinfo)
+            if message:
+                # resize failed
+                popupMessage(_("Sorry, resizing failed. Here is the"
+                        " error report:\n\n") + message)
+            self.diskChanged(self.device)
 
-        if ((self.device+str(self.partitionnum)) == self.partlist[-1]):
+        if (devpart == self.partlist[-1]):
             # Last NTFS partition
             return 0
 
@@ -208,243 +257,9 @@ class Widget(Stage):
         # Don't go to next stage
         return -1
 
-
-
-
-
-
-
-
-
-
-    def start(self):
-        self.ntfs.enable(self.keep1init(self.dev))
-
-        self.swap.enable(True)
-        self.setCheck(self.expert, False)
-        self.ntfs_changed()
-        return self.stop_callback()
-
-    def keep1init(self, dev):
-        """Only offer to keep first partition if:
-            (a) part1 is NTFS, and (b) potential free space > MINLINUXSIZE
-        Return True if the option is to be offered.
-        """
-        self.noshrink = False
-        self.forceshrink = False
-        self.p1end = 0.0
-
-        MINLINUXSIZE = 5.0      # GB
-        if not install.p1end:
-            return False        # part1 not NTFS
-
-        self.p1end = float(install.p1end) / 1000
-
-        # Get lowest possible new end point for partition
-        ntfsmin = float(install.getNTFSmin(dev+"1") + install.p1start) / 1000
-        valmin = ntfsmin + 0.2
-        space = ((self.dsize - valmin) >= MINLINUXSIZE)
-                # enough (potential) free space?
-
-        valmax = self.p1end - 0.1
-        self.forceshrink = ((self.dsize - self.p1end) < MINLINUXSIZE)
-        if self.forceshrink:
-            # keeping only possible by shrinking
-            valmax = self.dsize - MINLINUXSIZE
-
-        self.noshrink = (valmax < valmin)
-                # No shrinking possible, partition too full?
-        if self.noshrink or not space:
-            popupMessage(_("The option to reduce the size of the existing"
-                    " operating system is not available because its"
-                    " partition is too full."))
-            return space
-
-        # slider values
-        val = self.dsize / 2
-        if (valmax < val):
-            val = valmax
-        elif (valmin > val):
-            val = valmin
-        self.ntfs.set_shrinkadjust(lower=valmin, upper=valmax, value=val)
-
-        # Activate shrinking by default if self.forceshrink is set or
-        # less than half the drive is free
-        self.ntfs.set_shrink(self.forceshrink or (self.p1end > (self.dsize/2)))
-
-        # Enable retention of the first partition by default
-        self.ntfs.set_keep1(True)
-        return True
-
-    def keep1_cb(self, on):
-        enshrink = (on and not self.noshrink)
-        self.ntfs.enable_shrink(enshrink)
-        if enshrink and self.ntfs.shrinkstate:
-            self.ntfs.enable_shrinkswitch(not self.forceshrink)
-        self.ntfs_changed()
-
-    def shrink_cb(self, on):
-        self.ntfs_changed()
-
-    def ntfssize_cb(self, size):
-        self.ntfs_changed()
-
-    def ntfs_changed(self):
-        """Signal a change in ntfssize.
-        """
-        if not self.ntfsFlag:
-            self.ntfsFlag = True
-            self.request_update(self.recalculate)
-
-    def swapsize_cb(self):
-        self.adjustroot()
-
-    def swap_cb(self, on):
-        self.adjustroot()
-
-    def homesize_cb(self):
-        self.adjustroot()
-
-    def home_cb(self, on):
-        self.adjustroot()
-
-    def adjustroot(self):
-        self.rootsize = self.dsize
-        if (self.ntfs.is_enabled and self.ntfs.keep1state):
-            if self.ntfs.shrinkstate:
-                self.rootsize -= self.ntfs.size
-            else:
-                self.rootsize -= self.p1end
-
-        if (self.swap.is_enabled and self.swap.swapstate):
-            self.swap_mb = int(self.swap.size * 1000)
-            self.rootsize -= self.swap.size
-        else:
-            self.swap_mb = 0
-        if (self.home.is_enabled and self.home.homestate):
-            self.home_mb = int(self.home.size * 1000)
-            self.rootsize -= self.home.size
-        else:
-            self.home_mb = 0
-        self.root.set_value(self.rootsize)
-
-    def recalculate(self):
-        """Something about the ntfs partition has changed.
-        Reevaluate the other partitions. This is an idle callback.
-        """
-        self.ntfsFlag = False
-
-        MINSPLITSIZE = 20.0    # GB
-        SWAPSIZE = 5           # % of total
-        SWAPMAX  = 2.0         # GB
-        SWAPMAXSIZE = 10       # % of total
-        SWAPDEF = 1.0          # GB
-        freesize = self.dsize
-        if (self.ntfs.is_enabled and self.ntfs.keep1state):
-            if self.ntfs.shrinkstate:
-                freesize -= self.ntfs.size
-            else:
-                freesize -= self.p1end
-
-        self.home_on = (freesize >= MINSPLITSIZE)
-        home_upper = freesize - SWAPMAX - 5.0
-        home_value = home_upper - 2.0
-        self.home.set_adjust(upper=home_upper, value=home_value)
-        self.home.enable(self.home_on and (not self.getCheck(self.expert)))
-
-        swap_upper = freesize * SWAPMAXSIZE / 100
-        if (swap_upper > SWAPMAX):
-            swap_upper = SWAPMAX
-        swap_value = freesize * SWAPSIZE / 100
-        if (swap_value > SWAPDEF):
-            swap_value = SWAPDEF
-        self.swap.set_adjust(upper=swap_upper, value=swap_value)
-
-        return self.stop_callback()
-
-
-    def ntfsresize(self):
-        """Shrink NTFS filesystem on first partition.
-        """
-        # convert size to MB
-        newsize = int(self.ntfs.size * 1000)
-        message = install.doNTFSshrink(newsize)
-        if message:
-            # resize failed
-            popupMessage(_("Sorry, resizing failed. Here is the"
-                    " error report:\n\n") + message)
-            self.reinit()
-            return False
-        return True
-
-################################
-        if (self.ntfs.is_enabled and self.ntfs.keep1state
-                and self.ntfs.shrinkstate):
-            if not popupWarning(_("You are about to shrink the"
-                    " first partition. Make sure you have backed up"
-                    " any important data.\n\nContinue?")):
-                return
-            if not self.ntfsresize():
-                self.reinit()
-                return
-
-        # Set up the installation partitions automatically.
-        if (self.ntfs.is_enabled and self.ntfs.keep1state):
-            text = _(" * Wipe everything except the first partition")
-            # allocate partitions from 2nd
-            startmark = install.p1end       # altered by ntfsresize
-            partno = 2
-        else:
-            text = _(" * Completely wipe the drive")
-            startmark = 0
-            partno = 1
-
-        dev = install.selectedDevice()
-        if not popupWarning(_("You are about to perform a destructive"
-                " operation on the data on your disk drive (%s):\n%s\n\n"
-                "This is a risky business, so don't proceed if"
-                " you have not backed up your important data.\n\n"
-                "Continue?") % (dev, text)):
-            self.reinit()
-            return
-
-        endmark = install.dsize #-1?
-
-        # Tricky logic here! The first partition should be root, then swap then
-        # home, but swap and/or home may be absent. The last partition should take
-        # its endpoint from 'endmark', root's start from startmark. The actual
-        # partitioning should be done, but the formatting can be handled - given
-        # the appropriate information - by the installation stage.
-
-        # Remove all existing partitions (except optionally the first)
-        install.rmparts(dev, partno)
-
-        if (self.home_mb == 0) and (self.swap_mb == 0):
-            em = endmark
-        else:
-            em = startmark + int(self.rootsize * 1000)
-        install.mkpart(dev, startmark, em)
-        startmark = em
-        install.newPartition("%s%d" % (dev, partno), m='/', f=True)
-
-        install.clearSwaps()
-        if (self.swap_mb != 0):
-            partno += 1
-            if (self.home_mb == 0):
-                em = endmark
-            else:
-                em = startmark + self.swap_mb
-            install.mkpart(dev, startmark, em, 'linux-swap')
-            startmark = em
-            part = "%s%d" % (dev, partno)
-            install.addSwap(part, True)
-
-        if self.home_mb:
-            partno += 1
-            install.mkpart(dev, startmark, endmark)
-            install.newPartition("%s%d" % (dev, partno), m='/home', f=True)
-
-        mainWindow.goto('install')
+    def diskChanged(self, dev):
+        p = install.getParts(dev)
+        self.diskinfo[dev][1] = p
 
 
 #################################################################

@@ -70,9 +70,6 @@ class NtfsWidget(gtk.Frame):
     def set_delete(self, on, update=True):
         """Set checkbutton 'delete partition' on or off.
         """
-
-        print "set_delete", on, update
-
         self.deletestate = on
         child = self.get_child()
         if child:
@@ -97,9 +94,6 @@ class NtfsWidget(gtk.Frame):
     def set_shrink(self, on, update=True):
         """Set checkbutton 'shrink partition' on or off.
         """
-
-        print "set_shrink", on, update
-
         self.shrinkstate = on
         self.shrink.set_sensitive(not self.toofullstate)
         if self.toofullstate:
@@ -108,12 +102,10 @@ class NtfsWidget(gtk.Frame):
         child = self.ntfsframe.get_child()
         if child:
             self.ntfsframe.remove(child)
-        if update:
-            self.shrink.set_active(on)
         if on:
             self.ntfsframe.add(self.ntfsbox)
             self.ntfsbox.show_all()
-            self.size_cb(self.get_size())
+            self.size_cb(self.size)
         else:
             self.ntfsframe.add(self.rlabel)
             rlabeltext = (_("This partition (size %s)"
@@ -124,6 +116,8 @@ class NtfsWidget(gtk.Frame):
             self.rlabel.set_label(rlabeltext)
             self.rlabel.show()
             self.size_cb(0)
+        if update:
+            self.shrink.set_active(on)
 
     def set_partsize(self, size):
         self.partsize = size
@@ -136,9 +130,6 @@ class NtfsWidget(gtk.Frame):
         """Set the size adjustment slider. Any of lower limit, upper limit
         and size can be set independently.
         """
-
-        print "shrinkadjust", lower, upper, value, update
-
         if (lower != None):
             self.ntfsadj.lower = lower
             if (self.size < lower):
@@ -154,28 +145,23 @@ class NtfsWidget(gtk.Frame):
                 and (value <= self.ntfsadj.upper)):
             self.size = value
             if self.shrinkstate and not self.deletestate:
-                self.size_cb(self.get_size())
+                self.size_cb(self.size)
             if update:
                 self.ntfsadj.value = value
 
     def ntfs_size_cb(self, widget, data=None):
         self.set_shrinkadjust(value=self.ntfsadj.value, update=False)
 
-    def get_size(self):
-        """Return the slider setting in MB
-        """
-        return int(self.size * 1000.0)
-
     def set_max(self, val):
-        self.max = float(val) / 1000.0
+        self.max = val
         self.set_shrinkadjust(upper=self.max)
 
     def set_min(self, val):
-        self.min = float(val) / 1000.0
+        self.min = val
         self.set_shrinkadjust(lower=self.min)
 
     def set_size(self, val):
-        self.set_shrinkadjust(value=(float(val) / 1000.0))
+        self.set_shrinkadjust(value=val)
 
 
 class ShowInfoWidget(gtk.HBox):
