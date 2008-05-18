@@ -19,10 +19,11 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.05.13
+# 2008.05.18
 
 import gtk
 
+from stage import ShowInfoWidget
 
 class NtfsWidget(gtk.Frame):
     """This widget allows an existing operating system (Windows/NTFS only)
@@ -163,22 +164,6 @@ class NtfsWidget(gtk.Frame):
     def set_size(self, val):
         self.set_shrinkadjust(value=val)
 
-
-class ShowInfoWidget(gtk.HBox):
-    """A widget to display (only - it is not editable) one piece of
-    information, a label and an entry.
-    """
-    def __init__(self, text):
-        gtk.HBox.__init__(self)
-        self.label = gtk.Label()
-        self.label.set_text(text)
-        self.sizew = gtk.Entry(20)
-        self.sizew.set_editable(False)
-        self.pack_end(self.sizew, False)
-        self.pack_end(self.label, False)
-
-    def set(self, val):
-        self.sizew.set_text(val)
 
 class PartitionWidget(gtk.HBox):
     """Combined widget showing all ntfs partitions in a list,
