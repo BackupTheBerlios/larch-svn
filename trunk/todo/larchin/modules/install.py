@@ -357,19 +357,38 @@ class installClass:
                 if op: return op
         return ""
 
-    def mkpart(self, dev, startMB, endMB, ptype='ext2', pl='primary'):
+    def makepart(self, dev, partnum, startcyl, endcyl, swap=False):
         """Make a partition on the given device with the given start and
-        end points. The default type is linux (called 'ext2' but no
-        formatting is done). pl can be 'primary', 'extended' or 'logical'.
+        end points. By default a 'linux' partition will be created, but
+        a 'swap' partition can also be requested. partnum can be 1-4, in
+        which case, a primary partition will be created/changed, 0, in
+        which case an extended partition will be created as fourth
+        partition, or -1, in which case a logical partition will be
+        created.
         """
-        # Partitions are aligned to even cylinder boundaries
-        startcyl = (int(startMB / self.cylinderMB + 1) / 2) * 2
-        endcyl = (int(endMB / self.cylinderMB + 1) / 2) * 2
-        if (endcyl > self.cylinders):
-            endcyl = self.cylinders
+        # Note that separate calls are used for logical and
+        # primary/extended partitions. This is because I could see no
+        # way of making parted add a primary partition with a given number
+        # and no way of creating a logical partition with sfdisk ...
+        if (partnum == 0):
+            self.xcall("newpart2 %s %d %d %d %s" % (dev, 4,
+                    startcyl, endcyl, "05"))
 
-        return self.xcall("newpart %s %d %d %s %s" % (dev,
-                startcyl, endcyl, ptype, pl))
+        elif (partnum == -1):
+            if swap:
+                ptype = "linux-swap"
+            else:
+                ptype = "ext2"
+            return self.xcall("newpart %s %d %d %s %s" % (dev,
+                    startcyl, endcyl, ptype, "logical"))
+
+        else:
+            if swap:
+                ptype = "82"
+            else:
+                ptype = "83"
+            self.xcall("newpart2 %s %d %d %d %s" % (dev, partnum,
+                    startcyl, endcyl, ptype))
 
     def getlinuxparts(self, dev):
         """Return a list of partitions on the given device with linux

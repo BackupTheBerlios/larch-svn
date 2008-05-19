@@ -23,10 +23,9 @@
 
 from stage import Stage, ShowInfoWidget
 from partitions_gui import SwapWidget, HomeWidget
-from dialogs import popupMessage
+from dialogs import popupMessage, popupWarning
 
-MINSPLITSIZE = 6.0    # GB, if less available, no /home
-#MINSPLITSIZE = 20.0    # GB, if less available, no /home
+MINSPLITSIZE = 20.0    # GB, if less available, no /home
 SWAPPZ0 = 5            # % of total, initial swap size, but:
 SWAPMAX  = 2.0         # GB, max swap size
 SWAPMAXPZ = 10         # % of total, max swap size, but:
@@ -118,8 +117,7 @@ class Widget(Stage):
         if (self.avG >= MINSPLITSIZE):
             self.home = self.addWidget(HomeWidget(self.homesize_cb))
 
-            home_upper = self.avG - SWAPMAX - 1.0
-#            home_upper = self.avG - SWAPMAX - 5.0
+            home_upper = self.avG - SWAPMAX - 5.0
             home_value = home_upper - 2.0
             self.home.set_adjust(upper=home_upper, value=home_value)
             self.home.set_home(True)
@@ -145,39 +143,48 @@ class Widget(Stage):
 
         print self.swapsizeG, self.homesizeG, self.rootsizeG
 
+        if not popupWarning(_("You are about to perform a destructive"
+                " operation on the data on your disk drive (%s):\n"
+                "    Repartitioning (removing old and creating new"
+                " partitions)\n\n"
+                "This is a risky business, so don't proceed if"
+                " you have not backed up your important data.\n\n"
+                "Continue?") % self.device):
+            return -1
+
         print "NYI"
         return 0
 
-        # Set up the installation partitions automatically.
-        if (self.ntfs.is_enabled and self.ntfs.keep1state):
-            text = _(" * Wipe everything except the first partition")
-            # allocate partitions from 2nd
-            startmark = install.p1end       # altered by ntfsresize
-            partno = 2
-        else:
-            text = _(" * Completely wipe the drive")
-            startmark = 0
-            partno = 1
 
-        dev = install.selectedDevice()
-        if not popupWarning(_("You are about to perform a destructive"
-                " operation on the data on your disk drive (%s):\n%s\n\n"
-                "This is a risky business, so don't proceed if"
-                " you have not backed up your important data.\n\n"
-                "Continue?") % (dev, text)):
-            self.reinit()
-            return
 
-        endmark = install.dsize #-1?
+        # I'll make the sequence root, then swap then home.
+        # But swap and/or home may be absent.
+        # Start partitioning from partition with index self.startpart,
+        # default value (no NTFS partitions) = 1.
+        # The first sector to use is self.startsector
+        # default value (no NTFS partitions) = 0.
 
-        # Tricky logic here! The first partition should be root, then swap then
-        # home, but swap and/or home may be absent. The last partition should take
-        # its endpoint from 'endmark', root's start from startmark. The actual
-        # partitioning should be done, but the formatting can be handled - given
-        # the appropriate information - by the installation stage.
+        # The actual partitioning should be done, but the formatting can
+        # be handled - given the appropriate information - by the
+        # installation stage.
 
-        # Remove all existing partitions (except optionally the first)
-        install.rmparts(dev, partno)
+        # Remove all existing partitions from self.startpart
+        install.rmparts(dev, self.startpart)
+
+        secspercyl =self.diskinfo[2]
+        startcyl = (self.startsector + secspercyl - 1) / secspercyl
+        endcyl = self.diskinfo[1]
+        # Note that the ending cylinder referred to in the commands
+        # will not be included in the partition, it is available to
+        # be the start of the next one.
+
+        # Use install.makepart, passing the cylinder boundaries
+
+
+
+
+
+
 
         if (self.home_mb == 0) and (self.swap_mb == 0):
             em = endmark
