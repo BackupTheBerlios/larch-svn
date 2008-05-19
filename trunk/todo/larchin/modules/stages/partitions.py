@@ -25,6 +25,14 @@ from stage import Stage, ShowInfoWidget
 from partitions_gui import SwapWidget, HomeWidget
 from dialogs import popupMessage
 
+MINSPLITSIZE = 6.0    # GB, if less available, no /home
+#MINSPLITSIZE = 20.0    # GB, if less available, no /home
+SWAPPZ0 = 5            # % of total, initial swap size, but:
+SWAPMAX  = 2.0         # GB, max swap size
+SWAPMAXPZ = 10         # % of total, max swap size, but:
+SWAPDEF = 1.0          # GB, initial swap size
+
+
 class Widget(Stage):
     def getHelp(self):
         return _("To make straightforward installations easier it is"
@@ -75,20 +83,23 @@ class Widget(Stage):
                     "Allocation will begin at partition %d.") %
                         (self.avG, self.startpart))
 
+        self.homesizeG = 0.0
+        self.swapsizeG = 0.0
+        self.root = None    # To suppress writing before widget is created
+
         # swap size
-        self.swap = self.addWidget(SwapWidget(self.swapsize_cb))
+        self.swapWidget()
 
         # home size
-        self.home = self.addWidget(HomeWidget(self.homesize_cb))
+        self.homeWidget()
 
         # root size
         self.root = self.addWidget(ShowInfoWidget(
                 _("Space for Linux system:  ")))
+        self.adjustroot()
 
         # Clear list of assigned partitions
         install.clearParts()
-
-#?
 
     def swapsize_cb(self, sizeG):
         self.swapsizeG = sizeG
@@ -100,36 +111,39 @@ class Widget(Stage):
 
     def adjustroot(self):
         self.rootsizeG = self.avG - self.swapsizeG - self.homesizeG
-        self.root.set("%8.1f GB" % self.rootsizeG)
+        if self.root:
+            self.root.set("%8.1f GB" % self.rootsizeG)
 
+    def homeWidget(self):
+        if (self.avG >= MINSPLITSIZE):
+            self.home = self.addWidget(HomeWidget(self.homesize_cb))
 
+            home_upper = self.avG - SWAPMAX - 1.0
+#            home_upper = self.avG - SWAPMAX - 5.0
+            home_value = home_upper - 2.0
+            self.home.set_adjust(upper=home_upper, value=home_value)
+            self.home.set_home(True)
 
-#???
-        MINSPLITSIZE = 20.0    # GB, if less available, no /home
-        SWAPPZ0 = 5            # % of total, initial swap size???
-        SWAPMAX  = 2.0         # GB, max swap size
-        SWAPMAXPZ = 10         # % of total, max swap size
-        SWAPDEF = 1.0          # GB, initial swap size???
+        else:
+            self.addLabel(_("There is too little free space on this"
+                    " drive to make a separate partition for user data"
+                    " (/home) worthwhile."))
 
-        self.home_on = (self.avG >= MINSPLITSIZE)
-        home_upper = self.avG - SWAPMAX - 5.0
-        home_value = home_upper - 2.0
-        self.home.set_adjust(upper=home_upper, value=home_value)
-        self.home.enable(self.home_on and (not self.getCheck(self.expert)))
+    def swapWidget(self):
+        self.swap = self.addWidget(SwapWidget(self.swapsize_cb))
 
-        swap_upper = freesize * SWAPMAXSIZE / 100
+        swap_upper = self.avG * SWAPMAXPZ / 100
         if (swap_upper > SWAPMAX):
             swap_upper = SWAPMAX
-        swap_value = freesize * SWAPSIZE / 100
+        swap_value = self.avG * SWAPPZ0 / 100
         if (swap_value > SWAPDEF):
             swap_value = SWAPDEF
         self.swap.set_adjust(upper=swap_upper, value=swap_value)
-
-
-
-
+        self.swap.set_swap(True)
 
     def forward(self):
+
+        print self.swapsizeG, self.homesizeG, self.rootsizeG
 
         print "NYI"
         return 0

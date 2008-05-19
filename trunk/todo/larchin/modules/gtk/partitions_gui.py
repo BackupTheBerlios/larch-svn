@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.05.18
+# 2008.05.19
 
 import gtk
 
@@ -43,6 +43,13 @@ class SwapWidget(gtk.Frame):
         self.swapbox = gtk.VBox()
         self.swapbox.pack_start(adjlabel)
         self.swapbox.pack_start(hscale)
+
+        self.notice = gtk.Label(_("No swap partition allocated.\n"
+                "Unless you have more memory than you will ever need"
+                " it is a good idea to set aside some disk space"
+                " for a swap partition."))
+        self.notice.set_line_wrap(True)
+
         self.add(self.swapbox)
 
         self.swapstate = False
@@ -59,13 +66,19 @@ class SwapWidget(gtk.Frame):
         if (on != self.swapstate):
             self.swapstate = on
         if on:
-            self.swapbox.show()
+            widget = self.swapbox
             self.size_callback(self.swapadj.value)
         else:
-            self.swapbox.hide()
+            widget = self.notice
             self.size_callback(0.0)
         if update:
             self.swapon.set_active(on)
+        else:
+            child = self.get_child()
+            if child:
+                self.remove(child)
+            self.add(widget)
+            widget.show()
 
     def set_adjust(self, lower = None, upper = None, value = None):
         """Set the size adjustment slider. Any of lower limit, upper limit
@@ -100,23 +113,20 @@ class HomeWidget(gtk.Frame):
         self.homebox = gtk.VBox()
         self.homebox.pack_start(adjlabel)
         self.homebox.pack_start(hscale)
+
+        self.notice = gtk.Label(_("The creation of a separate partition"
+                " for user data (in the folder /home) allows you to keep"
+                " this separate from the system files.\n"
+                "One advantage is that the operating system can later be"
+                " freshly installed without destroying your data."))
+        self.notice.set_line_wrap(True)
+
         self.add(self.homebox)
 
         self.is_enabled = False
         self.homestate = False
         self.homeadj.connect("value_changed", self.home_size_cb, size_cb)
         self.homeon.connect("toggled", self.home_check_cb)
-
-    def enable(self, on):
-        """Show (on=True) or hide (on=False) the home partition widget.
-        """
-        if on:
-            self.show()
-            # Make having a home partition the default
-            self.set_home(True)
-        else:
-            self.hide()
-        self.is_enabled = on
 
     def home_size_cb(self, widget, data=None):
         self.size_callback(self.homeadj.value)
@@ -128,13 +138,19 @@ class HomeWidget(gtk.Frame):
         if (on != self.homestate):
             self.homestate = on
         if on:
-            self.homebox.show()
+            widget = self.homebox
             self.size_callback(self.homeadj.value)
         else:
-            self.homebox.hide()
+            widget = self.notice
             self.size_callback(0.0)
         if update:
             self.homeon.set_active(on)
+        else:
+            child = self.get_child()
+            if child:
+                self.remove(child)
+            self.add(widget)
+            widget.show()
 
     def set_adjust(self, lower = None, upper = None,
             value = None, update = True):
