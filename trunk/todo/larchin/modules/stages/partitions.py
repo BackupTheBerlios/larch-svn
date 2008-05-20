@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.05.18
+# 2008.05.20
 
 from stage import Stage, ShowInfoWidget
 from partitions_gui import SwapWidget, HomeWidget
@@ -171,47 +171,53 @@ class Widget(Stage):
         # Remove all existing partitions from self.startpart
         install.rmparts(dev, self.startpart)
 
-        secspercyl =self.diskinfo[2]
+        secspercyl = self.diskinfo[2]
         startcyl = (self.startsector + secspercyl - 1) / secspercyl
         endcyl = self.diskinfo[1]
         # Note that the ending cylinder referred to in the commands
         # will not be included in the partition, it is available to
         # be the start of the next one.
 
+        # Get partition sizes in cylinder units
+        ncyls = endcyl - startcyl
+        cylsizeB = secspercyl * self.diskinfo[3]
+        swapC = int(self.swapsizeG * 1e9 / cylsizeB + 0.5)
+        homeC = int(self.homesizeG * 1e9 / cylsizeB + 0.5)
+        rootC = ncyls - swapC - homeC
+
+        startcyl = self.newpart(startcyl, endcyl, rootC,
+                (swapC == 0) and (homeC == 0))
+        config = "/:%s%d" % (self.device, self.startpart)
+        self.startpart + 1
+        if (swapC > 0):
+            startcyl = self.newpart(startcyl, endcyl, swapC,
+                    (homeC == 0), True)
+            self.startpart + 1
+
+        if (homeC > 0):
+            startcyl = self.newpart(startcyl, endcyl, homeC, True)
+            config += "\n/home:%s%d" % (self.device, self.startpart)
+
+        install.set_config("mountpoints", config)
+
+    def newpart(self, startcyl, endcyl, size, last, swap=False):
+        """Add a new partition, taking primary/extended/logical into
+        account.
+        """
         # Use install.makepart, passing the cylinder boundaries
+        part = -1
+        if (self.startpart == 4) and not last:
+            self.startpart = 5
+            install.makepart(self.device, 0, startcyl, endcyl)
+        elif (self.startpart <= 4):
+            part = self.startpart
 
+        newstartcyl = startcyl + size
+        install.makepart(self.device, part,
+                startcyl, newstartcyl,
+                swap)
 
-
-
-
-
-
-        if (self.home_mb == 0) and (self.swap_mb == 0):
-            em = endmark
-        else:
-            em = startmark + int(self.rootsize * 1000)
-        install.mkpart(dev, startmark, em)
-        startmark = em
-        install.newPartition("%s%d" % (dev, partno), m='/', f=True)
-
-        install.clearSwaps()
-        if (self.swap_mb != 0):
-            partno += 1
-            if (self.home_mb == 0):
-                em = endmark
-            else:
-                em = startmark + self.swap_mb
-            install.mkpart(dev, startmark, em, 'linux-swap')
-            startmark = em
-            part = "%s%d" % (dev, partno)
-            install.addSwap(part, True)
-
-        if self.home_mb:
-            partno += 1
-            install.mkpart(dev, startmark, endmark)
-            install.newPartition("%s%d" % (dev, partno), m='/home', f=True)
-
-        mainWindow.goto('install')
+        return newstartcyl
 
 
 #################################################################
