@@ -19,28 +19,20 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.05
+# 2008.05.21
 
-class Swaps(Stage):
-    def stageTitle(self):
-        return _("Format swap partition(s)")
-
+class Widget(Stage):
     def getHelp(self):
         return _("Swap partitions will be found on the drives and offered"
                  " for formatting. It is generally good to have a swap"
-                 " partition, but it is not necessary, especially if you"
-                 " have a lot of memory. 0.5 - 1.0 GB should be plenty"
-                 " for most purposes.")
+                 " partition, but it is not necessary if you have more"
+                 " memory than you will ever need. 0.5 - 1.0 GB of swap"
+                 " space should be plenty for most purposes.")
 
     def __init__(self):
         """
         """
-        Stage.__init__(self)
-        self.reinit()
-
-    def reinit(self):
-        # remove all widgets
-        self.clear()
+        Stage.__init__(self, moduleDescription)
 
         self.swaps = {}
         inuse = install.getActiveSwaps()
@@ -69,24 +61,25 @@ class Swaps(Stage):
             self.swaps[p] = b
 
         if not all:
-            self.addLabel(_("There are no swap partitions available."))
+            self.addLabel(_("There are no swap partitions available. If the"
+                    " installation computer does not have a large amount of"
+                    " memory, you are strongly advised to create one before"
+                    " continuing."))
 
     def forward(self):
-        install.clearSwaps()
+        config = ""
         for p, b in self.swaps.items():
-            if self.getCheck(b):
-                install.addSwap(p, (p not in self.done))
+            f = "" if self.done else "format"
+            i = "include"if self.getCheck(b) else ""
+            if config:
+                config += "\n"
+            config += "%s:%s:%s" % (p, f, i)
+        install.set_config("swaps", config)
 
-        if not popupWarning(_("The installation will now proceed. Then"
-                " there is no way back ...\n\n"
-                "Continue?")):
-            self.reinit()
-            return
-
-        mainWindow.goto('install')
+        return 0
 
 
 #################################################################
 
-stages['swaps'] = Swaps
-
+moduleName = 'Swaps'
+moduleDescription = _("Include Swap Partitions")

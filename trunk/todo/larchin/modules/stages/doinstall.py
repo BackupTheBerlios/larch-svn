@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.04.18
+# 2008.05.21
 
 class DoInstall(Stage):
     def stageTitle(self):
@@ -146,9 +146,7 @@ class DoInstall(Stage):
         self.output.report(_("Copying of system completed."))
         self.output.report(_("Generating initramfs (this could take a while ...)"))
         install.mkinitcpio()
-        if not install.frugal:
-            self.output.report(_("Generating /etc/fstab"))
-            install.fstab()
+        self.output.report(_("Generating /etc/fstab"))
         return True
 
     def progress_cb(self):

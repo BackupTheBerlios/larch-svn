@@ -97,7 +97,8 @@ Welcome:NtfsShrink
 NtfsShrink:FindDevices
 FindDevices:AutoPart:ManuPart
 AutoPart:InstallStart
-ManuPart:MountPoints
+ManuPart:Swaps
+Swaps:MountPoints
 MountPoints:InstallStart
 InstallStart:Install
 Install:RootPass

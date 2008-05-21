@@ -23,7 +23,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.05.18
+# 2008.05.21
 
 from subprocess import Popen, PIPE, STDOUT
 import os, shutil, signal
@@ -35,7 +35,18 @@ from dialogs import PopupInfo, popupWarning, popupError
 
 class installClass:
     def __init__(self, host=None):
-        self.LINUXMIN = 5.0     # GB, guessed minimum space for Linux
+        self.LINUXMIN = 5.0     # GB, guessed min. space requirement for Linux
+
+        # The following flag declarations serve two purposes:
+        #  1) Show which flags are available
+        #  2) Show the defaults ('on' is capitalized)
+        # Flags used to affect partition formatting (fs-type dependent usage):
+        # ext3::: c: disable boot-time checks, i:directory indexing,
+        #         f: full journal
+        self.FORMATFLAGS = "cIf"
+        # Flags used to set mount options in /etc/fstab:
+        # a: noatime, d: nodiratime, m: noauto
+        self.MOUNTFLAGS = "ADm"
 
         self.host = host
 
@@ -46,10 +57,6 @@ class installClass:
         # Create a directory for temporary files
         shutil.rmtree("/tmp/larchin", True)
         os.mkdir("/tmp/larchin")
-
-        # Allow possibility of offering 'frugal' installation (may never be
-        # implemented as it should perhaps be handled completely separately).
-        self.frugal = False
 
     def set_config(self, item, value):
         fh = open("/tmp/larchin/%s" % item, "w")
@@ -83,6 +90,7 @@ class installClass:
     def xsendfile(self, path, dest):
         """Copy the given file (path) to dest on the target.
         """
+        plog("COPY FILE: %s (host) to %s (target)" % (path, dest))
         if self.host:
             Popen("scp -q %s root@%s:%s" %
                     (path, self.host, dest), shell=True,
@@ -123,6 +131,7 @@ class installClass:
         else:
             term += " -e "
 
+        plog("TERMINAL: %s" % cmd)
         process = Popen(term + cmd, shell=True)
         self.processes.append(process)
         while (process.poll() == None):
@@ -130,9 +139,7 @@ class installClass:
         del(self.processes[-1])
 
     def xcall(self, cmd, opt="", callback=None):
-
-        print "XCALL:", cmd
-
+        plog("XCALL: %s" % cmd)
         if self.host:
             process = self.xcall_net(cmd, opt)
         else:
@@ -145,6 +152,8 @@ class installClass:
             mainWindow.eventloop(0.5)
 
         op = process.stdout.read()
+        plog(op)
+        plog("END-XCALL")
         del(self.processes[-1])
         if op.endswith("^OK^"):
             self.okop = op
@@ -435,16 +444,6 @@ class installClass:
             ls = l.split()
             swaps.append((ls[0], float(ls[1]) * 1024 / 1e9))
         return swaps
-
-    def clearSwaps(self):
-        self.swaps = []
-        self.format_swaps = []
-
-    def addSwap(self, p, format):
-        # include in /etc/fstab
-        self.swaps.append(p)
-        if format:
-            self.format_swaps.append(p)
 
     def swapFormat(self, p):
         return self.xcall("swap-format %s" % p)

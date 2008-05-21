@@ -22,7 +22,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.11
+# 2008.02.21
 
 class Partition:
     """The instances of this class manage the formatting/mount
@@ -64,7 +64,7 @@ class Partition:
         """
         # At the moment there is only an entry for 'ext3'
         return { 'ext3' : [
-                (_("disable boot-time checks"), 'd', False,
+                (_("disable boot-time checks"), 'c', False,
                     _("Normally an ext3 file-system will be checked every"
                       " 30 mounts or so. With a large partition this can"
                       " take quite a while, and some people like to disable"
@@ -85,19 +85,19 @@ class Partition:
         """
         # At the moment there are just these two flags
         if fstype:
-            flg = [ (_("noatime"), 'T', True,
+            flg = [ (_("noatime"), 'a', True,
                     _("Disables recording atime (access time) to disk, thus"
                       " speeding up disk access. This is unlikely to cause"
                       " problems (famous last words ...). Important for"
                       " flash devices")),
 
-                    (_("nodiratime"), 'D', True,
+                    (_("nodiratime"), 'd', True,
                     _("Disables recording directory access time to disk, thus"
                       " speeding up disk access. This is unlikely to cause"
                       " problems (famous last words ...). Important for"
                       " flash devices")),
 
-                    (_("noauto"), 'A', False,
+                    (_("noauto"), 'm', False,
                     _("Don't mount this partition during system"
                       " initialization."))
                 ]

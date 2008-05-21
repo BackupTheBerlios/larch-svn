@@ -142,7 +142,8 @@ class Widget(Stage):
                  _("No swap partition allocated.\n"
                 "Unless you have more memory than you will ever need"
                 " it is a good idea to set aside some disk space"
-                " for a swap partition."),
+                " for a swap partition. 0.5 - 1.0 GB should be plenty"
+                " for most purposes."),
                 self.swapsize_cb))
 
         swap_upper = self.avG * SWAPMAXPZ / 100
@@ -196,18 +197,20 @@ class Widget(Stage):
                 (swapC == 0) and (homeC == 0))
         # See partition formatting and fstab setting up for the
         # meaning of the flags
-        config = "/:%s%d:ext3:iTD" % (self.device, self.startpart)
+        config = "/:%s%d:ext3:%s:%s" % (self.device, self.startpart,
+                install.FORMATFLAGS, install.MOUNTFLAGS)
         self.startpart + 1
         if (swapC > 0):
             startcyl = self.newpart(startcyl, endcyl, swapC,
                     (homeC == 0), True)
-            install.set_config("swaps", "%s%d:format" %
+            install.set_config("swaps", "%s%d:format:include" %
                     (self.device, self.startpart))
             self.startpart + 1
 
         if (homeC > 0):
             startcyl = self.newpart(startcyl, endcyl, homeC, True)
-            config += "\n/home:%s%d:ext3:iTD" % (self.device, self.startpart)
+            config += "\n/home:%s%d:ext3:iTD" % (self.device, self.startpart,
+                    install.FORMATFLAGS, install.MOUNTFLAGS)
 
         install.set_config("mountpoints", config)
         return 0
