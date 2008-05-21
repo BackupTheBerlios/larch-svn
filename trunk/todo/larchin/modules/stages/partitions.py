@@ -19,10 +19,10 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.05.20
+# 2008.05.21
 
 from stage import Stage, ShowInfoWidget
-from partitions_gui import SwapWidget, HomeWidget
+from partitions_gui import PartitionWidget
 from dialogs import popupMessage, popupWarning
 
 MINSPLITSIZE = 20.0    # GB, if less available, no /home
@@ -115,12 +115,20 @@ class Widget(Stage):
 
     def homeWidget(self):
         if (self.avG >= MINSPLITSIZE):
-            self.home = self.addWidget(HomeWidget(self.homesize_cb))
+            self.home = self.addWidget(PartitionWidget(
+                _("Set size of '/home' partition (GB)"),
+                _("Create partition for user data (/home)"),
+                _("The creation of a separate partition"
+                  " for user data (in the folder /home) allows you to keep"
+                  " this separate from the system files.\n"
+                  "One advantage is that the operating system can later be"
+                  " freshly installed without destroying your data."),
+                self.homesize_cb))
 
             home_upper = self.avG - SWAPMAX - 5.0
             home_value = home_upper - 2.0
             self.home.set_adjust(upper=home_upper, value=home_value)
-            self.home.set_home(True)
+            self.home.set_on(True)
 
         else:
             self.addLabel(_("There is too little free space on this"
@@ -128,7 +136,14 @@ class Widget(Stage):
                     " (/home) worthwhile."))
 
     def swapWidget(self):
-        self.swap = self.addWidget(SwapWidget(self.swapsize_cb))
+        self.swap = self.addWidget(PartitionWidget(
+                _("Set size of swap partition (GB)"),
+                _("Create swap partition"),
+                 _("No swap partition allocated.\n"
+                "Unless you have more memory than you will ever need"
+                " it is a good idea to set aside some disk space"
+                " for a swap partition."),
+                self.swapsize_cb))
 
         swap_upper = self.avG * SWAPMAXPZ / 100
         if (swap_upper > SWAPMAX):
@@ -137,12 +152,9 @@ class Widget(Stage):
         if (swap_value > SWAPDEF):
             swap_value = SWAPDEF
         self.swap.set_adjust(upper=swap_upper, value=swap_value)
-        self.swap.set_swap(True)
+        self.swap.set_on(True)
 
     def forward(self):
-
-        print self.swapsizeG, self.homesizeG, self.rootsizeG
-
         if not popupWarning(_("You are about to perform a destructive"
                 " operation on the data on your disk drive (%s):\n"
                 "    Repartitioning (removing old and creating new"
@@ -152,12 +164,7 @@ class Widget(Stage):
                 "Continue?") % self.device):
             return -1
 
-        print "NYI"
-        return 0
-
-
-
-        # I'll make the sequence root, then swap then home.
+        # I'll make the sequence: root, then swap then home.
         # But swap and/or home may be absent.
         # Start partitioning from partition with index self.startpart,
         # default value (no NTFS partitions) = 1.
@@ -169,36 +176,41 @@ class Widget(Stage):
         # installation stage.
 
         # Remove all existing partitions from self.startpart
-        install.rmparts(dev, self.startpart)
+        install.rmparts(self.device, self.startpart)
 
-        secspercyl = self.diskinfo[2]
+        secspercyl = self.dinfo[2]
         startcyl = (self.startsector + secspercyl - 1) / secspercyl
-        endcyl = self.diskinfo[1]
+        endcyl = self.dinfo[1]
         # Note that the ending cylinder referred to in the commands
         # will not be included in the partition, it is available to
         # be the start of the next one.
 
         # Get partition sizes in cylinder units
         ncyls = endcyl - startcyl
-        cylsizeB = secspercyl * self.diskinfo[3]
+        cylsizeB = secspercyl * self.dinfo[3]
         swapC = int(self.swapsizeG * 1e9 / cylsizeB + 0.5)
         homeC = int(self.homesizeG * 1e9 / cylsizeB + 0.5)
         rootC = ncyls - swapC - homeC
 
         startcyl = self.newpart(startcyl, endcyl, rootC,
                 (swapC == 0) and (homeC == 0))
-        config = "/:%s%d" % (self.device, self.startpart)
+        # See partition formatting and fstab setting up for the
+        # meaning of the flags
+        config = "/:%s%d:ext3:iTD" % (self.device, self.startpart)
         self.startpart + 1
         if (swapC > 0):
             startcyl = self.newpart(startcyl, endcyl, swapC,
                     (homeC == 0), True)
+            install.set_config("swaps", "%s%d:format" %
+                    (self.device, self.startpart))
             self.startpart + 1
 
         if (homeC > 0):
             startcyl = self.newpart(startcyl, endcyl, homeC, True)
-            config += "\n/home:%s%d" % (self.device, self.startpart)
+            config += "\n/home:%s%d:ext3:iTD" % (self.device, self.startpart)
 
         install.set_config("mountpoints", config)
+        return 0
 
     def newpart(self, startcyl, endcyl, size, last, swap=False):
         """Add a new partition, taking primary/extended/logical into

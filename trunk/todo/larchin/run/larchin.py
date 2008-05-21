@@ -21,7 +21,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.05.17
+# 2008.05.21
 
 import os, sys
 
@@ -96,6 +96,12 @@ stageSwitchSource = """
 Welcome:NtfsShrink
 NtfsShrink:FindDevices
 FindDevices:AutoPart:ManuPart
+AutoPart:InstallStart
+ManuPart:MountPoints
+MountPoints:InstallStart
+InstallStart:Install
+Install:RootPass
+RootPass:Grub
 """
 
 # Build a dictionary for the stage transitions
