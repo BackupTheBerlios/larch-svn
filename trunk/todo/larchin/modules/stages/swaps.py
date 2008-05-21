@@ -21,6 +21,8 @@
 #----------------------------------------------------------------------------
 # 2008.05.21
 
+from stage import Stage
+
 class Widget(Stage):
     def getHelp(self):
         return _("Swap partitions will be found on the drives and offered"

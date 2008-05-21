@@ -19,14 +19,11 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.01.30
+# 2008.05.21
 
+from stage import Stage
 
-
-class ManuPart(Stage):
-    def stageTitle(self):
-        return _("Edit disk partitions manually")
-
+class Widget(Stage):
     def getHelp(self):
         return _("Here you can choose a partitioning tool and/or disk(-like)"
                 " device in order to prepare your system to receive an"
@@ -42,7 +39,7 @@ class ManuPart(Stage):
     def __init__(self):
         Stage.__init__(self)
 
-        dev = install.selectedDevice()
+        ld = install.listDevices()
 
         # Offer gparted - if available
         if (install.gparted_available() == ""):
@@ -52,18 +49,29 @@ class ManuPart(Stage):
             gparted = None
 
         # Offer cfdisk on each available disk device
+        mounts = install.getmounts().splitlines()
         mounteds = 0
-        for d, s, t in install.devices:
-            if d.endswith('-'):
-                d = d.rstrip('-')
-                style = 'red'
-                mounteds += 1
-            else:
+        i = 0
+        if ld:
+            for d, s, n in ld:
+                i += 1
+                # Determine devices which have mounted partitions
+                dstring = "%16s  (%10s : %s)" % (d, s, n)
                 style = None
-            text = _("Use cfdisk on %s") % d
-            b = self.addOption('cfdisk-%s' % d, text, style=style)
-            if (d == dev) and not gparted:
-                b.set_active(True)
+                for m in mounts:
+                    if m.startswith(d):
+                        style = 'red'
+                        mounteds += 1
+                        break
+                self.addOption('cfdisk-%s' % d,
+                        _("Use cfdisk on %s (%s)") % (d, s),
+                        (i == 1) and not gparted,
+                        style=style)
+
+        else:
+            popupError(_("No disk(-like) devices were found,"
+                    " so Arch Linux can not be installed on this machine"))
+            mainWindow.exit()
 
         if mounteds:
             self.addLabel(_('WARNING: Editing partitions on a device with'
@@ -81,16 +89,17 @@ class ManuPart(Stage):
         sel = self.getSelectedOption()
         if (sel == 'gparted'):
             install.gparted()
-            self.reinit()
+            return -1
 
         elif (sel == 'done'):
-            mainWindow.goto('partSelect')
+            return 0
 
         else:
             install.cfdisk(sel.split('-')[1])
-            self.reinit()
+            return -1
 
 
 #################################################################
 
-stages['manualPart'] = ManuPart
+moduleName = 'ManuPart'
+moduleDescription = _("Edit disk partitions manually")

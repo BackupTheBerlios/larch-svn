@@ -82,7 +82,8 @@ initialized = True
 import imp
 mlist = []
 # I might change this to import all .py files in the stages folder ...
-for module in ('welcome', 'ntfs', 'finddevices', 'partitions'):
+for module in ('welcome', 'ntfs', 'finddevices', 'partitions', 'swaps',
+        'partmanu'):
     m = imp.load_source(module, "%s/modules/stages/%s.py" % (basedir, module))
     mlist.append((m.moduleName, m.moduleDescription))
     stages[m.moduleName] = m
