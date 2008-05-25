@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.05.21
+# 2008.05.25
 
 from stage import Stage, ShowInfoWidget
 from partitions_gui import PartitionWidget
@@ -209,7 +209,7 @@ class Widget(Stage):
 
         if (homeC > 0):
             startcyl = self.newpart(startcyl, endcyl, homeC, True)
-            config += "\n/home:%s%d:ext3:iTD" % (self.device, self.startpart,
+            config += "\n/home:%s%d:ext3:%s:%s" % (self.device, self.startpart,
                     install.FORMATFLAGS, install.MOUNTFLAGS)
 
         install.set_config("mountpoints", config)

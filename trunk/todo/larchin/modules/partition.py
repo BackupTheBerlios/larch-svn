@@ -22,7 +22,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.21
+# 2008.02.25
 
 class Partition:
     """The instances of this class manage the formatting/mount
@@ -83,7 +83,7 @@ class Partition:
         """Return a list of available mount (/etc/fstab) flags for the
         given file-system type.
         """
-        # At the moment there are just these two flags
+        # At the moment there are just these three flags
         if fstype:
             flg = [ (_("noatime"), 'a', True,
                     _("Disables recording atime (access time) to disk, thus"
@@ -114,8 +114,7 @@ class Partition:
         flags = ''
         if flist:
             for f in flist:
-                if f[2]:
-                    flags += f[1]
+                flags += f[1].upper() if f[2] else f[1]
         return flags
 
     def format_cb(self, table, on):

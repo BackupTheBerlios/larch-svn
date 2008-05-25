@@ -19,12 +19,12 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.05
+# 2008.02.25
 
-class SelPart(Stage):
-    def stageTitle(self):
-        return _("Select installation partitions")
+from stage import Stage
+from selpart_gui import SelTable, SelDevice
 
+class Widget(Stage):
     def getHelp(self):
         return _("The device partitions used for the Arch Linux installation"
                 " can be manually selected here.\n"
@@ -40,27 +40,33 @@ class SelPart(Stage):
                 " considering these.")
 
     def __init__(self):
-        Stage.__init__(self)
-        from selpart_gui import SelTable, SelDevice
+        Stage.__init__(self, moduleDescription)
 
-        self.devselect = SelDevice(self, [d[0] for d in install.devices])
+
+        # get any existing partition info
+
+
+        self.devselect = SelDevice(self.setDevice,
+                [d[0] for d in install.listDevices()])
         self.addWidget(self.devselect, False)
 
         filesystems = ['ext3', 'reiserfs', 'ext2', 'jfs', 'xfs']
         # List of mount-point suggestions
         mountpoints = ['/', '/home', '/boot', '/var', '/opt', '/usr']
 
-        self.table = SelTable(self, filesystems, mountpoints)
+        self.table = SelTable(filesystems, mountpoints)
         self.addWidget(self.table)
-        self.reinit()
-
-    def reinit(self):
         self.mounts = install.getmounts()
         self.devselect.setdevice(install.selectedDevice())
 
+
+
+
     def setDevice(self, dev):
         self.device = dev
-        install.getDeviceInfo(self.device)
+
+        # Do I need this?
+        self.dinfo = install.getDeviceInfo(self.device)
 
         self.parts = []
         for p in install.getlinuxparts(self.device):
@@ -68,7 +74,28 @@ class SelPart(Stage):
                 pa = install.getPartition(p)
                 if not pa:
                     partno = int(re.sub("/dev/[a-z]+", "", p))
-                    size, fstype = install.getPartInfo(partno)
+
+
+
+
+                    size, fstype = getPartInfo(partno)
+########### This needs reworking
+                        def getPartInfo(partno):
+        """Get size and fstype for the given partition number using the
+        data from the last call of getDeviceInfo.
+        """
+        rc = re.compile(r"^%d:([0-9\.]+)MB:([0-9\.]+)MB:"
+                "([0-9\.]+)MB:([^:]*):.*;$" % partno)
+        for l in self.dinfo.splitlines():
+            rm = rc.search(l)
+            if (rm and (rm.group(4) != 'free')):
+                size = int(rm.group(3))
+                fstype = rm.group(4)
+                return (size, fstype)
+        # This shouldn't happen
+        assert False, "I wasn't expecting the Spanish Inquisition"
+##################
+
                     pa = install.newPartition(p, size, fstype)
                 self.parts.append(pa)
 
@@ -81,12 +108,17 @@ class SelPart(Stage):
     def forward(self):
         for p in install.parts.values():
             if (p.mountpoint == '/'):
-                mainWindow.goto('swaps')
-                return
+
+
+                # save partition info
+
+                return 0
 
         popupError(_("You must specify a root ('/') partition"))
+        return -1
 
 
 #################################################################
 
-stages['partSelect'] = SelPart
+moduleName = 'MountPoints'
+moduleDescription = _("Select Installation Partitions")

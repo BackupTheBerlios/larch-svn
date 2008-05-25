@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.05
+# 2008.05.25
 
 import gtk
 
@@ -27,8 +27,7 @@ class SelTable(gtk.ScrolledWindow):
     """This widget presents a list of available partitions for
     allocation in the new system.
     """
-    def __init__(self, master, filesystems, mountpoints):
-        self.master = master
+    def __init__(self, filesystems, mountpoints):
         self.mountpoints = mountpoints
         gtk.ScrolledWindow.__init__(self)
         self.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
@@ -244,11 +243,11 @@ class SelDevice(gtk.Frame):
     """This widget allows selection of the device on which partitions are
     to be allocated to mountpoints, formatted, etc.
     """
-    def __init__(self, master, devices):
+    def __init__(self, setdev_cb, devices):
         gtk.Frame.__init__(self)
         self.set_border_width(5)
         hb = gtk.HBox()
-        self.master = master
+        self.setdev_cb = setdev_cb
         self.devices = devices
         label = gtk.Label(_("Configuring partitions on drive "))
         hb.pack_start(label, False)
@@ -263,14 +262,14 @@ class SelDevice(gtk.Frame):
         d = self.combo.get_active_text()
         self.updated = True
         if d:
-            self.master.setDevice(d)
+            self.setdev_cb(d)
 
     def setdevice(self, d):
         self.updated = False
         self.combo.set_active(self.devices.index(d))
         mainWindow.eventloop()
         if (not self.updated) and d:
-            self.master.setDevice(d)
+            self.setdev_cb(d)
 
 class SelMountPoint(gtk.HBox):
     def __init__(self, table, part, mountpoints):
