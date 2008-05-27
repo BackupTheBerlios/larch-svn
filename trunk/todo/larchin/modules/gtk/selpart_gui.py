@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.05.25
+# 2008.05.27
 
 import gtk
 
@@ -79,29 +79,25 @@ class SelTable(gtk.ScrolledWindow):
             self.rows = [[None, notice]]
 
         for p in partlist:
-            devw = gtk.Label(p.partition)
+            # partition
+            devw = gtk.Label(p[0])
             mpw = SelMountPoint(self, p, self.mountpoints)
-
-            try: s = "%8.1f GB" % (float(p.size) / 1000)
-            except: s = '?'
-            sizew = gtk.Label(s)
+            sizew = gtk.Label("%8.1f GB" % (float(p[2]) / 1e9))
             fmtw = gtk.CheckButton()
-            fmtw.set_active(p.format)
+            do_format = (p[4] != "")
+            fmtw.set_active(do_format)
             fmtw.connect("toggled", self.fmtw_cb, p)
             fstw = gtk.ComboBox(self.fs_liststore)
             fstw.pack_start(self.cellr, True)
             fstw.add_attribute(self.cellr, 'text', 0)
             try:
-                fstw.set_active(self.filesystems.index(p.newformat))
+                fstw.set_active(self.filesystems.index(p[4]))
             except:
                 fstw.set_active(-1)
 
-            fstw.set_sensitive(p.format)
-            # callable externally as:
-            #self.enable_fstype(p, p.format)
+            fstw.set_sensitive(do_format)
 
             fstw.connect("changed", self.fstw_cb, p)
-
 
             optw = gtk.Button()
             optw.connect("clicked", self.popupOptions, p)
@@ -116,14 +112,13 @@ class SelTable(gtk.ScrolledWindow):
             self.rows.append([p, devw, mpw, sizew, fmtw, fstw, optw])
 
             self.fstw_cb(fstw, p)
-            #self.update_options(p)
 
         self.table.show_all()
 
-    def popupOptions(self, widget, partition):
-        self.popup_part = partition
-        fo = partition.get_format_options()
-        mo = partition.get_mount_options()
+    def popupOptions(self, widget, partdata):
+        self.popup_part = partdata
+        fo = partition.get_format_options(partdata[4])
+        mo = partition.get_mount_options(partdata[4])
         rows = []
         if fo:
             rows.append(gtk.HSeparator())
@@ -243,7 +238,7 @@ class SelDevice(gtk.Frame):
     """This widget allows selection of the device on which partitions are
     to be allocated to mountpoints, formatted, etc.
     """
-    def __init__(self, setdev_cb, devices):
+    def __init__(self, devices, setdev_cb):
         gtk.Frame.__init__(self)
         self.set_border_width(5)
         hb = gtk.HBox()
@@ -255,8 +250,11 @@ class SelDevice(gtk.Frame):
         hb.pack_start(self.combo, False)
         self.add(hb)
         for d in devices:
-            self.combo.append_text(d.rstrip('-'))
+            self.combo.append_text(d)
         self.combo.connect('changed', mainWindow.sigprocess, self.newdevice)
+        # Ensure first device is selected and initialized
+        self.combo.set_active(-1)
+        self.combo.set_active(0)
 
     def newdevice(self, data):
         d = self.combo.get_active_text()
@@ -264,12 +262,6 @@ class SelDevice(gtk.Frame):
         if d:
             self.setdev_cb(d)
 
-    def setdevice(self, d):
-        self.updated = False
-        self.combo.set_active(self.devices.index(d))
-        mainWindow.eventloop()
-        if (not self.updated) and d:
-            self.setdev_cb(d)
 
 class SelMountPoint(gtk.HBox):
     def __init__(self, table, part, mountpoints):

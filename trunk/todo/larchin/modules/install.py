@@ -188,15 +188,6 @@ class installClass:
         """
         return self.xcall("larchbootdev").strip()
 
-    def setPart(self, start):
-        """Used by the autopartitioner to determine where the free space
-        begins. The value can be:
-                None       - manual partitioning
-                0          - use whole drive
-                1          - start after first partition
-        """
-        self.autoPartStart = start
-
     def getDeviceInfo(self, dev):
         """Get info on drive and partitions (dev="/dev/sda", etc.)
         Return tuple: ( drive size as string,
@@ -404,23 +395,6 @@ class installClass:
         partition code (83).
         """
         return self.xcall("linuxparts %s" % dev).split()
-
-    def clearParts(self):
-        """Keep a record of partitions which have been marked for use,
-        initially empty.
-        """
-        self.parts = {}
-
-    def newPartition(self, p, s="?", fpre=None, m=None, f=False, fnew=None,
-            mo=None, fo=None):
-        """Add a partition to the list of those marked for use.
-        """
-        pa = Partition(p, s, fpre, m, f, fnew, mo, fo)
-        self.parts[p] = pa
-        return pa
-
-    def getPartition(self, part):
-        return self.parts.get(part)
 
     def getActiveSwaps(self):
         """Discover active swap partitions. Return list

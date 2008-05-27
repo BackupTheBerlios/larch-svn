@@ -1,7 +1,7 @@
 # partition.py
 #
-# This module handles information about a single partition which is to
-# be in some way relevant (!) to the new installation.
+# This module handles information about partitions which are to
+# be used in the new installation.
 #
 # (c) Copyright 2008 Michael Towers <gradgrind[at]online[dot]de>
 #
@@ -22,7 +22,22 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.25
+# 2008.02.27
+
+#Under construction!!!
+def get_format_options(fstype):
+    fopts = []
+    fl = self.format_flags(fstype)
+    if fl:
+        for name, flag, on, desc in fl:
+            fopts.append((name, flag, flag in self.format_options, desc))
+    return fopts
+
+
+def get_mount_options(fstype):
+
+
+####################################
 
 class Partition:
     """The instances of this class manage the formatting/mount
