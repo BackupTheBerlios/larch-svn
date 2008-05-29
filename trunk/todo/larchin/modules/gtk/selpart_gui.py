@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.05.27
+# 2008.05.29
 
 import gtk
 
@@ -31,7 +31,7 @@ class SelTable(gtk.ScrolledWindow):
         self.mountpoints = mountpoints
         gtk.ScrolledWindow.__init__(self)
         self.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-        self.table = gtk.Table(2, 6)
+        self.table = gtk.Table(2, 7)
         self.table.set_row_spacings(10)
         self.table.set_col_spacings(10)
         self.add_with_viewport(self.table)
@@ -39,20 +39,14 @@ class SelTable(gtk.ScrolledWindow):
         # column headers
         i = 0
         for l in (_(" Partition "), _("Mount Point"), _("   Size   "),
-                _("Format"), _("File-system"), _("Options")):
+                _("Mount Options"), _("Format"), _("File-system"),
+                _("Format Options")):
             lw = gtk.Button(l)
             self.table.attach(lw, i, i+1, 0, 1, yoptions=0)
             i += 1
 
         line = gtk.HSeparator()
-        self.table.attach(line, 0, 6, 1, 2, yoptions=0)
-
-        #self.mp_liststore = gtk.ListStore(str)
-        #for mp in mountpoints:
-        #    self.mp_liststore.append([mp])
-        # Note: it might be better to have an individual list for each
-        # partition, so that (a) /mnt/% can be substituted, and (b) the
-        # already allocated mount points can be left out.
+        self.table.attach(line, 0, 7, 1, 2, yoptions=0)
 
         self.filesystems = filesystems
         self.fs_liststore = gtk.ListStore(str)
@@ -71,27 +65,27 @@ class SelTable(gtk.ScrolledWindow):
 
         ri = 1
         if partlist:
-            self.table.resize(len(partlist) + ri+1, 6)
+            self.table.resize(len(partlist) + ri+1, 7)
         else:
-            self.table.resize(ri+2, 6)
+            self.table.resize(ri+2, 7)
             notice = gtk.Label(_("No partitions available on this device"))
-            self.table.attach(notice, 0, 6, ri+1, ri+2, yoptions=0)
+            self.table.attach(notice, 0, 7, ri+1, ri+2, yoptions=0)
             self.rows = [[None, notice]]
 
         for p in partlist:
-            # partition
-            devw = gtk.Label(p[0])
+            # p is the information for a single partition
+            devw = gtk.Label(p.partition)
             mpw = SelMountPoint(self, p, self.mountpoints)
-            sizew = gtk.Label("%8.1f GB" % (float(p[2]) / 1e9))
+            sizew = gtk.Label("%8.1f GB" % (float(p.size) / 1e9))
             fmtw = gtk.CheckButton()
-            do_format = (p[4] != "")
+            do_format = (p.newformat != "")
             fmtw.set_active(do_format)
             fmtw.connect("toggled", self.fmtw_cb, p)
             fstw = gtk.ComboBox(self.fs_liststore)
             fstw.pack_start(self.cellr, True)
             fstw.add_attribute(self.cellr, 'text', 0)
             try:
-                fstw.set_active(self.filesystems.index(p[4]))
+                fstw.set_active(self.filesystems.index(p.newformat))
             except:
                 fstw.set_active(-1)
 
@@ -99,23 +93,102 @@ class SelTable(gtk.ScrolledWindow):
 
             fstw.connect("changed", self.fstw_cb, p)
 
-            optw = gtk.Button()
-            optw.connect("clicked", self.popupOptions, p)
+            moptw = gtk.Button()
+            moptw.connect("clicked", self.popupMountOptions, p)
+
+            foptw = gtk.Button()
+            foptw.connect("clicked", self.popupFormatOptions, p)
 
             ri += 1
             self.table.attach(devw, 0, 1, ri, ri+1, yoptions=0)
             self.table.attach(mpw, 1, 2, ri, ri+1, yoptions=0)
             self.table.attach(sizew, 2, 3, ri, ri+1, yoptions=0)
-            self.table.attach(fmtw, 3, 4, ri, ri+1, xoptions=0, yoptions=0)
-            self.table.attach(fstw, 4, 5, ri, ri+1, yoptions=0)
-            self.table.attach(optw, 5, 6, ri, ri+1, yoptions=0)
-            self.rows.append([p, devw, mpw, sizew, fmtw, fstw, optw])
+            self.table.attach(moptw, 3, 4, ri, ri+1, yoptions=0)
+            self.table.attach(fmtw, 4, 5, ri, ri+1, xoptions=0, yoptions=0)
+            self.table.attach(fstw, 5, 6, ri, ri+1, yoptions=0)
+            self.table.attach(foptw, 6, 7, ri, ri+1, yoptions=0)
+            self.rows.append([p, devw, mpw, sizew, moptw, fmtw, fstw, foptw])
 
             self.fstw_cb(fstw, p)
 
         self.table.show_all()
 
-    def popupOptions(self, widget, partdata):
+    def popupMountOptions(self, widget, partdata):
+        mo = partdata.get_mount_options()
+        rows = []
+        if mo:
+            for opt in mo:
+                rows.append(self.newOption(opt))
+
+        if not rows:
+            return
+        dlg = gtk.Dialog(_("Mount Options for %s, mounted at %s") %
+                (partdata[0], partdata[1]), None,
+            gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
+            (gtk.STOCK_OK, gtk.RESPONSE_OK))
+
+        table = gtk.Table(len(rows), 2)
+        table.set_row_spacings(10)
+        table.set_col_spacings(10)
+        dlg.vbox.pack_start(table)
+        i = 0
+        for r in rows:
+            table.attach(r[0], 0, 1, i, i+1, xoptions=gtk.FILL)
+            table.attach(r[1], 1, 2, i, i+1, xoptions=gtk.EXPAND|gtk.FILL)
+            i += 1
+
+        dlg.vbox.show_all()
+        dlg.run()
+        dlg.destroy()
+        i = 0
+        mflags = ""
+        for r in rows:
+            f = mo[i][1]
+            if r[0].get_active():
+                f = f.upper()
+            mflags += f
+        partdata.set_mount_flags(mflags)
+        widget.set_label(mflags)
+
+    def popupFormatOptions(self, widget, partdata):
+        fo = partdata.get_fprmat_options()
+        rows = []
+        if fo:
+            for opt in fo:
+                rows.append(self.newOption(opt))
+
+        if not rows:
+            return
+        dlg = gtk.Dialog(_("Formatting Options for %s") %
+                partdata[0], None,
+            gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
+            (gtk.STOCK_OK, gtk.RESPONSE_OK))
+
+        table = gtk.Table(len(rows), 2)
+        table.set_row_spacings(10)
+        table.set_col_spacings(10)
+        dlg.vbox.pack_start(table)
+        i = 0
+        for r in rows:
+            table.attach(r[0], 0, 1, i, i+1, xoptions=gtk.FILL)
+            table.attach(r[1], 1, 2, i, i+1, xoptions=gtk.EXPAND|gtk.FILL)
+            i += 1
+
+        dlg.vbox.show_all()
+        dlg.run()
+        dlg.destroy()
+        i = 0
+        fflags = ""
+        for r in rows:
+            f = fo[i][1]
+            if r[0].get_active():
+                f = f.upper()
+            fflags += f
+        partdata.set_format_flags(fflags)
+        widget.set_label(fflags)
+
+
+
         self.popup_part = partdata
         fo = partition.get_format_options(partdata[4])
         mo = partition.get_mount_options(partdata[4])
@@ -181,19 +254,12 @@ class SelTable(gtk.ScrolledWindow):
     def newOption(self, opt):
         cb = gtk.CheckButton(opt[0])
         cb.set_active(opt[2])
-        cb.connect("toggled", self.opt_cb, opt[1])
         hf = gtk.Frame()
         hl = gtk.Label(opt[3])
         hl.set_line_wrap(True)
         hl.set_size_request(400, -1)
         hf.add(hl)
         return (cb, hf)
-
-    def opt_cb(self, widget, flag):
-        if flag.isupper():
-            self.popup_part.mount_options_cb(flag, widget.get_active())
-        else:
-            self.popup_part.format_options_cb(flag, widget.get_active())
 
     def fstw_cb(self, widget, part):
         part.fstype_cb(self, widget.get_active_text())

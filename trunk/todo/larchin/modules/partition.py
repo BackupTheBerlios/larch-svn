@@ -22,7 +22,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.27
+# 2008.02.28
 
 #Under construction!!!
 def get_format_options(fstype):
@@ -43,35 +43,14 @@ class Partition:
     """The instances of this class manage the formatting/mount
     information for a single partition.
     """
-    def __init__(self, p, s, fpre, m, f, fnew, mo, fo):
+    def __init__(self, p, mountp, size, fstype, format, fflags, mflags)
         self.partition = p
-        self.size = s
-        self.existing_format = fpre
-        self.mountpoint = m
-        self.mount_options = None
-        self.newformat = fnew
-        self.format = f
-        if self.format:
-            if not self.newformat:
-                self.newformat = 'ext3'
-            if (fo != None):
-                self.format_options = fo
-            else:
-                self.format_options = self.default_flags(
-                        self.format_flags(self.newformat))
-
-            if self.mountpoint:
-                if (mo != None):
-                    self.mount_options = mo
-                else:
-                    self.mount_options = self.default_flags(
-                            self.mount_flags(self.newformat or
-                                    self.existing_format))
-
-        else:
-            self.newformat = None
-            self.format_options = None
-            self.mountpoint = None
+        self.mountpoint = mountp
+        self.size = size        # bytes
+        self.existing_format = fstype
+        self.newformat = format
+        self.format_options = fflags
+        self.mount_options = mflags
 
     def format_flags(self, fstype):
         """Return a list of available format flags for the given
