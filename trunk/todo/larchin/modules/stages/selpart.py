@@ -19,10 +19,12 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.29
+# 2008.05.30
 
 from stage import Stage
-from selpart_gui import SelTable, SelDevice
+from selpart_gui import PartitionGui, SelTable, SelDevice
+
+import re
 
 class Widget(Stage):
     def getHelp(self):
@@ -43,6 +45,7 @@ class Widget(Stage):
         Stage.__init__(self, moduleDescription)
 
         self.device = None
+        self.mounts = install.getmounts()
         # List of partitions already configured for use.
         #    Each entry has the form [mount-point, device, format,
         #                         format-flags, mount-flags]
@@ -52,17 +55,12 @@ class Widget(Stage):
             for p in parts.splitlines():
                 self.used_partitions.append(p.split(':'))
 
+        self.table = SelTable(self)
         self.devselect = SelDevice([d[0] for d in install.listDevices()],
                 self.setDevice)
         self.addWidget(self.devselect, False)
 
-        filesystems = ['ext3', 'reiserfs', 'ext2', 'jfs', 'xfs']
-        # List of mount-point suggestions
-        mountpoints = ['/', '/home', '/boot', '/var', '/opt', '/usr']
-
-        self.table = SelTable(filesystems, mountpoints)
         self.addWidget(self.table)
-        self.mounts = install.getmounts()
 
     def setDevice(self, dev):
         if self.device:
@@ -70,7 +68,7 @@ class Widget(Stage):
         self.device = dev
         dinfo = install.getDeviceInfo(self.device)
         pinfo = install.getParts(self.device)
-        self.parts = []
+        self.table.clear()
         for p in install.getlinuxparts(self.device):
             if not self.ismounted(p):
 
@@ -95,30 +93,46 @@ class Widget(Stage):
                         mflags = pc[4]
                         break
 
-                self.parts.append(Partition(p, mountp, size,
-                        fstype, format, fflags, mflags)
+                self.table.addrow(Partition(self, p, mountp, size,
+                        fstype, format, fflags, mflags))
 
-        self.table.renew(self.parts)
+        self.table.showtable()
 
     def ismounted(self, part):
         return re.search(r'^%s ' % part, self.mounts, re.M)
 
-    def tidy(self):
-        """Save the information on the partitions in use on the current
-        device to the config file "partitions".
+    def update_parts(self, partobj):
+        """Update the information in the partition list (self.used_partitions)
+        for the given partition.
         """
-        # Remove all partitions on the current device from self.used_partitions
-        # and add all those with a mount-point (I am assuming I only allow
-        # formatting if at the same time a mount-point is specified).
-        new = []
+        i = 0
         for p in self.used_partitions:
-            if not p[1].startswith(self.device):
-                new.append(p)
-        for p in self.parts:
-            if p.mountpoint:
-                new.append([p.mountpoint, p.partition, p.newformat,
-                        p.format_options, p.mount_options])
-        self.used_partitions = new
+            if (p[1] == partobj.partition):
+
+                if partobj.mountpoint:
+                    # update all info
+                    p[0] = partobj.mountpoint
+                    p[2] = partobj.newformat
+                    p[3] = partobj.format_options
+                    p[4] = partobj.mount_options
+
+                else:
+                    # remove from list
+                    del(self.used_partitions[i])
+
+                return
+
+            i += 1
+
+        # else add this partition
+        self.used_partitions.append([partobj.mountpoint,
+                partobj.partition, partobj.newformat,
+                partobj.format_options, partobj.mount_options])
+
+    def tidy(self):
+        """Update the information on the partitions in use as stored in
+        the config file "partitions".
+        """
         config = ""
         for p in self.used_partitions:
             if config:
@@ -126,33 +140,23 @@ class Widget(Stage):
             config += "%s:%s:%s:%s:%s" % p
         install.set_config("partitions", config)
 
-
-
-
-
-
-
-
-
-
     def forward(self):
-        for p in install.parts.values():
-            if (p.mountpoint == '/'):
-
-
-                # save partition info
-
+        self.tidy()
+        for p in self.used_partitions:
+            if (p[0] == '/'):
                 return 0
 
         popupError(_("You must specify a root ('/') partition"))
         return -1
 
 
-class Partition:
+class Partition(PartitionGui):
     """The instances of this class manage the formatting/mount
     information for a single partition.
     """
-    def __init__(self, p, mountp, size, fstype, format, fflags, mflags)
+    def __init__(self, master, p, mountp, size, fstype, format,
+            fflags, mflags):
+        self.master = master
         self.partition = p
         self.mountpoint = mountp
         self.size = size        # bytes
@@ -160,6 +164,8 @@ class Partition:
         self.newformat = format
         self.format_options = fflags
         self.mount_options = mflags
+
+        PartitionGui.__init__(self)
 
     def get_mount_options(self):
         mopts = []
@@ -244,6 +250,39 @@ class Partition:
 
     def set_format_flags(self, fflags):
         self.format_options = fflags
+
+    def format_cb(self, fstype):
+        """Called from the gui when the formatting option is (de)activated.
+        """
+        if fstype:
+            self.newformat = fstype
+            if (fstype != self.existing_format):
+                self.format_options = self.default_flags(self.format_flags())
+                self.mount_options = self.default_flags(self.mount_flags())
+        else:
+            if (self.newformat != self.existing_format):
+                self.format_options = ""
+                self.mount_options = ""
+            self.newformat = ""
+
+    def default_flags(self, flist):
+        """Return the default set of flags for the given list of flags
+        (output of mount_flags or format_flags).
+        """
+        flags = ''
+        if flist:
+            for f in flist:
+                flags += f[1].upper() if f[2] else f[1]
+        return flags
+
+    def mountpoint_cb(self, m):
+        if m.startswith('/'):
+            # set default mount options
+            self.mount_options = self.default_flags(self.mount_flags())
+            self.mountpoint = m
+        else:
+            self.mountpoint = ""
+            self.mount_options = ""
 
 
 #################################################################

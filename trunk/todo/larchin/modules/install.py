@@ -23,14 +23,13 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.05.21
+# 2008.05.30
 
 from subprocess import Popen, PIPE, STDOUT
 import os, shutil, signal
 import re
 import crypt, random
 
-from partition import Partition
 from dialogs import PopupInfo, popupWarning, popupError
 
 class installClass:
@@ -47,6 +46,12 @@ class installClass:
         # Flags used to set mount options in /etc/fstab:
         # a: noatime, d: nodiratime, m: noauto
         self.MOUNTFLAGS = "ADm"
+
+		# Available file-systems for formatting
+        self.filesystems = ['ext3', 'reiserfs', 'ext2', 'jfs', 'xfs']
+        # List of mount-point suggestions
+        self.mountpoints = ['/', '/home', '/boot', '/var', '/opt', '/usr']
+
 
         self.host = host
 

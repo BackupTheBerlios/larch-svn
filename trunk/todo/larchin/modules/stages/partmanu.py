@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.05.21
+# 2008.05.29
 
 from stage import Stage
 
@@ -37,7 +37,7 @@ class Widget(Stage):
                 " from within the program.")
 
     def __init__(self):
-        Stage.__init__(self)
+        Stage.__init__(self, moduleDescription)
 
         ld = install.listDevices()
 
