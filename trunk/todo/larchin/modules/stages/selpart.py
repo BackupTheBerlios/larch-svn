@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.06.01
+# 2008.06.02
 
 from stage import Stage
 from selpart_gui import PartitionGui, SelTable, SelDevice
@@ -93,8 +93,11 @@ class Widget(Stage):
                         mflags = pc[4]
                         break
 
-                self.table.addrow(Partition(self, p, mountp, size,
-                        fstype, format, fflags, mflags))
+
+                partobj = Partition(self, p, mountp, size, fstype, format)
+                self.table.addrow(partobj)
+                partobj.set_format_flags(fflags)
+                partobj.set_mount_flags(mflags)
 
         self.table.showtable()
 
@@ -137,7 +140,7 @@ class Widget(Stage):
         for p in self.used_partitions:
             if config:
                 config += "\n"
-            config += "%s:%s:%s:%s:%s" % p
+            config += "%s:%s:%s:%s:%s" % tuple(p)
         install.set_config("partitions", config)
 
     def forward(self):
@@ -154,18 +157,23 @@ class Partition(PartitionGui):
     """The instances of this class manage the formatting/mount
     information for a single partition.
     """
-    def __init__(self, master, p, mountp, size, fstype, format,
-            fflags, mflags):
+    def __init__(self, master, p, mountp, size, fstype, format):
         self.master = master
         self.partition = p
         self.mountpoint = mountp
         self.size = size        # bytes
         self.existing_format = fstype
         self.newformat = format
-        self.format_options = fflags
-        self.mount_options = mflags
+        self.format_options = ""
+        self.mount_options = ""
 
         PartitionGui.__init__(self)
+
+    def has_fs(self):
+        """Has the partition a file-system (either an existing one or
+        one through planned formatting)?
+        """
+        return self.newformat or self.existing_format
 
     def get_mount_options(self):
         mopts = []
@@ -186,7 +194,7 @@ class Partition(PartitionGui):
         if self.newformat:
             # Options only available if format box is checked, which
             # ensures that self.newformat is set
-            fl = self.format_flags(self.newformat)
+            fl = self.format_flags()
             if fl:
                 lowerfo = self.format_options.lower()
                 for name, flag, on, desc in fl:
@@ -222,7 +230,7 @@ class Partition(PartitionGui):
         given file-system type.
         """
         # At the moment there are just these three flags
-        if self.newformat or self.existing_format:
+        if self.has_fs():
             flg = [ (_("noatime"), 'a', True,
                     _("Disables recording atime (access time) to disk, thus"
                       " speeding up disk access. This is unlikely to cause"
@@ -247,23 +255,29 @@ class Partition(PartitionGui):
 
     def set_mount_flags(self, mflags):
         self.mount_options = mflags
+        self.master.update_parts(self)
 
     def set_format_flags(self, fflags):
         self.format_options = fflags
+        self.master.update_parts(self)
 
     def format_cb(self, fstype):
         """Called from the gui when the formatting option is (de)activated.
         """
         if fstype:
             self.newformat = fstype
+            self.format_options = self.default_flags(self.format_flags())
             if (fstype != self.existing_format):
-                self.format_options = self.default_flags(self.format_flags())
-                self.mount_options = self.default_flags(self.mount_flags())
+                self.mount_options = (self.default_flags(self.mount_flags())
+                        if self.mountpoint else "")
         else:
             if (self.newformat != self.existing_format):
                 self.format_options = ""
                 self.mount_options = ""
+                if not self.existing_format:
+                    self.mountpoint = ""
             self.newformat = ""
+        self.master.update_parts(self)
 
     def default_flags(self, flist):
         """Return the default set of flags for the given list of flags
@@ -276,14 +290,21 @@ class Partition(PartitionGui):
         return flags
 
     def mountpoint_cb(self, m):
-        if m.startswith('/'):
+        if m.startswith('/') and self.has_fs():
             # set default mount options
             self.mount_options = self.default_flags(self.mount_flags())
             self.mountpoint = m
         else:
             self.mountpoint = ""
             self.mount_options = ""
+        self.master.update_parts(self)
         return self.mountpoint
+
+    def get_used_mountpoints(self):
+        """Return a list of the mount-points used by all Partition objects.
+        """
+        return [p[0] for p in self.master.used_partitions]
+
 
 #################################################################
 

@@ -23,7 +23,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.05.30
+# 2008.06.02
 
 from subprocess import Popen, PIPE, STDOUT
 import os, shutil, signal
@@ -47,11 +47,11 @@ class installClass:
         # a: noatime, d: nodiratime, m: noauto
         self.MOUNTFLAGS = "ADm"
 
-		# Available file-systems for formatting
+        # Available file-systems for formatting
         self.filesystems = ['ext3', 'reiserfs', 'ext2', 'jfs', 'xfs']
         # List of mount-point suggestions
-        self.mountpoints = ['/', '/home', '/boot', '/var', '/opt', '/usr']
-
+        self.mountpoints = ['---', '/', '/home', '/boot', '/var',
+                '/opt', '/usr']
 
         self.host = host
 

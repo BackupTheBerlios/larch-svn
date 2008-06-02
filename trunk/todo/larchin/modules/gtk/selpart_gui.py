@@ -39,8 +39,8 @@ class SelTable(gtk.ScrolledWindow):
         # column headers
         i = 0
         for l in (_(" Partition "), _("Mount Point"), _("   Size   "),
-                _("Mount Options"), _("Format"), _("File-system"),
-                _("Format Options")):
+                _("Mnt Opts"), _("Format"), _("File-system"),
+                _("Fmt Opts")):
             lw = gtk.Button(l)
             self.table.attach(lw, i, i+1, 0, 1, yoptions=0)
             i += 1
@@ -128,7 +128,8 @@ class SelDevice(gtk.Frame):
 
     def newdevice(self, data):
         d = self.combo.get_active_text()
-        self.setdev_cb(d)
+        if d:
+            self.setdev_cb(d)
 
 
 class SelMountPoint(gtk.HBox):
@@ -136,7 +137,7 @@ class SelMountPoint(gtk.HBox):
         self.partobj = partobj
         gtk.HBox.__init__(self)
         self.en = gtk.Entry()
-        self.en.set_width_chars(15)
+        self.en.set_width_chars(10)
         if partobj.mountpoint:
             self.en.set_text(partobj.mountpoint)
         self.en.connect("changed", partobj.mountpoint_text_cb)
@@ -160,6 +161,10 @@ class SelMountPoint(gtk.HBox):
             # We have not handled this event, pass it on
             return False
 
+        # Only allow setting mountpoint if there is a file-system
+        if not self.partobj.has_fs():
+            return True
+
         menu = gtk.Menu()
 
         # Get list of used mountpoints
@@ -182,6 +187,8 @@ class SelMountPoint(gtk.HBox):
         return True
 
     def menuitem_cb(self, widget, item):
+        if (item == '---'):
+            item = ''
         self.en.set_text(item)
 
     def set_text(self, text):
@@ -314,14 +321,15 @@ class PartitionGui:
         self.set_fstype(fstype, on)
         self.format_cb(fsformat)
         # Now reset the labels on the option buttons
-        self.set_mount_options(part)
-        self.set_format_options(part)
+        self.set_mount_options()
+        self.set_format_options()
 
     def set_fstype(self, fst, enable=True):
         try:
             self.fstw.set_active(install.filesystems.index(fst))
         except:
             self.fstw.set_active(-1)
+            self.mpw.set_text("")
 
         self.fstw.set_sensitive(enable)
 
