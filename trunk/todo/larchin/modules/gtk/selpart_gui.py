@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.05.31
+# 2008.06.02
 
 import gtk
 
@@ -104,11 +104,6 @@ class SelTable(gtk.ScrolledWindow):
         self.table.show_all()
 
 
-
-
-
-
-
 class SelDevice(gtk.Frame):
     """This widget allows selection of the device on which partitions are
     to be allocated to mountpoints, formatted, etc.
@@ -133,9 +128,7 @@ class SelDevice(gtk.Frame):
 
     def newdevice(self, data):
         d = self.combo.get_active_text()
-        self.updated = True
-        if d:
-            self.setdev_cb(d)
+        self.setdev_cb(d)
 
 
 class SelMountPoint(gtk.HBox):
@@ -220,10 +213,6 @@ class PartitionGui:
 
         self.foptw = gtk.Button()
         self.foptw.connect("clicked", self.popupFormatOptions)
-
-
-        # ???
-        self.fstw_cb()
 
     def popupMountOptions(self, widget, data=None):
         mo = self.get_mount_options()
@@ -323,7 +312,7 @@ class PartitionGui:
             fstype = self.existing_format
             fsformat = ""
         self.set_fstype(fstype, on)
-        part.format_cb(fsformat)
+        self.format_cb(fsformat)
         # Now reset the labels on the option buttons
         self.set_mount_options(part)
         self.set_format_options(part)
@@ -349,25 +338,10 @@ class PartitionGui:
         self.set_format_options()
 
     def mountpoint_text_cb(self, widget, data=None):
-        self.mountpoint_cb(widget.get_text())
+        mp = widget.get_text()
+        mp2 = self.mountpoint_cb(mp)
+        if (mp != mp2):
+            widget.set_text(mp2)
+            return
         self.set_mount_options()
 
-
-
-
-    def format_cb(self, table, on):
-        self.format = on
-        table.enable_fstype(self, on)
-        table.enable_mountpoint(self, on)
-        # Ensure changed signal emitted when real setting passed (later)
-        table.set_fstype(self, None)
-        if on:
-            newfs = self.existing_format
-            if not newfs:
-                newfs = 'ext3'
-            table.set_fstype(self, newfs)
-
-        else:
-            self.newformat = None
-            if not self.mountpoint:
-                self.mount_options = None

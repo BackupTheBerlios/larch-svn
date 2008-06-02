@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.05.30
+# 2008.06.01
 
 from stage import Stage
 from selpart_gui import PartitionGui, SelTable, SelDevice
@@ -283,7 +283,7 @@ class Partition(PartitionGui):
         else:
             self.mountpoint = ""
             self.mount_options = ""
-
+        return self.mountpoint
 
 #################################################################
 
