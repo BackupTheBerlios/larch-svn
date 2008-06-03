@@ -19,9 +19,10 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.06.02
+# 2008.06.03
 
 import gtk
+import re
 
 class SelTable(gtk.ScrolledWindow):
     """This widget presents a list of available partitions for
@@ -138,9 +139,7 @@ class SelMountPoint(gtk.HBox):
         gtk.HBox.__init__(self)
         self.en = gtk.Entry()
         self.en.set_width_chars(10)
-        if partobj.mountpoint:
-            self.en.set_text(partobj.mountpoint)
-        self.en.connect("changed", partobj.mountpoint_text_cb)
+        self.en.connect("changed", self.mountpoint_text_cb)
         pb = gtk.Button()
         pb.add(gtk.Arrow(gtk.ARROW_DOWN, gtk.SHADOW_NONE))
 
@@ -154,16 +153,20 @@ class SelMountPoint(gtk.HBox):
         self.pack_start(pb)
 #        self.show_all()
 
+    def mountpoint_text_cb(self, widget, data=None):
+        mp = widget.get_text()
+        # Only accept a subset of possible names
+        if re.match(r"/[a-zA-Z\-_/]*$", mp) or (not mp):
+            self.partobj.set_mountpoint(mp, False)
+        else:
+            widget.set_text(self.partobj.get_mountpoint())
+
     def pb_cb(self, widget, event, data=None):
 
         # Explain this!
         if (event.type != gtk.gdk.BUTTON_PRESS):
             # We have not handled this event, pass it on
             return False
-
-        # Only allow setting mountpoint if there is a file-system
-        if not self.partobj.has_fs():
-            return True
 
         menu = gtk.Menu()
 
@@ -207,12 +210,9 @@ class PartitionGui:
         self.sizew = gtk.Label("%8.1f GB" % (float(self.size) / 1e9))
 
         self.fmtw = gtk.CheckButton()
-        do_format = (self.newformat != "")
-        self.fmtw.set_active(do_format)
         self.fmtw.connect("toggled", self.fmtw_cb)
         self.fstw = gtk.ComboBox()
 
-        self.fstw.set_sensitive(do_format)
         self.fstw.connect("changed", self.fstw_cb)
 
         self.moptw = gtk.Button()
@@ -220,6 +220,31 @@ class PartitionGui:
 
         self.foptw = gtk.Button()
         self.foptw.connect("clicked", self.popupFormatOptions)
+
+    def set_mflags(self, mflags):
+        self.moptw.set_label(mflags)
+
+    def set_fflags(self, fflags):
+        self.foptw.set_label(fflags)
+
+    def set_newformat(self, format):
+        if format:
+            self.fmtw.set_active(True)
+            self.fstw.set_sensitive(True)
+            self.fstw.set_active(install.filesystems.index(format))
+            self.mpw.set_sensitive(True)
+        else:
+            if self.existing_format:
+                self.fstw.set_active(
+                        install.filesystems.index(self.existing_format))
+                self.mpw.set_sensitive(True)
+            else:
+                self.fstw.set_active(-1)
+                self.mpw.set_sensitive(False)
+            self.fstw.set_sensitive(False)
+
+    def set_mp(self, mp):
+        self.mpw.set_text(mp)
 
     def popupMountOptions(self, widget, data=None):
         mo = self.get_mount_options()
@@ -231,7 +256,7 @@ class PartitionGui:
         if not rows:
             return
         dlg = gtk.Dialog(_("Mount Options for %s, mounted at %s") %
-                (self.partition, self.mountpoint), None,
+                (self.partition, self.get_mountpoint()), None,
             gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
             (gtk.STOCK_OK, gtk.RESPONSE_OK))
 
@@ -257,7 +282,6 @@ class PartitionGui:
             mflags += f
             i += 1
         self.set_mount_flags(mflags)
-        widget.set_label(mflags)
 
     def popupFormatOptions(self, widget, data=None):
         fo = self.get_format_options()
@@ -295,7 +319,6 @@ class PartitionGui:
             fflags += f
             i += 1
         self.set_format_flags(fflags)
-        widget.set_label(fflags)
 
     def newOption(self, opt):
         cb = gtk.CheckButton(opt[0])
@@ -308,48 +331,16 @@ class PartitionGui:
         return (cb, hf)
 
     def fmtw_cb(self, widget, data=None):
-        on = widget.get_active()
-        if on:
+        if widget.get_active():
             # If activating formatting, set the fstype to the default
             fstype = "ext3"
-            fsformat = fstype
         else:
-            # otherwise set the fstype to the existing one (if any) and
-            # disable the combobox
-            fstype = self.existing_format
-            fsformat = ""
-        self.set_fstype(fstype, on)
-        self.format_cb(fsformat)
-        # Now reset the labels on the option buttons
-        self.set_mount_options()
-        self.set_format_options()
-
-    def set_fstype(self, fst, enable=True):
-        try:
-            self.fstw.set_active(install.filesystems.index(fst))
-        except:
-            self.fstw.set_active(-1)
-            self.mpw.set_text("")
-
-        self.fstw.set_sensitive(enable)
-
-    def set_mount_options(self):
-        self.moptw.set_label(self.mount_options)
-
-    def set_format_options(self):
-        self.foptw.set_label(self.format_options)
+            # otherwise set the fstype to ''. self.setnewformat will then
+            # show the existing format if there is one
+            fstype = ""
+        self.set_format(fstype)
 
     def fstw_cb(self, widget, data=None):
-        self.format_cb(widget.get_active_text())
-        # Now reset the labels on the option buttons
-        self.set_mount_options()
-        self.set_format_options()
+        self.set_format(widget.get_active_text(), False)
 
-    def mountpoint_text_cb(self, widget, data=None):
-        mp = widget.get_text()
-        mp2 = self.mountpoint_cb(mp)
-        if (mp != mp2):
-            widget.set_text(mp2)
-            return
-        self.set_mount_options()
 
