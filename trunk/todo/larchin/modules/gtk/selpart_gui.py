@@ -28,8 +28,7 @@ class SelTable(gtk.ScrolledWindow):
     """This widget presents a list of available partitions for
     allocation in the new system.
     """
-    def __init__(self, master):
-        self.master = master
+    def __init__(self):
         gtk.ScrolledWindow.__init__(self)
         self.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
         self.table = gtk.Table(2, 7)

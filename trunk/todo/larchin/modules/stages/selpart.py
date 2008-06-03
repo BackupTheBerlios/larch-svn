@@ -56,7 +56,7 @@ class Widget(Stage):
             for p in parts.splitlines():
                 used_partitions.append(p.split(':'))
 
-        self.table = SelTable(self)
+        self.table = SelTable()
         self.devselect = SelDevice([d[0] for d in install.listDevices()],
                 self.setDevice)
         self.addWidget(self.devselect, False)
