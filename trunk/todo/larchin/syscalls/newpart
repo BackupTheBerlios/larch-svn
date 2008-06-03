@@ -9,6 +9,6 @@
 # $5 - primary/logical
 if parted -s $1 unit cyl mkpart $5 $4 $2 $3; then
     echo -n '^OK^'
-echo
+else
     echo -n "Couldn't create partition on $1 from cylinder $2 to cylinder $3"
 fi

@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.05.25
+# 2008.06.03
 
 from stage import Stage, ShowInfoWidget
 from partitions_gui import PartitionWidget
@@ -96,9 +96,6 @@ class Widget(Stage):
         self.root = self.addWidget(ShowInfoWidget(
                 _("Space for Linux system:  ")))
         self.adjustroot()
-
-        # Clear list of assigned partitions
-        install.clearParts()
 
     def swapsize_cb(self, sizeG):
         self.swapsizeG = sizeG
@@ -212,7 +209,7 @@ class Widget(Stage):
             config += "\n/home:%s%d:ext3:%s:%s" % (self.device, self.startpart,
                     install.FORMATFLAGS, install.MOUNTFLAGS)
 
-        install.set_config("mountpoints", config)
+        install.set_config("partitions", config)
         return 0
 
     def newpart(self, startcyl, endcyl, size, last, swap=False):

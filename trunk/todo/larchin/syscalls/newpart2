@@ -11,6 +11,6 @@
 
 if echo "$3,$(( $4 - $3 )),$5" | sfdisk -D /dev/sda -N$2; then
     echo -n '^OK^'
-echo
+else
     echo -n "Couldn't create partition on $1$2 from cylinder $3 to cylinder $4"
 fi

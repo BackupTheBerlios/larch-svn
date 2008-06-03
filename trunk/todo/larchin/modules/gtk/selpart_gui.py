@@ -124,10 +124,15 @@ class SelDevice(gtk.Frame):
             self.combo.append_text(d)
         self.combo.connect('changed', mainWindow.sigprocess, self.newdevice)
         # Ensure first device is selected and initialized
-        self.combo.set_active(-1)
+        self.block = True
         self.combo.set_active(0)
+        mainWindow.eventloop()
+        self.block = False
+        self.newdevice(None)
 
     def newdevice(self, data):
+        if self.block:
+            return
         d = self.combo.get_active_text()
         if d:
             self.setdev_cb(d)
