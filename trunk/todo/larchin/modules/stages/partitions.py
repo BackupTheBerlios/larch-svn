@@ -56,7 +56,9 @@ class Widget(Stage):
         Stage.__init__(self, moduleDescription)
 
         # Info on drive
-        self.device = install.get_config('autodevice')
+        self.device = install.get_config('autodevice', trap=False)
+        if not self.device:
+            self.device = install.listDevices()[0][0]
         self.dinfo = install.getDeviceInfo(self.device)
 
         # Info: total drive size

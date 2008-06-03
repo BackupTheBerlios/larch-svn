@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.05.18
+# 2008.06.03
 
 import gtk
 
@@ -194,6 +194,7 @@ class PartitionWidget(gtk.HBox):
 
     def set_part(self, part):
         self.partition.set(part)
+        self.plist.set_select(part)
 
 
 class SimpleList(gtk.ScrolledWindow):
@@ -224,3 +225,8 @@ class SimpleList(gtk.ScrolledWindow):
         for t in tlist:
             self.liststore.append([t])
 
+    def set_select(self, part):
+        for r in self.liststore:
+            if (part == r[0]):
+                r[0] = part + "   <--"
+                break
