@@ -44,7 +44,7 @@ class Widget(Stage):
         # For size information
         self.info = install.parted_lm().splitlines()
 
-        # List of partitions already configured for use.
+        # List of partitions configured for use.
         #    Each entry has the form [mount-point, device, format,
         #                         format-flags, mount-flags]
         parts = install.get_config("partitions", False)

@@ -19,35 +19,9 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.08
+# 2008.06.04
 
 import gtk
-
-class Report(gtk.ScrolledWindow):
-    """
-    """
-    def __init__(self):
-        gtk.ScrolledWindow.__init__(self)
-        self.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-        self.view = gtk.TextView()
-        self.view.set_editable(False)
-        #view.set_wrap_mode(gtk.WRAP_WORD)
-        self.add(self.view)
-        self.show()
-        self.view.show()
-
-        self.reportbuf = self.view.get_buffer()
-
-    def report(self, text):
-        self.reportbuf.insert(self.reportbuf.get_end_iter(), text+'\n')
-        self.view.scroll_mark_onscreen(self.reportbuf.get_insert())
-        mainWindow.eventloop()
-
-    def backline(self):
-        lc = self.reportbuf.get_line_count()
-        li = self.reportbuf.get_iter_at_line(lc-2)
-        ei = self.reportbuf.get_end_iter()
-        self.reportbuf.delete(li, ei)
 
 class Progress(gtk.Frame):
     def __init__(self):

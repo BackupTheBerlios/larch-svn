@@ -433,12 +433,8 @@ class installClass:
     def swapFormat(self, p):
         return self.xcall("swap-format %s" % p)
 
-    def partFormat(self, p):
-        fo = p.format_options
-        if (fo == None):
-            fo = ""
-        return self.xcall("part-format %s %s %s" % (p.partition,
-                p.newformat, fo))
+    def partFormat(self, part, format, options):
+        return self.xcall("part-format %s %s %s" % (part, format, options))
 
     def checkEmpty(self, mp):
         if self.xcall("check-mount %s" % mp):
@@ -479,24 +475,19 @@ class installClass:
         care must be taken that inner mounts (e.g. '/home') are placed
         after their containing mounts (e.g. '/') in the list.
         """
-        self.mplist = []
-        for p in self.parts.values():
-            # Only mount partitions which will be formatted, which have
-            # a mount-point and which are to be mounted at boot.
-            if (p.mountpoint and p.format and ('A' not in p.mount_options)):
-                i = 0
-                for p0 in self.mplist:
-                    if (p.mountpoint < p0[0]):
-                        break
-                    i += 1
-                self.mplist.insert(i, (p.mountpoint, p.partition))
         return self.remount(True)
+
+    def getumounts(self):
+        """Each entry is a list of partition, mount-point and mount-flags
+        """
+        return [m.split(':') for m in self.get_config('mounts').splitlines()]
 
     def remount(self, check=False):
         """This mounts the partitions used by the new system using the
-        list prepared by 'mount'.
+        list in the 'mounts' config file.
         """
-        for m, d in self.mplist:
+        mplist = self.getumounts()
+        for d, m, f in mplist:
             result = self.xcall("do-mount %s %s" % (d, m))
             if result:
                 return None
@@ -504,15 +495,14 @@ class installClass:
             # can be ignored however.
             if check and not self.checkEmpty(m):
                 return None
-        return self.mplist
+        return mplist
 
     def unmount(self):
         """To unmount the partitions mounted by the installer.
         """
-        mlist = list(self.mplist)
+        mlist = self.getumounts()
         mlist.reverse()
-        for m, d in mlist:
-            # the 'list()' is needed because of the 'remove' below
+        for d, m, f in mlist:
             result = self.xcall("do-unmount %s" % m)
             if result:
                 return False
@@ -520,6 +510,17 @@ class installClass:
 
     def mkinitcpio(self):
         self.xcall("do-mkinitcpio")
+
+    def getswaps(self):
+        """Retrieve swap partition list from config file 'swaps'
+        """
+        # Swaps ([device, format, include])
+        slist = []
+        swaps = self.get_config("swaps", False)
+        if swaps:
+            for s in swaps.splitlines():
+                slist.append(s.split(':'))
+        return slist
 
     def fstab(self):
         """Build a suitable /etc/fstab for the newly installed system.
@@ -531,31 +532,31 @@ class installClass:
         mainmounts = []
         mmounts = []
         xmounts = []
-        # System partitions from self.parts
-        for p in install.parts.values():
-            if p.mountpoint:
-                mainmounts.append(p.partition)
-                opt = 'defaults'
-                if (p.mountpoint == '/'):
-                    pas = '1'
-                else:
-                    pas = '2'
-                sysm = True
-                if ('T' in p.mount_options):
-                    opt += ',noatime'
-                if ('D' in p.mount_options):
-                    opt += ',nodiratime'
-                if ('A' in p.mount_options):
-                    opt += ',noauto'
-                    pas = '0'
-                    sysm = False
+        mplist = self.getumounts()
+        for d, m, f in mplist:
+            mainmounts.append(d)
+            opt = 'defaults'
+            if (m == '/'):
+                pas = '1'
+            else:
+                pas = '2'
+            sysm = True
+            if ('A' in f):
+                opt += ',noatime'
+            if ('D' in f):
+                opt += ',nodiratime'
+            if ('M' in f):
+                opt += ',noauto'
+                pas = '0'
+                sysm = False
 
-                s = "%-15s %-12s %-8s %s 0     %s\n" % (p.partition,
-                        p.mountpoint, p.newformat or "auto", opt, pas)
-                if sysm:
-                    mmounts.append((p.mountpoint, s))
-                else:
-                    xmounts.append((p.mountpoint, s))
+            # Read format??? or just use 'auto'
+
+            s = "%-15s %-12s %-8s %s 0     %s\n" % (d, m, "auto", opt, pas)
+            if sysm:
+                mmounts.append((m, s))
+            else:
+                xmounts.append((m, s))
 
         mmounts.sort()
         for m, s in mmounts:
@@ -567,9 +568,10 @@ class installClass:
                         "        0     0\n\n")
 
         fstab += "# Swaps\n"
-        for p in self.swaps:
-            fstab += ("%-12s swap       swap   defaults        0     0\n"
-                    % p)
+        for p, f, i in self.getswaps():
+            if i:
+                fstab += ("%-12s swap       swap   defaults        0     0\n"
+                        % p)
 
         if xmounts:
             fstab += "#\n Other partitions\n"
@@ -627,9 +629,10 @@ class installClass:
         if self.remount():
             # Filter out new system '/' and '/boot'
             bar = []
-            for p in self.parts.values():
-                if (p.mountpoint == '/') or (p.mountpoint == '/boot'):
-                    bar.append(p.partition)
+            mplist = self.getumounts()
+            for d, m, f in mplist:
+                if (m == '/') or (m == '/boot'):
+                    bar.append(d)
 
             self.device_map = []
             self.menulst = []

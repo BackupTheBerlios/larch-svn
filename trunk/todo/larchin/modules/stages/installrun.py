@@ -21,102 +21,57 @@
 #----------------------------------------------------------------------------
 # 2008.06.04
 
-from stage import Stage
-from installstart_gui import PartTable
-
-import re
+from stage import Stage, Report
+from doinstall_gui import Progress
 
 class Widget(Stage):
     def getHelp(self):
-        return _("If you press OK now the chosen partitions will be"
-                " formatted and mounted and then the running system will"
-                " be copied onto them.")
+        return _("The installation process is now running. The individual"
+                " operations being performed are listed in the report"
+                " window.\n\n"
+                "1) Format swap partitions.\n"
+                "2) Format installation partitions.\n"
+                "3) Mount installation partitions.\n"
+                "4) Copy system to installation partitions.\n"
+                "5) Generate new initramfs.\n"
+                "6) Generate new /etc/fstab.")
 
     def __init__(self):
         Stage.__init__(self, moduleDescription)
 
-        self.addLabel(_("Please check that the formatting of the"
-                " following partitions and their use within the new"
-                " installation (mount-points) corresponds with what you"
-                " had in mind. Accidents could well result in serious"
-                " data loss."))
+        self.output = self.addWidget(Report())
 
-        # For size information
-        self.info = install.parted_lm().splitlines()
+        self.progress = self.addWidget(Progress(), False)
 
-        # List of partitions already configured for use.
-        #    Each entry has the form [mount-point, device, format,
-        #                         format-flags, mount-flags]
-        parts = install.get_config("partitions", False)
-        plist = []
-        if parts:
-            for p in parts.splitlines():
-                pl = p.split(':')
-                plist.append(pl + [self.getsize(pl[1])])
-
-        # In case of mounts within mounts
-        plist.sort()
-
-        # Swaps ([device, format, include])
-        swaps = install.get_config("swaps", False)
-        if swaps:
-            for s in swaps.splitlines():
-                p, f, i = s.split(':')
-                if i:
-                    plist.append(["swap", p, f, "", "", self.getsize(p)])
-
-        self.addWidget(PartTable(plist))
-
-    def getsize(part):
-        """Get the size of a partition using the output of 'parted -lm'
-        saved in self.info.
-        """
-        dev, partno = re.match(r"(/dev/[a-z]+)([0-9]+)", part).groups()
-        search = True
-        for line in self.info:
-            if line.startswith("/dev/"):
-                if not search:
-                    break
-                if line.startswith(dev+':'):
-                    search = False
-                continue
-            if search:
-                continue
-            if line.startswith(partno+':'):
-                return line.split(':')[1]
-        return "???"
-
-    def forward(self):
-        return 0
-
-
-
-
-
-
-
-
-
-
-
-        from doinstall_gui import Report, Progress
-        self.output = Report()
-        self.addWidget(self.output)
-
-        self.progress = Progress()
-        self.addWidget(self.progress, False)
         self.request_soon(self.run)
 
     def run(self):
-        # need to disable forward button
-        mainWindow.enable_forward(False)
-        mainWindow.busy_on(False)
+        mainWindow.sigprocess(None, self.doInstall)
+        return self.stop_callback()
 
+    def doInstall(self, arg):
         self.ok = False
+        self.swaplist = []
+        self.partlist = []
         if self.format():
-            mountlist = install.mount()
-            if mountlist:
-                for m, p in mountlist:
+            # Generate list of mounts for config file
+            mounts = ""
+            for pmf in self.partlist:
+                if mounts:
+                    mounts += "\n"
+                mounts += "%s:%s:%s" % pmf
+            install.set_config("mounts", mounts)
+
+            # Regenerate the swaps config file
+            swaps = ""
+            for s in self.swaplist:
+                if swaps:
+                    swaps += "\n"
+                swaps += "%s::include" % s
+            install.set_config("swaps", swaps)
+
+            if install.mount():
+                for p, m, f in self.partlist:
                     self.output.report(_("Mounted partition %s at %s")
                             % (p, m))
 
@@ -125,52 +80,65 @@ class Widget(Stage):
                             " partitions."))
                     self.output.report(_("\nInstallation completed"
                             " successfully."))
-                    self.output.report(_("\nPress 'Forward' to continue"))
+                    self.output.report(_("\nPress 'OK' to continue"))
                     self.ok = True
                 else:
                     self.output.report(_("\nInstallation failed"))
             else:
                 self.output.report(_("Couldn't mount installation"
                         " partition(s)"))
-        # need to reenable forward button
-        mainWindow.busy_off(False)
-        mainWindow.enable_forward(True)
-        return self.stop_callback()
-
-    def reinit(self):
-        self.output.report(_("The installation has already been completed."
-                " No further action is possible."))
 
     def format(self):
 
+        #print "NOT FORMATTING"
+        #return True
 
-#        print "NOT FORMATTING"
-#        return True
-
-        # Swaps
-        for p in install.format_swaps:
-            self.output.report(_("Formatting partition %s as swap ...") % p)
-            result = install.swapFormat(p)
-            if result:
-                self.output.report(result)
-                return False
-
-        # Installation partitions
-        for p in install.parts.values():
-            if p.format:
-                self.output.report(_("Formatting partition %s as %s ...")
-                        % (p.partition, p.newformat))
-                result = install.partFormat(p)
+        # Swaps ([device, format, include])
+        for p, f, i in install.getswaps():
+            if f:
+                self.output.report(_("Formatting partition %s as swap ...")
+                        % p)
+                result = install.swapFormat(p)
                 if result:
                     self.output.report(result)
                     return False
-        return True
+            if i:
+                self.swaplist.append(p)
+
+
+        # Installation partitions
+        # List of partitions configured for use.
+        #    Each entry has the form [mount-point, device, format,
+        #                         format-flags, mount-flags]
+        parts = install.get_config("partitions", False).splitlines()
+        plist = [p.split(':') for p in parts]
+
+        root = False
+        if plist:
+            # In case of mounts within mounts
+            plist.sort()
+            for mp, p, f, ff, mf in plist:
+                if f:
+                    self.output.report(_("Formatting partition %s as %s ...")
+                            % (p, f))
+                    result = install.partFormat(p, f, ff)
+                    if result:
+                        self.output.report(result)
+                        return False
+                if mp:
+                    if (mp == '/'):
+                        root = True
+                    self.partlist.append((p, mp, mf))
+
+        if root:
+            return True
+        self.output.report(_("ERROR: No root (/) partition selected"))
+        return False
 
     def install(self):
 
-#        print "NOT INSTALLING"
-#        return True
-
+        #print "NOT INSTALLING"
+        #return True
 
         self.progress_count = 0
         self.progress_ratio = 1.0
@@ -201,6 +169,7 @@ class Widget(Stage):
             isize = install.get_size()
             self.progress_ratio = float(totalsize) / (isize - self.basesize)
 
+        self.output.report(_("Replacing/removing 'live'-specific stuff"))
         install.install_tidy()
 
         self.progress.ended()
@@ -208,6 +177,7 @@ class Widget(Stage):
         self.output.report(_("Generating initramfs (this could take a while ...)"))
         install.mkinitcpio()
         self.output.report(_("Generating /etc/fstab"))
+        install.fstab()
         return True
 
     def progress_cb(self):
@@ -224,13 +194,13 @@ class Widget(Stage):
 
     def forward(self):
         if self.ok:
-            mainWindow.goto('grub')
+            return 0
         else:
-            mainWindow.goto('error')
+            return -1
 
 
 #################################################################
 
-moduleName = 'InstallStart'
-moduleDescription = _("Start the actual installation process")
+moduleName = 'Install'
+moduleDescription = _("Installing ...")
 
