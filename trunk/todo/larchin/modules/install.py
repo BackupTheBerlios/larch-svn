@@ -23,7 +23,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.06.02
+# 2008.06.04
 
 from subprocess import Popen, PIPE, STDOUT
 import os, shutil, signal
@@ -178,6 +178,12 @@ class installClass:
         for line in op.splitlines():
             devices.append(line.rstrip(';').split(':'))
         return devices
+
+    def parted_lm(self):
+        """Return the output of 'parted -lm', to get info on all drives
+        and partitions.
+        """
+        return self.xcall("parted-lm")
 
     def getmounts(self):
         return self.xcall("get-mounts")
