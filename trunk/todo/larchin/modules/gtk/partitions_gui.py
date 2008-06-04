@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.05.21
+# 2008.06.04
 
 import gtk
 
@@ -38,7 +38,7 @@ class PartitionWidget(gtk.Frame):
         self.adj = gtk.Adjustment(lower=0.1, step_incr=0.1, page_incr=1.0)
         hscale = gtk.HScale(self.adj)
 
-        self.onSwitch = gtk.CheckButton()
+        self.onSwitch = gtk.CheckButton(title_checkbutton)
 
         self.set_label_widget(self.onSwitch)
         self.box = gtk.VBox()

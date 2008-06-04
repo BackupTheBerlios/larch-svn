@@ -22,6 +22,8 @@
 # 2008.06.04
 
 from stage import Stage
+from rootpw_gui import PWEnter
+from dialogs import popupMessage
 
 class Widget(Stage):
     def getHelp(self):
@@ -34,49 +36,23 @@ class Widget(Stage):
                 " not to lose/forget the password you set here.")
 
     def __init__(self):
-        Stage.__init__(self)
+        Stage.__init__(self, moduleDescription)
 
-        layout = gtk.Table(2, 2)
-        layout.set_row_spacings(10)
-
-        l1 = gtk.Label(_("Enter new root password:"))
-        l1.set_alignment(1.0, 0.5)
-        layout.attach(l1, 0, 1, 0, 1,
-                xoptions=gtk.FILL, yoptions=gtk.FILL,
-                xpadding=5, ypadding=5)
-        self.pw1 = gtk.Entry()
-        self.pw1.set_visibility(False)
-        layout.attach(self.pw1, 1, 2, 0, 1,
-                xoptions=gtk.FILL|gtk.EXPAND, yoptions=gtk.FILL|gtk.EXPAND,
-                xpadding=5, ypadding=5)
-
-        l2 = gtk.Label(_("Reenter new root password:"))
-        l2.set_alignment(1.0, 0.5)
-        layout.attach(l2, 0, 1, 1, 2,
-                xoptions=gtk.FILL, yoptions=gtk.FILL,
-                xpadding=5, ypadding=5)
-        self.pw2 = gtk.Entry()
-        self.pw2.set_visibility(False)
-        layout.attach(self.pw2, 1, 2, 1, 2,
-                xoptions=gtk.FILL|gtk.EXPAND, yoptions=gtk.FILL|gtk.EXPAND,
-                xpadding=5, ypadding=5)
-
-        self.addWidget(layout)
+        self.pwe = self.addWidget(PWEnter())
         self.reinit()
 
     def reinit(self):
-        self.pw1.grab_focus()
+        self.pwe.move_focus()
 
     def forward(self):
         # Check entered passwords are identical
-        pw = self.pw1.get_text()
-        if (pw != self.pw2.get_text()):
+        pw = self.pwe.get_text1()
+        if (pw != self.pwe.get_text2()):
             popupMessage(_("The passwords are not identical,\n"
                     "  Please try again."))
 
         # Set the password
         elif install.set_rootpw(pw):
-            mainWindow.goto('end')
             return 0
 
         self.reinit()

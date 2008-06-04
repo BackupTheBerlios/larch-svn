@@ -28,7 +28,7 @@ class Widget(Stage):
         return _("For any further help please contact the authors.")
 
     def __init__(self):
-        Stage.__init__(self)
+        Stage.__init__(self, moduleDescription)
         self.addLabel(_("If all went well, your installation should now"
                 " be bootable."))
 

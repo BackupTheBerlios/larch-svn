@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.10
+# 2008.06.04
 
 import gtk
 
@@ -38,8 +38,8 @@ class Mbrinstall(gtk.Frame):
         self.drive = gtk.combo_box_new_text()
         hb.pack_end(self.drive, False)
         hb.pack_end(gtk.Label(_("Boot Device: ")), False)
-        for d in install.devices:
-            self.drive.append_text(d[0].rstrip('-'))
+        for d in install.listDevices():
+            self.drive.append_text(d[0])
         self.drive.set_active(0)
 
         mlcombobox = gtk.HBox(spacing=5)

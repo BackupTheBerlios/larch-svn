@@ -36,7 +36,7 @@ class Widget(Stage):
                 " system can also be booted from an existing GRUB.")
 
     def __init__(self):
-        Stage.__init__(self)
+        Stage.__init__(self, moduleDescription)
 
         # Set up grub's device map and a list of existing menu.lst files.
         assert install.set_devicemap(), "Couldn't get device map for GRUB"
@@ -122,14 +122,13 @@ class Widget(Stage):
         return text
 
     def newgrubentries(self):
-        import time
         # look for separate boot partition
         self.bootpart = None
-        for p in install.parts.values():
-            if (p.mountpoint == '/'):
-                self.rootpart = p.partition
-            elif (p.mountpoint == '/boot'):
-                self.bootpart = p.partition
+        for d, m, f in install.getumounts():
+            if (m == '/'):
+                self.rootpart = d
+            elif (m == '/boot'):
+                self.bootpart = d
         # add an entry for each initramfs
         text = "# ++++ Section added by larchin (%s)\n\n" % time.ctime()
 

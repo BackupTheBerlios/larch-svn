@@ -169,6 +169,7 @@ class Widget(Stage):
             isize = install.get_size()
             self.progress_ratio = float(totalsize) / (isize - self.basesize)
 
+        self.output.report(_("---"))
         self.output.report(_("Replacing/removing 'live'-specific stuff"))
         install.install_tidy()
 

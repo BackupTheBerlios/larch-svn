@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.06.03
+# 2008.06.04
 
 from stage import Stage, ShowInfoWidget
 from partitions_gui import PartitionWidget
@@ -198,13 +198,13 @@ class Widget(Stage):
         # meaning of the flags
         config = "/:%s%d:ext3:%s:%s" % (self.device, self.startpart,
                 install.FORMATFLAGS, install.MOUNTFLAGS)
-        self.startpart + 1
+        self.startpart += 1
         if (swapC > 0):
             startcyl = self.newpart(startcyl, endcyl, swapC,
                     (homeC == 0), True)
             install.set_config("swaps", "%s%d:format:include" %
                     (self.device, self.startpart))
-            self.startpart + 1
+            self.startpart += 1
 
         if (homeC > 0):
             startcyl = self.newpart(startcyl, endcyl, homeC, True)
