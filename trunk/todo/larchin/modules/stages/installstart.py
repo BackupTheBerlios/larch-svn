@@ -83,7 +83,7 @@ class Widget(Stage):
             if search:
                 continue
             if line.startswith(partno+':'):
-                return line.split(':')[1]
+                return line.split(':')[3]
         return "???"
 
     def forward(self):
