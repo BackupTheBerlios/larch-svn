@@ -19,13 +19,15 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.04.17
+# 2008.06.04
 
+from stage import Stage
+from grub_gui import Mbrinstall, Oldgrub
+from menu_lst_base import menu_lst_base
 
-class Grub(Stage):
-    def stageTitle(self):
-        return _("Set up boot-loader (GRUB)")
+import time
 
+class Widget(Stage):
     def getHelp(self):
         return _("GRUB allows the booting of more than one operating"
                 " system.\n"
@@ -33,14 +35,8 @@ class Grub(Stage):
                 " record' on the first disk drive, but the new Linux"
                 " system can also be booted from an existing GRUB.")
 
-    def labelL(self):
-        return ""
-
     def __init__(self):
-        """
-        """
         Stage.__init__(self)
-        from grub_gui import Mbrinstall, Oldgrub
 
         # Set up grub's device map and a list of existing menu.lst files.
         assert install.set_devicemap(), "Couldn't get device map for GRUB"
@@ -59,9 +55,6 @@ class Grub(Stage):
 
         self.addOption('part', _("Install GRUB to installation partition."))
 
-        self.reinit()
-
-    def reinit(self):
         self.request_soon(self.init)
 
     def init(self):
@@ -84,7 +77,6 @@ class Grub(Stage):
 
     def revert_cb(self):
         # Get template
-        from menu_lst_base import menu_lst_base
         text = menu_lst_base
 
         # Add entries for new installation
@@ -118,7 +110,6 @@ class Grub(Stage):
             self.ml = newtext
 
     def reml_cb(self):
-        import time
         if self.mlwhere:
             # Get existing menu.lst
             dev, path = self.mlwhere.split(':')
@@ -203,10 +194,11 @@ class Grub(Stage):
 
         install.setup_grub(device, path, text)
 
-        mainWindow.goto('rootpw')
+        return 0
 
 
 #################################################################
 
-stages['grub'] = Grub
+moduleName = 'Grub'
+moduleDescription = _("Install / adjust the GRUB bootloader")
 

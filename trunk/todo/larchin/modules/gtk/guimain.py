@@ -21,7 +21,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.05.14
+# 2008.06.04
 
 # Add a Quit button?
 
@@ -219,8 +219,12 @@ class StageList(gtk.ScrolledWindow):
                 self.selection.select_path(i)
                 return
             i += 1
-        popupError(_("Attempt to select non-existent stage: %s") % stagename,
-                "BUG")
+
+        if (stagename == '/'):
+            mainWindow.exit()
+        else:
+            popupError(_("Attempt to select non-existent stage: %s") %
+                    stagename, "BUG")
 
     def changed_cb(self, widget, data=None):
         tv, iter = self.selection.get_selected()

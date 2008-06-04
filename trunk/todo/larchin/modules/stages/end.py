@@ -19,26 +19,23 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.12
+# 2008.06.04
 
-class End(Stage):
-    def stageTitle(self):
-        return ('<i>larchin</i>: %s' % _("Installation Complete"))
+from stage import Stage
 
-    def labelR(self):
-        return gtk.STOCK_OK
+class Widget(Stage):
+    def getHelp(self):
+        return _("For any further help please contact the authors.")
 
     def __init__(self):
         Stage.__init__(self)
         self.addLabel(_("If all went well, your installation should now"
                 " be bootable."))
 
-    def getHelp(self):
-        return _("For any further help please contact the authors.")
-
     def forward(self):
-        mainWindow.exit()
+        return 0
 
 #################################################################
 
-stages['end'] = End
+moduleName = 'End'
+moduleDescription = _("Installation Completed")
