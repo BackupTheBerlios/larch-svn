@@ -23,9 +23,10 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.06.04
+# 2008.06.05
 
 from subprocess import Popen, PIPE, STDOUT
+import select
 import os, shutil, signal
 import re
 import crypt, random
@@ -107,7 +108,7 @@ class installClass:
         """Call a function on the same machine.
         """
         xcmd = ("%s/syscalls/%s" % (basePath, cmd))
-        return Popen(xcmd, shell=True, stdout=PIPE, stderr=STDOUT)
+        return Popen(xcmd, shell=True, stdout=PIPE, stderr=STDOUT, bufsize=1)
 
     def xcall_net(self, cmd, opt=""):
         """Call a function on another machine.
@@ -116,7 +117,7 @@ class installClass:
         """
         xcmd = ("ssh %s root@%s /opt/larchin/syscalls/%s" %
                 (opt, self.host, cmd))
-        return Popen(xcmd, shell=True, stdout=PIPE, stderr=STDOUT)
+        return Popen(xcmd, shell=True, stdout=PIPE, stderr=STDOUT, bufsize=1)
 
     def terminal(self, cmd):
         """Run a command in a terminal. The environment variable 'XTERM' is
@@ -143,22 +144,35 @@ class installClass:
             mainWindow.eventloop(0.5)
         del(self.processes[-1])
 
-    def xcall(self, cmd, opt="", callback=None):
-        plog("XCALL: %s" % cmd)
+    def xcall(self, cmd, opt="", callback=None, log=True):
+        if log:
+            plog("XCALL: %s" % cmd)
         if self.host:
             process = self.xcall_net(cmd, opt)
         else:
             process = self.xcall_local(cmd)
         self.processes.append(process)
 
+        op = ""
         while (process.poll() == None):
             if callback:
                 callback()
-            mainWindow.eventloop(0.5)
 
-        op = process.stdout.read()
-        plog(op)
-        plog("END-XCALL")
+            if select.select([process.stdout], [], [], 0)[0]:
+                opx = process.stdout.readline()
+                if log:
+                    plog(opx)
+                op += opx
+            mainWindow.eventloop(0.1)
+
+        opx = process.stdout.read()
+        if opx:
+            if log:
+                plog(opx)
+            op += opx
+
+        if log:
+            plog("END-XCALL")
         del(self.processes[-1])
         if op.endswith("^OK^"):
             self.okop = op
@@ -463,12 +477,12 @@ class installClass:
         """
         self.xcall("larch-tidy")
 
-    def get_size(self):
+    def get_size(self, log=False):
         """Get some estimate of the current size of the system being
         installed.
         Returns a value in MiB.
         """
-        return int(self.xcall("installed-size"))
+        return int(self.xcall("installed-size", log=log))
 
     def mount(self):
         """The order is important in some cases, so when building the list

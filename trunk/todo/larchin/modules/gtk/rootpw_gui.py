@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.02.10
+# 2008.06.05
 
 import gtk
 
@@ -59,4 +59,8 @@ class PWEnter(gtk.Table):
         return self.pw2.get_text()
 
     def move_focus(self):
+        """This is a 'request_soon' callback, so it needs to return
+        False to stop it being called again.
+        """
         self.pw1.grab_focus()
+        return False

@@ -21,12 +21,13 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.06.04
+# 2008.06.05
 
 # Add a Quit button?
 
 import gtk, gobject
 from dialogs import popupError
+from stage import Report
 
 class Larchin(gtk.Window):
     def __init__(self):
@@ -60,12 +61,20 @@ class Larchin(gtk.Window):
 
         vbox1.pack_start(self.pane)
 
+        # The reporting window
+        self.toplevel = gtk.Window()
+        self.toplevel.set_title(_("larchin - log"))
+        self.toplevel.connect("delete-event", self.closereport)
+        self.toplevel.set_default_size(600,400)
+        self.reportw = Report()
+        self.toplevel.add(self.reportw)
+
         buttons = gtk.HBox(False, spacing=10)
-        #self.lButton = gtk.Button(stock=gtk.STOCK_GO_BACK)
         self.rButton = gtk.Button(stock=gtk.STOCK_OK)
         self.hButton = gtk.Button(stock=gtk.STOCK_HELP)
-        #buttons.pack_start(self.lButton, False, False, padding=3)
+        self.oButton = gtk.ToggleButton(_("Reporting"))
         buttons.pack_start(self.hButton, False, False, padding=3)
+        buttons.pack_start(self.oButton, False, False, padding=3)
         buttons.pack_end(self.rButton, False, False, padding=3)
 
         vbox1.pack_start(buttons, expand=False, padding=3)
@@ -73,7 +82,7 @@ class Larchin(gtk.Window):
         self.add(vbox1)
 
         self.hButton.connect("clicked", self.help)
-        #self.lButton.connect("clicked", self.sigprocess, self.back)
+        self.oButton.connect("toggled", self.showreport)
         self.rButton.connect("clicked", self.sigprocess, self.ok)
 
         self.watchcursor = gtk.gdk.Cursor(gtk.gdk.WATCH)
@@ -99,6 +108,10 @@ class Larchin(gtk.Window):
     def exit(self, widget=None, data=None):
         install.tidyup()
         gtk.main_quit()
+
+    def closereport(self, widget, event, data=None):
+        self.oButton.set_active(False)
+        return True
 
     #def enable_forward(self, on):
     #    self.rButton.set_sensitive(on)
@@ -158,6 +171,12 @@ class Larchin(gtk.Window):
 
     def help(self, widget, data=None):
         self.mainWidget.help()
+
+    def showreport(self, widget, data=None):
+        if widget.get_active():
+            self.toplevel.show_all()
+        else:
+            self.toplevel.hide_all()
 
     def ok(self, data):
         stagename = self.mainWidget.stagename

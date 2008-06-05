@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.06.04
+# 2008.06.05
 
 from stage import Stage, Report
 from doinstall_gui import Progress
@@ -186,7 +186,7 @@ class Widget(Stage):
         if self.progress_count < 10:
             return
         self.progress_count = 0
-        installed_size = install.get_size()
+        installed_size = install.get_size(log=False)
         frac = ((installed_size  - self.basesize) * self.progress_ratio
                 / self.system_size)
         if (frac > 1.0):

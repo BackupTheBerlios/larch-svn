@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.05.18
+# 2008.06.05
 
 import gtk, gobject
 
@@ -177,10 +177,12 @@ class Report(gtk.ScrolledWindow):
         self.view.show()
 
         self.reportbuf = self.view.get_buffer()
+        self.mark = self.reportbuf.create_mark(None,
+                self.reportbuf.get_end_iter(), False)
 
     def report(self, text):
         self.reportbuf.insert(self.reportbuf.get_end_iter(), text+'\n')
-        self.view.scroll_mark_onscreen(self.reportbuf.get_insert())
+        self.view.scroll_mark_onscreen(self.mark)
         mainWindow.eventloop()
 
     def backline(self):

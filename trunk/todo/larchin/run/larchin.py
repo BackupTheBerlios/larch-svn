@@ -21,7 +21,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.06.04
+# 2008.06.05
 
 import os, sys
 
@@ -69,7 +69,8 @@ else:
 def plog(text):
     """A function to log information from the program.
     """
-    print text
+    #print text
+    mainWindow.reportw.report(text)
 
 __builtin__.plog = plog
 __builtin__.basePath = basedir
