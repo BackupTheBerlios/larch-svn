@@ -19,17 +19,18 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.05.21
+# 2008.06.05
 
 from stage import Stage
 
 class Widget(Stage):
     def getHelp(self):
-        return _("Swap partitions will be found on the drives and offered"
-                 " for formatting. It is generally good to have a swap"
-                 " partition, but it is not necessary if you have more"
-                 " memory than you will ever need. 0.5 - 1.0 GB of swap"
-                 " space should be plenty for most purposes.")
+        return _("Any existing swap partitions on the drives will be found"
+                 "  and offered for formatting. It is generally good to have"
+                 " a swap partition, but it is not necessary if you have more"
+                 " memory than you will ever need.\n\n"
+                 " 0.5 - 1.0 GB of swap space should be plenty for most"
+                 " purposes.")
 
     def __init__(self):
         """

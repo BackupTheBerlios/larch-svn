@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.06.04
+# 2008.06.05
 
 from stage import Stage, ShowInfoWidget
 from partitions_gui import PartitionWidget
@@ -40,8 +40,8 @@ class Widget(Stage):
                 "WARNING: If you have an operating system already installed"
                 " on this drive which you wish to keep, you must perform"
                 " partitioning manually (or use the existing partitions) by"
-                " selecting 'Manual Partitioning' (or 'Set Mount Points')"
-                " from the stage menu.\n"
+                " selecting 'Edit disk partitions manually' (or"
+                " 'Select Installation Partitions') from the stage menu.\n"
                 "EXCEPTION: if the existing operating system uses the NTFS"
                 " file-system (Windows), it is also possible to use automatic"
                 " partitioning, if enough space is free, or has been freed"
@@ -50,7 +50,7 @@ class Widget(Stage):
                 " available for the new Linux installation. If you want to"
                 " use some or all of the space occupied by Windows, you"
                 " must shrink or remove the last NTS partitions first"
-                " (by returning to the previous stage).")
+                " (by returning to the appropriate stage).")
 
     def __init__(self):
         Stage.__init__(self, moduleDescription)

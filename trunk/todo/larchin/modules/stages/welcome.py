@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.05.11
+# 2008.06.05
 
 from stage import Stage
 
@@ -36,7 +36,26 @@ class Widget(Stage):
                 'Copyright (c) 2008   Michael Towers')
 
     def getHelp(self):
-        return _("Click on the 'OK' button to start.")
+        return _("This installation program concentrates on just the most"
+                " essential aspects of Arch Linux system installation: disk"
+                " preparation, copying of the system data, generation of"
+                " the initramfs, setting up the GRUB bootloader and setting"
+                " the root password.\n"
+                "The remaining configuration of the system can be performed"
+                " before running this program. This is one advantage of"
+                " installing from a 'live' system - the configuration can"
+                " be set up and tested before installation.\n"
+                "Configuration can of course also be performed later, on"
+                " the running installed system, if you prefer.\n\n"
+                "Simple graphical programs for setting the xorg keyboard"
+                " layout (xkmap), for adding users (luser) and for setting"
+                " the locale (localed) are available in the larch repository,"
+                " and may be found in the 'system' category of the menu if"
+                " they have been installed.\n\n"
+                "Other useful sources of information concerning"
+                " installation are the Arch Linux Installation Guide, and"
+                " the Arch Linux wiki, for example the Beginner's Guide.\n\n"
+                "Click on the 'OK' button to start.")
 
     def forward(self):
         return 0

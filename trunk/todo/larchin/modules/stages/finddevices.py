@@ -19,22 +19,12 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.05.12
+# 2008.06.05
 
 from stage import Stage
 from dialogs import popupError, popupMessage
 
 class Widget(Stage):
-    def __init__(self):
-        Stage.__init__(self, moduleDescription)
-        self.addLabel(_('Disk(-like) devices will be detected and offered'
-                ' for automatic partitioning.\n\n'
-                'If a device has mounted partitions it will not be offered'
-                ' for automatic partitioning. If you want to partition'
-                ' such a device, you must select the "Manual Partitioning"'
-                ' stage.'))
-        self.getDevices()
-
     def getHelp(self):
         return _('On the basis of the detected disk(-like) devices a choice'
                 ' of devices for automatic partitioning will be offered.\n'
@@ -49,12 +39,22 @@ class Widget(Stage):
                 ' allow the use of the external tools cfdisk and gparted.\n'
                 'In the case of manual partitioning the selection of the'
                 ' mount points is done separately in the'
-                ' "Set Mount Points" stage, which will be skipped if the'
-                ' automatic partitioning scheme is accepted.\n'
+                ' "Select Installation Partitions" stage, which will be'
+                ' skipped if the automatic partitioning scheme is accepted.\n'
                 'Selecting one of the devices offered for automatic'
-                ' partitioning will not yet cause it to be modified,'
+                ' partitioning will not immediately cause it to be modified,'
                 ' so try it out without fear. You can return here via the'
                 ' stage menu.')
+
+    def __init__(self):
+        Stage.__init__(self, moduleDescription)
+        self.addLabel(_('Disk(-like) devices will be detected and offered'
+                ' for automatic partitioning.\n\n'
+                'If a device has mounted partitions it will not be offered'
+                ' for automatic partitioning. If you want to partition'
+                ' such a device, you must select the "Manual Partitioning"'
+                ' stage.'))
+        self.getDevices()
 
     def forward(self):
         # Set device selection for automatic partitioning.

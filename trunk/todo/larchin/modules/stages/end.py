@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.06.04
+# 2008.06.05
 
 from stage import Stage
 
@@ -30,7 +30,7 @@ class Widget(Stage):
     def __init__(self):
         Stage.__init__(self, moduleDescription)
         self.addLabel(_("If all went well, your installation should now"
-                " be bootable."))
+                " be bootable. Click on OK to quit the installer."))
 
     def forward(self):
         return 0

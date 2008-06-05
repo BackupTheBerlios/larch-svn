@@ -34,7 +34,8 @@ class Widget(Stage):
                 "3) Mount installation partitions.\n"
                 "4) Copy system to installation partitions.\n"
                 "5) Generate new initramfs.\n"
-                "6) Generate new /etc/fstab.")
+                "6) Generate new /etc/fstab.\n"
+                "7) Unmount installation partitions.")
 
     def __init__(self):
         Stage.__init__(self, moduleDescription)
