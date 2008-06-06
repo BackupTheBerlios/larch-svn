@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.06.03
+# 2008.06.06
 
 from stage import Stage
 from selpart_gui import PartitionGui, SelTable, SelDevice
@@ -103,7 +103,7 @@ class Widget(Stage):
 
                 partobj = Partition(p, size, fstype, pdata)
                 self.table.addrow(partobj)
-                partobj.set_format(format)
+                partobj.set_newformat(format)
                 partobj.set_format_flags(fflags)
                 partobj.set_mountpoint(mountp)
                 partobj.set_mount_flags(mflags)
@@ -165,20 +165,19 @@ class Partition(PartitionGui):
         self.partitiondata[3] = fflags
         self.set_fflags(fflags)
 
-    def set_format(self, format, setgui=True):
-        if setgui:
-            self.set_newformat(format)
+    def set_format(self, format):
 
+        print "set_format", self.partition, format
+
+        self.partitiondata[2] = format
+
+        if format:
+            self.reset_format_flags()
+            self.reset_mount_flags()
         else:
-            self.partitiondata[2] = format
-
-            if format:
-                self.reset_format_flags()
-                self.reset_mount_flags()
-            else:
-                self.set_format_flags("")
-                if not self.existing_format:
-                    self.set_mountpoint("")
+            self.set_format_flags("")
+            if not self.existing_format:
+                self.set_mountpoint("")
 
     def set_mountpoint(self, mp, setgui=True):
         mp = mp.strip()

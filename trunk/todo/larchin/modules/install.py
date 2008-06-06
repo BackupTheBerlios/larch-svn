@@ -23,7 +23,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.06.05
+# 2008.06.06
 
 from subprocess import Popen, PIPE, STDOUT
 import select
@@ -212,6 +212,11 @@ class installClass:
         it booted. Otherwise ''.
         """
         return self.xcall("larchbootdev").strip()
+
+    def fdiskall(self):
+        """Get the output of 'fdisk -l'
+        """
+        return self.xcall("fdiskall")
 
     def getDeviceInfo(self, dev):
         """Get info on drive and partitions (dev="/dev/sda", etc.)

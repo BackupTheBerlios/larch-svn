@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.06.03
+# 2008.06.06
 
 import gtk
 import re
@@ -236,6 +236,7 @@ class PartitionGui:
             self.fmtw.set_active(True)
             self.fstw.set_sensitive(True)
             self.fstw.set_active(install.filesystems.index(format))
+            self.set_format(format)
             self.mpw.set_sensitive(True)
         else:
             if self.existing_format:
@@ -245,6 +246,7 @@ class PartitionGui:
             else:
                 self.fstw.set_active(-1)
                 self.mpw.set_sensitive(False)
+            self.set_format("")
             self.fstw.set_sensitive(False)
 
     def set_mp(self, mp):
@@ -339,12 +341,13 @@ class PartitionGui:
             # If activating formatting, set the fstype to the default
             fstype = "ext3"
         else:
-            # otherwise set the fstype to ''. self.setnewformat will then
+            # otherwise set the fstype to ''. self.set_newformat will then
             # show the existing format if there is one
             fstype = ""
-        self.set_format(fstype)
+        self.set_newformat(fstype)
 
     def fstw_cb(self, widget, data=None):
-        self.set_format(widget.get_active_text(), False)
+    	text = widget.get_active_text()
+        self.set_format(text)
 
 

@@ -19,12 +19,14 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.06.04
+# 2008.06.06
 
 from stage import Stage
 from grub_gui import Mbrinstall, Oldgrub
 from menu_lst_base import menu_lst_base
+from dialogs import popupEditor
 
+import re
 import time
 
 class Widget(Stage):
@@ -54,6 +56,19 @@ class Widget(Stage):
             self.addWidget(self.oldgrub, False)
 
         self.addOption('part', _("Install GRUB to installation partition."))
+
+        self.ntfsboot = None
+        # Seek likely candidate for Windows boot partition
+        dinfo = install.fdiskall()
+        nlist = install.listNTFSpartitions()
+        for np in nlist:
+            # First look for (first) partition marked with boot flag
+            if re.search(r"^%s +\*" % np, dinfo, re.M):
+                self.ntfsboot = np
+                break
+        if (not self.ntfsboot) and nlist:
+            # Else just guess first NTFS partition
+            self.ntfsboot = nlist[0]
 
         self.request_soon(self.init)
 
@@ -93,7 +108,6 @@ class Widget(Stage):
                 text += "\n" + m.group(1)
 
         return text
-
 
     # Stuff for 'use existing menu'
     def oldtoggled(self, on):
@@ -145,6 +159,12 @@ class Widget(Stage):
             text += "root   %s\n" % rp
             text += "kernel %s/%s root=%s ro\n" % (bp, kernel, self.rootpart)
             text += "initrd %s/%s\n\n" % (bp, init)
+
+        if self.ntfsboot:
+            text += "title Windows\n"
+            text += "rootnoverify %s\n" % install.grubdevice(self.ntfsboot)
+            text += "makeactive\n"
+            text += "chainloader +1\n\n"
 
         return (text + "# ---- End of section added by larchin\n")
 
