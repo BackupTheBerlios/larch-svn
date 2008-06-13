@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.05.18
+# 2008.06.13
 
 
 from stage import Stage
@@ -265,5 +265,5 @@ class Widget(Stage):
 #################################################################
 
 moduleName = 'NtfsShrink'
-moduleDescription = _("Shrink or Remove NTFS (Windows) Partition")
+moduleDescription = _("Modify Windows Partition")
 

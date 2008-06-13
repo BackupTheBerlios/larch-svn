@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.06.06
+# 2008.06.13
 
 from stage import Stage
 from selpart_gui import PartitionGui, SelTable, SelDevice
@@ -292,4 +292,4 @@ class Partition(PartitionGui):
 #################################################################
 
 moduleName = 'MountPoints'
-moduleDescription = _("Select Installation Partitions")
+moduleDescription = _("Select Install Partitions")

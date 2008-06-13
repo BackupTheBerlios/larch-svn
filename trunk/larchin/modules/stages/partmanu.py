@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.05.29
+# 2008.06.13
 
 from stage import Stage
 
@@ -102,4 +102,4 @@ class Widget(Stage):
 #################################################################
 
 moduleName = 'ManuPart'
-moduleDescription = _("Edit disk partitions manually")
+moduleDescription = _("Edit Partitions Manually")

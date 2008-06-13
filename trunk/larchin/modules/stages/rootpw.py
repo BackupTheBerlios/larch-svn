@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.06.05
+# 2008.06.13
 
 from stage import Stage
 from rootpw_gui import PWEnter
@@ -61,4 +61,4 @@ class Widget(Stage):
 #################################################################
 
 moduleName = 'RootPass'
-moduleDescription = _("Set the root (administrator) password")
+moduleDescription = _("Set Administrator Password")

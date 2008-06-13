@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.06.04
+# 2008.06.13
 
 from stage import Stage
 from installstart_gui import PartTable
@@ -93,5 +93,5 @@ class Widget(Stage):
 #################################################################
 
 moduleName = 'InstallStart'
-moduleDescription = _("Start the actual installation process")
+moduleDescription = _("Confirmation")
 

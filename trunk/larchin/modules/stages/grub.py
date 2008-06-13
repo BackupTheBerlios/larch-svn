@@ -19,7 +19,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.06.06
+# 2008.06.13
 
 from stage import Stage
 from grub_gui import Mbrinstall, Oldgrub
@@ -219,5 +219,5 @@ class Widget(Stage):
 #################################################################
 
 moduleName = 'Grub'
-moduleDescription = _("Install / adjust the GRUB bootloader")
+moduleDescription = _("Configure Bootloader")
 
