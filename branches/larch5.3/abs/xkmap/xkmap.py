@@ -19,7 +19,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #-------------------------------------------------------------------
-# 2008.12.15
+# 2008.12.18
 
 # Set this for your system (probably one of these is OK)
 base_lst = "/usr/share/X11/xkb/rules/base.lst"
@@ -577,7 +577,8 @@ class Xkbset:
                     f.write(line + '\n')
 
                 f.close()
-                cmd = "mv '%s' '%s'" % (tmpfile, configall)
+                cmd = ("mv '%s' '%s' && chmod 644 '%s' && chown root:root '%s'"
+                        % (tmpfile, configall, configall, configall))
                 gui.rootrun(cmd)
 
         popupMessage(_("Keyboard set to:\n"

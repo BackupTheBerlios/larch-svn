@@ -2,7 +2,7 @@
 
 pkgname=xkmap
 pkgver=3.0
-pkgrel=3
+pkgrel=4
 pkgdesc="A keymap setter for xorg: a simple graphical front-end for setxkbmap"
 license=('GPL')
 arch=(i686 x86_64)
