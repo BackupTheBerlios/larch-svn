@@ -6,7 +6,7 @@
 
 for dev in $( cat /proc/partitions | grep "[sh]d[a-z]$" | sed "s|.* ||" ); do
     op=$( LANG=C parted /dev/$dev print | grep -m2 "" )
-    m=$( echo $op | sed "s|Model:\(.*\)Disk.*|\1|" )
+    m=$( echo $op | sed "s|.*Model:\(.*\)Disk.*|\1|" )
     s=$( echo $op | sed "s|.*Disk.*:||" )
     echo /dev/$dev:$s:$m
 done
