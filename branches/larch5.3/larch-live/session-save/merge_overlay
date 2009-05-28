@@ -21,7 +21,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.03.04
+# 2009.05.22
 
 # Currently only supports aufs (not unionfs).
 
@@ -81,6 +81,10 @@ echo "Mounting merge union"
 # This is using a new feature of aufs, to show whiteouts.
 layers="/.livesys/overlay=${ovl2mnt}:/.livesys/mods=${ovlmnt}"
 mount -t ${utype} -o ro,shwh,${bropt}${layers} ${utype} ${merge_union}
+if [ $? -ne 0 ]; then
+    echo "ERROR: Couldn't mount merge union"
+    exit 1
+fi
 
 echo "Rebuilding 'mods' overlay to ${overlaypath}/mods.tmp"
 # Recreate the desired layout in a new directory, using mount --bind

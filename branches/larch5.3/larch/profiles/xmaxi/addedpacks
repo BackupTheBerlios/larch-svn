@@ -5,9 +5,11 @@ lzop
 
 syslinux
 
-# You need a kernel.
-#kernel26 is now in 'base'
-aufs
+aufs2-util
+
+# Hack warning!
+# A patched aufs module, replaces the one in the kernel package
+aufs2
 
 # To eject a cd
 eject
@@ -40,9 +42,10 @@ alsa-utils
 cdparanoia
 cdrdao
 cups
-cups-pdf
+#cups-pdf
 gutenprint
 
+openntpd
 cpufrequtils
 
 # Xorg packages
@@ -74,10 +77,20 @@ thunar-volman
 thunar-archive-plugin
 xfce4-systemload-plugin
 xfce4-cpugraph-plugin
-xfce4-screenshooter-plugin
+xfce4-screenshooter
 xfce4-fsguard-plugin
 xfce4-datetime-plugin
 xfce4-mount-plugin
+xfce4-cpufreq-plugin
+xfce4-diskperf-plugin
+xfce4-mount-plugin
+xfce4-power-manager
+xfce4-sensors-plugin
+xfce4-xkb-plugin
+#xfburn
+gamin
+
+lxde
 
 #desktop-file-utils is required by thunar, etc.
 gimp
@@ -95,8 +108,6 @@ ttf-dejavu
 gdm
 dlarch-theme-gdm
 
-opera
-
 ttf-ms-fonts
 
 openoffice-base
@@ -112,8 +123,9 @@ asunder
 evince
 gthumb
 mirage
+k3b
 
-scribus
+#scribus
 
 hplip
-pyqt3
+pyqt

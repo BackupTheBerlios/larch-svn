@@ -1,18 +1,15 @@
 #
 # patch file for /etc/rc.conf
 #
+MODULES=(!snd_pcsp)
 
 LOCALE="en_US.utf8"
 HARDWARECLOCK="UTC"
-TIMEZONE="Europe/London"
-KEYMAP="uk"
-
-MODULES=(floppy)
+TIMEZONE="Europe/Berlin"
+KEYMAP="us"
 
 HOSTNAME="larch5"
 
-USELVM="yes"
-
 eth0="dhcp"
 
-DAEMONS=(syslog-ng @network dbus hal !gdm !cups !crond fam !sshd)
+DAEMONS=(syslog-ng @network dbus hal !gdm !cups !crond !sshd)

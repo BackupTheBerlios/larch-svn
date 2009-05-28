@@ -45,4 +45,5 @@ f_remountro ()
         echo -ne "Press Enter to continue"
         read junk
     fi
+    sync
 }

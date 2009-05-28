@@ -5,7 +5,11 @@ lzop
 
 syslinux
 
-aufs
+aufs2-util
+
+# Hack warning!
+# A patched aufs module, replaces the one in the kernel package
+aufs2
 
 # To eject a cd
 eject
@@ -64,16 +68,24 @@ thunar-volman
 thunar-archive-plugin
 xfce4-systemload-plugin
 xfce4-cpugraph-plugin
-xfce4-screenshooter-plugin
+xfce4-screenshooter
 xfce4-fsguard-plugin
 xfce4-datetime-plugin
 xfce4-mount-plugin
+xfce4-cpufreq-plugin
+xfce4-diskperf-plugin
+xfce4-mount-plugin
+xfce4-power-manager
+xfce4-sensors-plugin
+xfce4-xkb-plugin
+xfburn
+gamin
 
 #desktop-file-utils is required by thunar, etc.
 gimp
 wicd
 
-geany
+#geany
 
 ttf-dejavu
 

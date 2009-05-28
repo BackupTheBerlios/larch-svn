@@ -1,3 +1,19 @@
+2009.05.27
+larch and larch-live version 5.5.0.
+Changed in larch-live:
+  /etc/larch-shutdown		(add sync before power-off)
+  /etc/rc.shutdown.larch	(update to new initscripts)
+  /etc/rc.sysinit.larch		(update to new initscripts)
+  /lib/initcpio/hooks/larch3	(/tmp must be in tmpfs)
+Changed in larch:
+  inpacs			(fixed db copying)
+  mklarch			(fixed grepping [larch5] in pacman.conf)
+The xmaxi and xmini profiles were updated to reflect some (not all)
+Arch changes over the last months. They are still not perfect.
+To enable session merging, you need a patched aufs module at the
+moment (it is still being tested). Without this, do not try to merge
+sessions, it will make a mess of your larch system.
+
 2008.12.15
 larch and larch-live version 5.4.0.
 Added create-iso (build iso from larch USB-stick) to larch, removed usb2iso. 

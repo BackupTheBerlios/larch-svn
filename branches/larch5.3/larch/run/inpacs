@@ -21,7 +21,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-#2008.10.10
+#2009.05.21
 
 # Note that this has quite a few differences to 'pacin' (now deprecated).
 # Read the usage blurb carefully, for example the options -c, -a (changed
@@ -234,7 +234,7 @@ mkdir -p ${INSTLDIR}${DBPATH}/sync
 if [ -n "${DBDIR}" ]; then
     echo "//"
     echo "// Fetching package dbs from: ${DBDIR}"
-    for repo in $( grep "^\[.*\]" ${PACMANCONF} | sed "s|\[\(.*\)\]|\1|"); do
+    for repo in $( grep "^\[.*\]" ${PACMANK} | sed "s|\[\(.*\)\]|\1|" ); do
         if [ "${repo}" != "options" ]; then
             echo "      ... ${repo}"
             cp -a ${DBDIR}/sync/${repo} ${INSTLDIR}${DBPATH}/sync

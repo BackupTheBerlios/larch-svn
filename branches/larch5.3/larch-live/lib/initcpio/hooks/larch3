@@ -24,7 +24,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.10.10
+# 2009.05.22
 
 run_hook ()
 {
@@ -137,7 +137,7 @@ run_hook ()
     /bin/mknod /union/dev/zero c 1 5
 
     # Make special directories
-    /bin/mkdir -m 1777 /union/tmp
+    /bin/mkdir -m 1777 /tfs/tmp
     /bin/mkdir /union/media
     /bin/mkdir /union/sys
     /bin/mkdir /union/proc
@@ -145,6 +145,7 @@ run_hook ()
     # Make the tmpfs stuff accessible within the union
     /bin/mkdir /union/.livesys
     /bin/mount -o bind /tfs /union/.livesys
+    /bin/ln -s .livesys/tmp /union/tmp
 
     /bin/mkdir /union/.livesys/medium
 

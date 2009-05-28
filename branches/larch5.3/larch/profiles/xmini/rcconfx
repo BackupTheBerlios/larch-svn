@@ -2,12 +2,12 @@
 # patch file for /etc/rc.conf
 #
 
+MODULES=(!snd_pcsp)
+
 LOCALE="en_US.utf8"
 HARDWARECLOCK="UTC"
 TIMEZONE="UTC"
 KEYMAP="us"
-
-MODULES=(floppy)
 
 HOSTNAME="larch5"
 

@@ -1,8 +1,8 @@
 # Maintainer: Michael Towers <gradgrind[at]online[dot]de>
-# 2008.12.15
+# 2009.05.27
 pkgname=larch
-pkgver=5.4.0
-pkgrel=3
+pkgver=5.5.0
+pkgrel=2
 
 # If I need the architecture, I can get it as ${CARCH}
 
@@ -11,7 +11,6 @@ url="http://larch.berlios.de"
 depends=()
 arch=(i686 x86_64)
 license=('GPL')
-install=${pkgname}.install
 
 build() {
   mkdir -p ${startdir}/pkg/opt/larch
