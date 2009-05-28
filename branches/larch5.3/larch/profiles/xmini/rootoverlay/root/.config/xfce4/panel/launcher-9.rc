@@ -1,0 +1,13 @@
+[Entry 0]
+Name=File Manager
+Comment=Manage files and folders
+Icon=system-file-manager
+Exec=thunar
+Path=/root
+Terminal=false
+StartupNotify=false
+
+[Global]
+MoveFirst=false
+ArrowPosition=0
+

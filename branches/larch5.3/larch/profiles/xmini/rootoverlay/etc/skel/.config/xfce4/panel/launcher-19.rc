@@ -1,0 +1,8 @@
+[Entry 0]
+Name=CD/DVD Writer
+Exec=xfburn
+Terminal=false
+StartupNotify=true
+Comment=Burn CDs and DVDs
+Icon=xcdroast
+

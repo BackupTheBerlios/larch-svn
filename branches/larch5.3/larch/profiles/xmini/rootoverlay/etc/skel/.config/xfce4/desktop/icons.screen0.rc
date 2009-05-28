@@ -1,0 +1,32 @@
+[Larch Documentation]
+row=2
+col=1
+
+[Install Arch Linux]
+row=1
+col=1
+
+[1G Removable Volume]
+row=4
+col=0
+
+[3G Removable Volume]
+row=3
+col=0
+
+[CDROM]
+row=0
+col=1
+
+[Trash]
+row=0
+col=0
+
+[File System]
+row=2
+col=0
+
+[Home]
+row=1
+col=0
+

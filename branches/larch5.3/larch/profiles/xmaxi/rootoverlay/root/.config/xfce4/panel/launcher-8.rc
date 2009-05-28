@@ -1,0 +1,13 @@
+[Entry 0]
+Name=Editor
+Comment=Edit text files
+Icon=accessories-text-editor
+Exec=mousepad
+Path=/root
+Terminal=false
+StartupNotify=false
+
+[Global]
+MoveFirst=false
+ArrowPosition=0
+

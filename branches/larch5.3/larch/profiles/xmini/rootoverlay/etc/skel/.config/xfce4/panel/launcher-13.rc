@@ -1,0 +1,13 @@
+[Global]
+MoveFirst=false
+ArrowPosition=0
+
+[Entry 0]
+Name=Mail Reader
+Comment=Read and Write Mail
+Icon=evolution
+Exec=exo-open --launch MailReader
+Path=/root
+Terminal=false
+StartupNotify=true
+
