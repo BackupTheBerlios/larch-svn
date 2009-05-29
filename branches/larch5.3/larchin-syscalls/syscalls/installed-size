@@ -5,7 +5,7 @@
 # Guess the size of the system being installed, in MiB
 
 mb=0
-for i in $( df | grep ' /tmp/install' |
+for i in $( df | grep '/tmp/install' |
         while read d t u r; do echo ${u}; done ); do
     mb=$(( ${mb} + ${i} / 1024 ))
 done

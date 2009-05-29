@@ -22,8 +22,8 @@ blkid -c /dev/null -s TYPE | sed -r s'|:.*=| |' |  tr -d \" | \
         fi
         part=${dev:5}
         echo -n "${part}"
-        bpath=$( udevadm info --name=${dev} --query=path | cut -d'/' -f1,2,3 )
-        if [ $( cat /sys${bpath}/removable 2>/dev/null ) -ne 0 ]; then
+        bdev=${part:0:3}
+        if [ $( cat /sys/block/${bdev}/removable 2>/dev/null ) -ne 0 ]; then
             echo -n " + "
         else
             echo -n " - "

@@ -1,13 +1,13 @@
+[Global]
+MoveFirst=false
+ArrowPosition=0
+
 [Entry 0]
 Name=Editor
 Comment=Edit text files
-Icon=accessories-text-editor
+Icon=xfce-edit
 Exec=mousepad
 Path=/root
 Terminal=false
 StartupNotify=false
-
-[Global]
-MoveFirst=false
-ArrowPosition=0
 

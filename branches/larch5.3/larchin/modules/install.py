@@ -23,7 +23,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2009.02.18
+# 2009.05.29
 
 from subprocess import Popen, PIPE, STDOUT
 import select
@@ -214,7 +214,7 @@ class installClass:
                         popupError(_("Couldn't create partition table:\n %s"))
                     else:
                         return self.listDevices()
-                return []
+                continue
             devices.append(line.rstrip(';').split(':'))
         return devices
 
