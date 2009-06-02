@@ -84,4 +84,6 @@ TitleMode=TERMINAL_TITLE_APPEND
 Term=xterm
 VteWorkaroundTitleBug=TRUE
 WordChars=-A-Za-z0-9,./?%&#:_~
+TabActivityColor=#afff00000000
+TabActivityTimeout=2.000000
 

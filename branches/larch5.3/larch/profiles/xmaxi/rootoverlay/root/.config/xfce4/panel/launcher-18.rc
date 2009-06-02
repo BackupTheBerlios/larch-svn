@@ -1,9 +1,8 @@
 [Entry 0]
 Name=Document Editor
 Comment=Edit your text documents
-Icon=gnome-applications
+Icon=main
 Exec=soffice -writer
-Path=/root
 Terminal=false
 StartupNotify=true
 

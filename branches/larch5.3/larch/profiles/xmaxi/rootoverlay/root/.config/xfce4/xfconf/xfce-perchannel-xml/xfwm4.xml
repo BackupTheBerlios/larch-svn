@@ -70,9 +70,9 @@
     <property name="wrap_workspaces" type="bool" value="false"/>
     <property name="workspace_names" type="array">
       <value type="string" value="1"/>
-      <value type="string" value="2"/>
-      <value type="string" value="3"/>
-      <value type="string" value="4"/>
+      <value type="string" value="Workspace 2"/>
+      <value type="string" value="Workspace 3"/>
+      <value type="string" value="Workspace 4"/>
     </property>
   </property>
 </channel>

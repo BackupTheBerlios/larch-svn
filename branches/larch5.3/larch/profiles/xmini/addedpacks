@@ -78,6 +78,7 @@ xfce4-mount-plugin
 xfce4-power-manager
 xfce4-sensors-plugin
 xfce4-xkb-plugin
+gstreamer0.10-good-plugins
 xfburn
 gamin
 

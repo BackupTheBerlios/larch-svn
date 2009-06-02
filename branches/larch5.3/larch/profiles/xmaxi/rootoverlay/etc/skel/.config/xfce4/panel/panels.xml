@@ -8,7 +8,7 @@
 			<property name="screen-position" value="11"/>
 			<property name="fullwidth" value="1"/>
 			<property name="xoffset" value="0"/>
-			<property name="yoffset" value="743"/>
+			<property name="yoffset" value="742"/>
 			<property name="handlestyle" value="0"/>
 			<property name="autohide" value="0"/>
 			<property name="transparency" value="20"/>
@@ -19,9 +19,9 @@
 			<item name="showdesktop" id="1"/>
 			<item name="pager" id="2"/>
 			<item name="tasklist" id="3"/>
+			<item name="xfce4-mixer" id="17"/>
 			<item name="datetime" id="16"/>
 			<item name="cpugraph" id="15"/>
-			<item name="xfce4-mixer" id="17"/>
 			<item name="systray" id="4"/>
 		</items>
 	</panel>
@@ -31,7 +31,7 @@
 			<property name="monitor" value="0"/>
 			<property name="screen-position" value="7"/>
 			<property name="fullwidth" value="0"/>
-			<property name="xoffset" value="993"/>
+			<property name="xoffset" value="992"/>
 			<property name="yoffset" value="0"/>
 			<property name="handlestyle" value="0"/>
 			<property name="autohide" value="0"/>
@@ -46,6 +46,7 @@
 			<item name="launcher" id="13"/>
 			<item name="separator" id="11"/>
 			<item name="launcher" id="18"/>
+			<item name="launcher" id="21"/>
 			<item name="launcher" id="19"/>
 			<item name="separator" id="20"/>
 			<item name="launcher" id="12"/>

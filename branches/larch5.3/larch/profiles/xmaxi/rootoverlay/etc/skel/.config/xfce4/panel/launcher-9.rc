@@ -1,9 +1,8 @@
 [Entry 0]
 Name=File Manager
 Comment=Manage files and folders
-Icon=system-file-manager
+Icon=xfce-filemanager
 Exec=thunar
-Path=/root
 Terminal=false
 StartupNotify=false
 

@@ -88,6 +88,7 @@ xfce4-power-manager
 xfce4-sensors-plugin
 xfce4-xkb-plugin
 #xfburn
+gstreamer0.10-plugins
 gamin
 
 lxde
