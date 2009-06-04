@@ -48,10 +48,8 @@ replacequit ()
     done
 
     if [ -f ${INSTALL}$1/.bash_profile ]; then
-        sed -i "s|<app .*cmd=\"larchquit.*/>|${defaultquit}|" \
-                ${INSTALL}$1/.config/xfce4/desktop/menu.xml
+        rm -f ${INSTALL}$1/.local/share/applications/xfce4-logout.desktop
 
-        cp /.livesys/xfce4-session.rc ${INSTALL}$1/.config/xfce4-session
         cp /.livesys/bash_profile ${INSTALL}$1/.bash_profile
     fi
 }

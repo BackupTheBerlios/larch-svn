@@ -3,7 +3,7 @@
 # larchquit.py  - a logout gui for larch live systems,
 #                 with session save options, where appropriate
 #
-# (c) Copyright 2008 Michael Towers <gradgrind[at]online[dot]de>
+# (c) Copyright 2008, 2009 Michael Towers <gradgrind[at]online[dot]de>
 #
 # This file is part of the larch project.
 #
@@ -22,7 +22,7 @@
 #    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #----------------------------------------------------------------------------
-# 2008.04.17
+# 2009.06.03
 
 import gtk
 import os
@@ -209,7 +209,7 @@ class Actions:
     def logout(self, widget=None, data="0"):
         os.system("echo '%s' > /tmp/xlogout" % data)
         if (session == "xfce"):
-            os.system("sh -c 'sleep 0.5; xfce4-session-logout' &")
+            os.system("sh -c 'sleep 0.5; xfce4-session-logout --logout' &")
         else:
             error(_("Unsupported session type: %s") % session)
         self.exit()

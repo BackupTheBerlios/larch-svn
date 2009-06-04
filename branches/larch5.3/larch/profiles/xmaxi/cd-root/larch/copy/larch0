@@ -29,8 +29,6 @@ fi
 ### Maybe it would be better just to provide a special live quit desktop
 ### icon which can be removed on installation, like the installation icon.
 
-defaultquit='<builtin name="Quit" cmd="Quit" icon="gnome-logout"/>'
-
 replacequit ()
 {
     for f in ${INSTALL}$1/.config/xfce4/panel/*; do
@@ -46,10 +44,8 @@ replacequit ()
     done
 
     if [ -f ${INSTALL}$1/.bash_profile ]; then
-        sed -i "s|<app .*cmd=\"larchquit.*/>|${defaultquit}|" \
-                ${INSTALL}$1/.config/xfce4/desktop/menu.xml
+        rm -f ${INSTALL}$1/.local/share/applications/xfce4-logout.desktop
 
-        cp /.livesys/xfce4-session.rc ${INSTALL}$1/.config/xfce4-session
         cp /.livesys/bash_profile ${INSTALL}$1/.bash_profile
     fi
 }

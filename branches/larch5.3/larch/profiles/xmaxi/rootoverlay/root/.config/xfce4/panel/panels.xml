@@ -19,7 +19,7 @@
 			<item name="showdesktop" id="1"/>
 			<item name="pager" id="2"/>
 			<item name="tasklist" id="3"/>
-			<item name="xfce4-mixer" id="17"/>
+			<item name="xfce4-mixer-plugin" id="17"/>
 			<item name="datetime" id="16"/>
 			<item name="cpugraph" id="15"/>
 			<item name="systray" id="4"/>
