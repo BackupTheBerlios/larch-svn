@@ -2,11 +2,12 @@
 xkmap-set
 
 case ${desktop} in
-    xfce ) exec startxfce4 ;;
+    xfce ) exec ck-launch-session xfce4-session ;;
 
-    gnome ) exec gnome-session ;;
+# Now these are only wild guesses!
+    gnome ) exec ck-launch-session gnome-session ;;
 
-    kde ) exec startkde ;;
+    kde ) exec ck-launch-session startkde ;;
 
     * ) ;;
 esac
