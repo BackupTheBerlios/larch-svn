@@ -5,7 +5,8 @@ lzop
 
 syslinux
 
-aufs
+# In case necessary (depends on kernel)
+#aufs2
 
 # To eject a cd
 eject

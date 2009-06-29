@@ -7,9 +7,8 @@ syslinux
 
 aufs2-util
 
-# Hack warning!
-# A patched aufs module, replaces the one in the kernel package
-aufs2
+# In case necessary (depends on kernel)
+#aufs2
 
 # To eject a cd
 eject
